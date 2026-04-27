@@ -1,0 +1,13 @@
+php_value display_errors On
+php_value mbstring.http_input auto
+php_value date.timezone Asia/Jakarta
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^ index.php [L,QSA]
+</IfModule>

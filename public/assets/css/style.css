@@ -1,0 +1,805 @@
+:root {
+  --bg-main: #ffffff;
+  --bg-header: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --accent-blue: #2563eb;
+  --accent-blue-hover: #1d4ed8;
+  --border-soft: #e5e7eb;
+  --shadow-soft: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  text-decoration: none;
+  border: none;
+  outline: none;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: "Inter", sans-serif;
+  padding-top: 80px;
+}
+
+/* Navbar */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 24px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+}
+
+.logo a {
+  font-size: 1.4rem;
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+}
+
+.logo a:hover {
+  color: var(--accent-blue-hover);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.navbar li {
+  height: 50px;
+}
+
+.navbar a {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+  color: var(--accent-blue);
+}
+
+.btn-lg a {
+  color: white;
+}
+
+.btn-auth {
+  padding: 9px 10px;
+  font-size: 0.5rem;
+  font-weight: 500;
+  background: var(--accent-blue);
+  color: white;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+.btn-auth:hover {
+  background: var(--accent-blue-hover);
+}
+
+/* Home */
+.home {
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 80px;
+  gap: 48px;
+}
+
+.home-content {
+  max-width: 520px;
+}
+
+.home-content h1 {
+  font-size: 2.8rem;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.home-content h1 span {
+  color: var(--accent-blue);
+}
+
+.home-content p {
+  color: var(--text-muted);
+  margin-bottom: 32px;
+  font-size: 1rem;
+}
+
+.home-action {
+  margin-top: 32px;
+  display: flex;
+  gap: 16px;
+}
+
+.btn-primary {
+  padding: 12px 28px;
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-blue-hover);
+}
+
+.btn-secondary {
+  padding: 12px 28px;
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--accent-blue-hover);
+  color: #ffffff;
+}
+
+.home-image {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.home-image img {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Slider */
+.section {
+  padding: 60px;
+}
+
+.section-title {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.slider-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.slider {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 16px 0;
+}
+
+.slider::-webkit-scrollbar {
+  display: none;
+}
+
+/* Card */
+.kost-card {
+  min-width: 320px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.kost-card:hover {
+  transform: translateY(-6px);
+}
+
+/* Image */
+.kost-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.kost-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* bikin gambar proporsional */
+}
+
+/* Body */
+.kost-body {
+  padding: 16px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #f97316;
+  margin-bottom: 6px;
+}
+
+.kost-body h3 {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.lokasi {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* Footer */
+.kost-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.harga {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.harga span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.sisa {
+  font-size: 0.8rem;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.slider-btn.left {
+  left: 0;
+}
+
+.slider-btn.right {
+  right: 0;
+}
+
+.slider-btn i {
+  color: var(--accent-blue);
+}
+
+.location-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.location-card {
+  position: relative;
+  height: 220px;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.3s ease;
+}
+
+.location-card:hover {
+  transform: translateY(-6px);
+}
+
+.location-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.location-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(15, 23, 42, 0.7),
+    rgba(15, 23, 42, 0.1)
+  );
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+}
+
+.location-overlay h3 {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.location-overlay h3:hover {
+  color: aqua;
+}
+
+/* footer */
+.footer {
+  margin-top: 60px;
+  padding: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #64748b;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ====================================================== */
+
+/* kamar */
+.kamar-page {
+  padding: 40px 80px;
+}
+
+.kamar-header {
+  margin-bottom: 32px;
+}
+
+.search-bar {
+  max-width: 900px;
+  margin: 0 auto 40px;
+  padding: 10px 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #fff;
+  border-radius: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Tambahkan ini di style.css bagian umum (bukan di dalam media query) */
+.search-bar form {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 16px;
+  flex: 1;
+}
+
+.search-input i {
+  font-size: 1.2rem;
+  color: var(--accent-blue);
+}
+
+.search-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.search-text span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.search-text input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.btn-search {
+  padding: 14px 28px;
+  border-radius: 30px;
+  background: var(--accent-blue);
+  color: var(--border-soft);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-search:hover {
+  background: var(--accent-blue-hover);
+}
+
+/* Grid Card */
+.kamar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+/* Reuse kost-card */
+.kamar-grid .kost-card {
+  min-width: unset;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 48px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.pagination button {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 12px;
+
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: #ffffff;
+
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main);
+
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+/* Hover */
+.pagination button:hover {
+  background: #f1f5f9;
+}
+
+/* Active */
+.pagination button.active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+/* =========================================== */
+
+/* contact */
+.contact-section {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.contact-section h2 {
+  margin-bottom: 8px;
+}
+
+.contact-section p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  font-size: 0.9rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--accent-blue);
+}
+
+.btn-submit {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background: var(--accent-blue-hover);
+}
+
+/* =========================================
+   RESPONSIVE & MOBILE MENU (Update Terbaru)
+   ========================================= */
+
+/* 1. Style Hamburger (Default: Sembunyi di Desktop) */
+.menu-toggle {
+  display: none; /* Sembunyi di laptop */
+  flex-direction: column;
+  cursor: pointer;
+  gap: 5px;
+}
+
+.menu-toggle .bar {
+  width: 25px;
+  height: 3px;
+  background-color: var(--text-main);
+  border-radius: 3px;
+  transition: 0.3s;
+}
+
+/* Sembunyikan tombol login mobile di desktop */
+.mobile-login {
+  display: none;
+}
+
+/* 2. Tampilan Mobile (HP layar < 768px) */
+@media (max-width: 768px) {
+  /* --- Header & Navigasi --- */
+  .header {
+    padding: 0 20px;
+    /* Pastikan elemen tersebar: Logo - [Ruang Kosong] - Login & Hamburger */
+    justify-content: space-between;
+  }
+
+  /* 1. LOGIKA TOMBOL LOGIN DI SAMPING GARIS TIGA */
+  .navbar {
+    /* Dorong navbar (yg berisi tombol login) ke kanan mentok */
+    margin-left: auto;
+    margin-right: 15px; /* Kasih jarak dikit sama garis tiga */
+    display: flex;
+    align-items: center;
+  }
+
+  .desktop-login {
+    display: block !important; /* Munculkan tombol login desktop di HP */
+  }
+
+  /* Kecilin dikit tombol login biar muat enak di HP */
+  .btn-auth {
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
+
+  /* Sembunyikan tombol login yang ada DI DALAM menu slide (biar gak dobel) */
+  .mobile-login {
+    display: none;
+  }
+
+  /* --- Hamburger Menu --- */
+  .menu-toggle {
+    display: flex;
+    z-index: 1001;
+  }
+
+  /* Menu Slide dari Kanan (Navigasi Link) */
+  .navbar ul {
+    position: fixed;
+    top: 70px;
+    right: -100%; /* Sembunyi */
+    width: 70%;
+    height: 100vh;
+    background: white;
+    flex-direction: column;
+    padding: 30px;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: 0.3s ease-in-out;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start; /* Link rata kiri */
+  }
+
+  /* Class aktif untuk memunculkan menu */
+  .navbar ul.active {
+    right: 0;
+  }
+
+  /* Animasi Hamburger jadi X */
+  .menu-toggle.is-active .bar:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-toggle.is-active .bar:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+  .menu-toggle.is-active .bar:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+
+  /* --- 2. FIX GAMBAR RUMAH (RATA TENGAH) --- */
+  .home {
+    flex-direction: column-reverse; /* Teks di bawah, gambar di atas */
+    padding: 100px 20px 50px;
+    height: auto;
+    text-align: center;
+  }
+
+  .home-image {
+    /* INI KUNCINYA: Ubah dari flex-end (kanan) ke center (tengah) */
+    justify-content: center;
+    width: 100%;
+  }
+
+  .home-image img {
+    width: 90%; /* Lebar gambar */
+    max-width: 400px; /* Batas maksimal biar gak kegedean */
+    margin-bottom: 30px;
+  }
+
+  .home-content h1 {
+    font-size: 2rem;
+  }
+
+  .home-action {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .section {
+    padding: 40px 20px; /* Kurangi padding agar tidak terlalu lebar jaraknya */
+  }
+
+  /* --- PERBAIKAN SLIDER (REKOMENDASI) --- */
+  
+  /* 1. Sembunyikan tombol panah di HP */
+  /* Alasan: Di HP user lebih natural swipe/geser jari, tombol panah malah bikin sempit */
+  .slider-btn {
+    display: none !important; 
+  }
+
+  /* 2. Atur Wrapper agar mentok ke ujung layar (Full Bleed) */
+  .slider-wrapper {
+    margin: 0 -20px; /* Negatif margin agar slider menyentuh ujung kiri-kanan layar */
+    padding: 0;
+  }
+
+  /* 3. Atur Container Slider */
+  .slider {
+    padding: 10px 20px; /* Beri ruang di kiri-kanan agar card pertama tidak nempel pinggir */
+    gap: 15px; /* Jarak antar kartu */
+    scroll-snap-type: x mandatory; /* Opsional: Agar saat digeser berhenti pas di tengah card */
+  }
+
+  /* 4. Atur Ukuran Kartu */
+  /* Jangan 100%, gunakan 85vw agar kartu berikutnya "mengintip" sedikit.
+     Ini memberi sinyal visual ke user bahwa ada konten lain di sebelahnya. */
+  .slider .kost-card {
+    min-width: 85vw; /* Lebar 85% dari layar HP */
+    max-width: 85vw;
+    scroll-snap-align: center; /* Pasangan scroll-snap-type */
+    margin: 0; /* Reset margin aneh jika ada */
+  }
+  
+  /* Pastikan gambar di dalam card slider proporsional */
+  .slider .kost-image {
+    height: 180px; /* Sesuaikan tinggi gambar agar tidak kepanjangan */
+  }
+
+  /* --- Perbaikan Grid Kamar & Lokasi --- */
+  .kamar-grid,
+  .location-grid {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+   /* 1. PERBAIKAN CONTAINER UTAMA */
+  /* Ubah padding yang tadinya 80px menjadi lebih kecil agar muat di HP */
+  .kamar-page {
+    padding: 20px 16px; /* Atas-Bawah 20px, Kiri-Kanan 16px */
+    width: 100%;
+    overflow-x: hidden; /* Mencegah scroll menyamping */
+  }
+
+  /* 2. PERBAIKAN SEARCH BAR */
+  /* Agar input dan tombol cari tidak dempet/gepeng, kita buat susun ke bawah */
+  .search-bar form {
+    flex-direction: column; /* Susun vertikal */
+    height: auto;
+    gap: 15px !important; /* Jarak antar input dan tombol */
+  }
+
+  .search-input {
+    width: 100%; /* Lebar penuh */
+    padding: 10px 0;
+  }
+
+  .btn-search {
+    width: 100%; /* Tombol jadi lebar penuh */
+    justify-content: center;
+  }
+
+  /* 3. PERBAIKAN GRID KAMAR */
+  /* Pastikan grid menjadi 1 kolom penuh */
+  .kamar-grid {
+    display: grid;
+    grid-template-columns: 1fr !important; /* Paksa 1 kolom */
+    gap: 20px;
+    padding: 10px 0 !important; /* Hapus padding bawaan inline style */
+  }
+  
+  /* Pastikan kartu tidak melebihi lebar layar */
+  .kost-card {
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* --- Slider --- */
+  .slider-wrapper {
+    padding: 0 10px;
+  }
+  .slider .kost-card {
+    min-width: 100%;
+  }
+
+  /* --- Perbaikan Peta --- */
+  #map {
+    height: 300px;
+  }
+}
+

@@ -1,0 +1,465 @@
+:root {
+  --bg-main: #f8fafc;
+  --bg-sidebar: #1e3a8a;
+  --bg-sidebar-dark: #1e40af;
+  --bg-hover: rgba(255, 255, 255, 0.14);
+
+  --text-main: #0f172a;
+  --text-light: #f8fafc;
+  --text-muted: #c7d2fe;
+
+  --accent-blue: #3b82f6;
+  --accent-blue-soft: #1e3a8a;
+
+  --danger: #f87171;
+
+  --border-soft: #1e40af;
+  --shadow-soft: 0 10px 28px rgba(30, 58, 138, 0.45);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-main);
+}
+
+.sidebar {
+  width: 260px;
+  background: linear-gradient(
+    180deg,
+    var(--bg-sidebar-dark),
+    var(--bg-sidebar)
+  );
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 22px 20px;
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--bg-sidebar-dark);
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.menu {
+  list-style: none;
+  padding: 6px 12px;
+}
+
+.menu li {
+  margin-bottom: 6px;
+}
+
+.menu li a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.25s ease;
+}
+
+.menu li a:hover {
+  background: var(--bg-hover);
+  color: var(--text-light);
+}
+
+.menu li a i {
+  width: 20px;
+  text-align: center;
+}
+
+.menu li a.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.logout {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logout a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--danger);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  background: #f8fafc;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.page-subtitle {
+  margin-top: 6px;
+  margin-bottom: 30px;
+  color: #64748b;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.stats-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+}
+
+.stats-card h3 {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.stats-card span {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.info-box {
+  margin-top: 30px;
+  background: white;
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.info-box h3 {
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.info-box p {
+  color: #475569;
+  line-height: 1.6;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #1e40af, #1e3a8a);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+thead th {
+  font-size: 13px;
+  color: #64748b;
+}
+
+thead th,
+tbody td {
+  padding: 14px 16px;
+  text-align: left;
+}
+
+tbody tr {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.kost-image {
+  width: 90px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-edit {
+  background: #fde68a;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background: #fecaca;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.page-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.page-btn:hover {
+  background: #f1f5f9;
+}
+
+.page-btn.active {
+  background: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+}
+
+.table-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  max-width: 380px;
+}
+
+.table-search input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.table-search input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.btn-search {
+  background: var(--accent-blue);
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.btn-search:hover {
+  background: #2563eb;
+}
+
+table td a {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-edit {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-delete {
+  background-color: #ef4444;
+  color: white;
+  margin-left: 5px;
+}
+
+.btn-delete:hover {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+table td:last-child {
+  white-space: nowrap;
+  text-align: center;
+}
+
+table th:last-child,
+table td:last-child {
+  min-width: 180px; /* Biar tombolnya gak turun ke bawah */
+  white-space: nowrap;
+}
+
+/* Style khusus tombol status jika mau beda warna */
+/* Misalnya tombol Kosongkan warnanya orange, bukan merah hapus */
+.badge.warning {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+.header-mobile {
+  display: none;
+}
+
+/* TAMPILAN HP (Max 768px) */
+@media (max-width: 768px) {
+  /* 1. Layout Body */
+  body {
+    display: block; /* Matikan flex row */
+  }
+
+  /* 2. Sidebar Mobile (Off-Canvas) */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* Sembunyi di kiri */
+    width: 260px;
+    height: 100vh;
+    z-index: 1000;
+    transition: 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .sidebar.active {
+    left: 0; /* Muncul saat aktif */
+  }
+
+  /* 3. Header Mobile (Tombol Hamburger) */
+  .header-mobile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+  }
+
+  .btn-toggle {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-main);
+    cursor: pointer;
+  }
+
+  /* 4. Konten Utama */
+  .content {
+    width: 100%;
+    padding: 10px 20px 80px 20px;
+  }
+
+  /* 5. Stats Cards (Kotak Angka) */
+  .stats {
+    grid-template-columns: 1fr; /* 1 Kolom ke bawah */
+    gap: 15px;
+  }
+
+  /* 6. TABEL RESPONSIF (PENTING!) */
+  /* Agar tabel tidak gepeng, kita bungkus biar bisa scroll samping */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #eee; /* Tambahan border tipis */
+  }
+
+  table {
+    min-width: 800px; /* Paksa tabel lebar agar scroll muncul */
+  }
+
+  /* Tombol aksi di tabel biar gak berantakan */
+  td {
+    white-space: nowrap;
+  }
+}
