@@ -1,70 +1,347 @@
-<?php ob_start(); ?>
-    <section class="home" id="home">
-        <div class="home-content">
-            <h1>Cari Kos Nyaman?<br><span>Tanpa Ribet</span></h1>
-            <p>Temukan kos terbaik dengan fasilitas lengkap, harga terjangkau, dan lokasi strategis</p>
+<?php
+$recommendations = $recommendations ?? [];
+$branches = $branches ?? [];
+$promos = $promos ?? [];
+$homeStats = $homeStats ?? [];
+$featuredRoom = $recommendations[0] ?? null;
+$featuredImage = $featuredRoom !== null ? upload_asset($featuredRoom['foto_kost'] ?? null) : site_image('pexels-binyaminmellish-106399.jpg');
+$startingPrice = (float) ($homeStats['starting_price'] ?? 0);
+$whatsappText = rawurlencode('Halo Admin KosOnline, saya ingin tanya kamar kos yang tersedia.');
+$whatsappUrl = 'https://wa.me/6287748703029?text=' . $whatsappText;
 
-            <div class="home-action">
-                <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary">Lihat Kamar</a>
-                <a href="<?php echo e(url('/contact')); ?>" class="btn-secondary">Hubungi Pemilik</a>
-            </div>
-        </div>
+$finalPrice = static function (array $room): float {
+    $discount = (int) ($room['diskon_persen'] ?? 0);
+    $price = (float) ($room['harga'] ?? 0);
 
-        <div class="home-image">
-            <img src="<?php echo e(site_image('kossan.jpg')); ?>" alt="kos">
-        </div>
-    </section>
+    return $discount > 0 ? $price * (1 - ($discount / 100)) : $price;
+};
 
-    <section class="section">
-        <div class="section-title">
-            <h1>Rekomendasi Terbaru</h1>
-        </div>
+$facilityBadges = static function (?string $facilities): array {
+    $items = array_filter(array_map('trim', explode(',', (string) $facilities)));
 
-        <div class="slider-wrapper">
-            <button class="slider-btn left" onclick="slideLeft()">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
+    return array_slice($items, 0, 3);
+};
 
-            <div class="slider" id="slider">
-                <?php foreach ($recommendations as $data): ?>
-                    <div class="kost-card">
-                        <div class="kost-image">
-                            <img src="<?php echo e(upload_asset($data['foto_kost'])); ?>" alt="Foto Kost">
+ob_start();
+?>
+
+<section class="home-hero">
+    <div class="home-hero-glow glow-one"></div>
+    <div class="home-hero-glow glow-two"></div>
+
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="home-eyebrow"><i class="fa-solid fa-house-circle-check"></i> Kos strategis di Cirebon</span>
+                <h1>Temukan kamar kos yang pas, nyaman, dan siap huni.</h1>
+                <p class="home-hero-copy">
+                    Cari kamar berdasarkan cabang, fasilitas, dan promo aktif. Lihat detail foto, lokasi, harga, lalu langsung tanya admin atau booking dari satu halaman.
+                </p>
+
+                <div class="home-hero-actions">
+                    <a href="<?php echo e(url('/rooms')); ?>" class="home-btn-primary"><i class="fa-solid fa-bed"></i> Lihat Kamar Tersedia</a>
+                    <a href="<?php echo e($whatsappUrl); ?>" target="_blank" rel="noopener noreferrer" class="home-btn-outline"><i class="fa-brands fa-whatsapp"></i> Tanya Admin</a>
+                </div>
+
+                <form action="<?php echo e(url('/rooms')); ?>" method="GET" class="home-search-panel">
+                    <div class="home-search-field">
+                        <label>Lokasi / fasilitas</label>
+                        <div>
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" name="cari" placeholder="Contoh: listrik, air, parkir...">
                         </div>
-                        <div class="kost-body">
-                            <span class="badge"><?php echo e($data['nama_kost']); ?></span>
-                            <h3>Kamar <?php echo e($data['nomor_kamar']); ?></h3>
-                            <p class="lokasi"><i class="fa-solid fa-location-dot"></i> <?php echo e($data['alamat']); ?></p>
-                            <div class="kost-poster">
-                                <p class="harga"><strong>Rp <?php echo number_format((float) $data['harga'], 0, ',', '.'); ?></strong>/bulan</p>
-                                <p class="sisa">Lt. <?php echo e($data['lantai']); ?></p>
-                            </div>
-                        </div>
-                        <a href="<?php echo e(url('/rooms')); ?>" style="display:block; text-align:center; padding:10px; background:#1e3a8a; color:white; text-decoration:none; margin-top:10px;">Lihat Detail</a>
                     </div>
-                <?php endforeach; ?>
+                    <div class="home-search-field">
+                        <label>Cabang kos</label>
+                        <div>
+                            <i class="fa-solid fa-building"></i>
+                            <select name="cabang">
+                                <option value="">Semua cabang</option>
+                                <?php foreach ($branches as $branch): ?>
+                                    <option value="<?php echo e($branch['id_kost']); ?>"><?php echo e($branch['nama_kost']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit"><i class="fa-solid fa-arrow-right"></i> Cari</button>
+                </form>
+
+                <div class="home-quick-search">
+                    <span>Pencarian cepat:</span>
+                    <a href="<?php echo e(url('/rooms?cari=' . rawurlencode('Listrik'))); ?>">Listrik</a>
+                    <a href="<?php echo e(url('/rooms?cari=' . rawurlencode('Air'))); ?>">Air bersih</a>
+                    <a href="<?php echo e(url('/rooms?cari=' . rawurlencode('Parkir'))); ?>">Parkir</a>
+                </div>
             </div>
 
-            <button class="slider-btn right" onclick="slideRight()">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="section-title">
-            <h1>Lokasi Populer</h1>
-        </div>
-        <div class="location-grid">
-            <div class="location-card">
-                <img src="<?php echo e(site_image('kossan.jpg')); ?>" alt="">
-                <div class="location-overlay">
-                    <a href="<?php echo e(url('/rooms?cari=Cirebon')); ?>"><h3>Cirebon</h3></a>
+            <div class="col-lg-6">
+                <div class="home-hero-visual">
+                    <img src="<?php echo e($featuredImage); ?>" alt="Foto kos unggulan">
+                    <div class="hero-floating-card hero-card-price">
+                        <span>Mulai dari</span>
+                        <strong><?php echo $startingPrice > 0 ? 'Rp ' . number_format($startingPrice, 0, ',', '.') : 'Tanya admin'; ?></strong>
+                        <small>per bulan</small>
+                    </div>
+                    <div class="hero-floating-card hero-card-room">
+                        <i class="fa-solid fa-key"></i>
+                        <div>
+                            <strong><?php echo e($homeStats['available_rooms'] ?? 0); ?> kamar</strong>
+                            <span>tersedia sekarang</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+
+        <div class="home-stats-strip">
+            <div>
+                <strong><?php echo e($homeStats['total_branches'] ?? 0); ?>+</strong>
+                <span>Cabang kost</span>
+            </div>
+            <div>
+                <strong><?php echo e($homeStats['available_rooms'] ?? 0); ?></strong>
+                <span>Kamar tersedia</span>
+            </div>
+            <div>
+                <strong><?php echo e($homeStats['active_promos'] ?? 0); ?></strong>
+                <span>Promo aktif</span>
+            </div>
+            <div>
+                <strong>24 Jam</strong>
+                <span>Admin & CS online</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<?php if (!empty($promos)): ?>
+<section class="home-section">
+    <div class="container">
+        <div class="home-section-heading">
+            <div>
+                <span class="home-eyebrow danger"><i class="fa-solid fa-fire"></i> Penawaran terbatas</span>
+                <h2>Promo kamar yang sedang aktif</h2>
+                <p>Ambil kesempatan harga terbaik sebelum kamar terisi.</p>
+            </div>
+            <a href="<?php echo e(url('/rooms')); ?>">Lihat semua <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <?php foreach ($promos as $room): ?>
+                <?php $priceAfterDiscount = $finalPrice($room); ?>
+                <div class="col">
+                    <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
+                        <div class="home-room-image">
+                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>">
+                            <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
+                            <span class="home-status-badge">Tersedia</span>
+                        </div>
+                        <div class="home-room-body">
+                            <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
+                            <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
+                            <p><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
+                            <div class="home-facility-list">
+                                <?php foreach ($facilityBadges($room['fasilitas'] ?? '') as $facility): ?>
+                                    <span><i class="fa-solid fa-check"></i> <?php echo e($facility); ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="home-room-footer">
+                                <div>
+                                    <small>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></small>
+                                    <strong>Rp <?php echo number_format($priceAfterDiscount, 0, ',', '.'); ?></strong>
+                                </div>
+                                <span>Lihat Detail</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<section class="home-section home-section-soft">
+    <div class="container">
+        <div class="home-section-heading">
+            <div>
+                <span class="home-eyebrow"><i class="fa-solid fa-thumbs-up"></i> Rekomendasi</span>
+                <h2>Kamar yang paling cocok untuk mulai dicari</h2>
+                <p>Pilihan kamar tersedia dengan harga dan lokasi yang mudah dibandingkan.</p>
+            </div>
+            <a href="<?php echo e(url('/rooms')); ?>">Lihat semua <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <?php foreach ($recommendations as $room): ?>
+                <?php
+                $hasPromo = (int) ($room['diskon_persen'] ?? 0) > 0;
+                $roomFinalPrice = $finalPrice($room);
+                ?>
+                <div class="col">
+                    <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
+                        <div class="home-room-image">
+                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>">
+                            <?php if ($hasPromo): ?>
+                                <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
+                            <?php endif; ?>
+                            <span class="home-status-badge">Tersedia</span>
+                        </div>
+                        <div class="home-room-body">
+                            <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
+                            <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
+                            <p><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
+                            <div class="home-facility-list">
+                                <?php foreach ($facilityBadges($room['fasilitas'] ?? '') as $facility): ?>
+                                    <span><i class="fa-solid fa-check"></i> <?php echo e($facility); ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="home-room-footer">
+                                <div>
+                                    <?php if ($hasPromo): ?>
+                                        <small>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></small>
+                                    <?php endif; ?>
+                                    <strong>Rp <?php echo number_format($roomFinalPrice, 0, ',', '.'); ?></strong>
+                                </div>
+                                <span>Lihat Detail</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<section class="home-section">
+    <div class="container">
+        <div class="home-section-heading centered">
+            <span class="home-eyebrow"><i class="fa-solid fa-route"></i> Cara booking</span>
+            <h2>Booking kos dibuat sesederhana mungkin</h2>
+            <p>Tiga langkah pendek supaya calon penghuni tidak bingung dari cari kamar sampai konfirmasi.</p>
+        </div>
+
+        <div class="home-steps">
+            <div class="home-step-card">
+                <span>01</span>
+                <i class="fa-solid fa-magnifying-glass-location"></i>
+                <h3>Cari kamar</h3>
+                <p>Pilih cabang, lihat foto, cek fasilitas, dan bandingkan harga yang paling cocok.</p>
+            </div>
+            <div class="home-step-card">
+                <span>02</span>
+                <i class="fa-brands fa-whatsapp"></i>
+                <h3>Tanya admin</h3>
+                <p>Konfirmasi ketersediaan, aturan kos, dan jadwal survei kamar lewat WhatsApp.</p>
+            </div>
+            <div class="home-step-card">
+                <span>03</span>
+                <i class="fa-solid fa-credit-card"></i>
+                <h3>Booking & bayar</h3>
+                <p>Lanjutkan pemesanan dari halaman detail dan simpan riwayatnya di dashboard member.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="home-section home-section-soft">
+    <div class="container">
+        <div class="home-section-heading centered">
+            <span class="home-eyebrow"><i class="fa-solid fa-network-wired"></i> Cabang kos</span>
+            <h2>Pilih cabang paling dekat dengan aktivitasmu</h2>
+            <p>Semua cabang terhubung ke daftar kamar, jadi kamu bisa langsung melihat unit yang tersedia.</p>
+        </div>
+
+        <div class="home-branch-grid">
+            <?php foreach ($branches as $branch): ?>
+                <article class="home-branch-card">
+                    <img src="<?php echo e(upload_asset($branch['foto_kost'])); ?>" alt="<?php echo e($branch['nama_kost']); ?>">
+                    <div>
+                        <span><?php echo e($branch['kamar_tersedia']); ?> kamar tersedia</span>
+                        <h3><?php echo e($branch['nama_kost']); ?></h3>
+                        <p><i class="fa-solid fa-location-dot"></i> <?php echo e($branch['alamat']); ?></p>
+                        <a href="<?php echo e(url('/rooms?cabang=' . $branch['id_kost'])); ?>">Lihat kamar cabang ini</a>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<section class="home-section">
+    <div class="container">
+        <div class="home-proof-grid">
+            <div>
+                <span class="home-eyebrow"><i class="fa-solid fa-shield-heart"></i> Kenapa KosOnline</span>
+                <h2>Lebih jelas sebelum datang survei.</h2>
+                <p>Calon penghuni bisa melihat harga, foto, fasilitas, lokasi, promo, dan langsung menghubungi admin tanpa pindah-pindah platform.</p>
+                <div class="home-benefit-list">
+                    <span><i class="fa-solid fa-circle-check"></i> Detail foto berkategori</span>
+                    <span><i class="fa-solid fa-circle-check"></i> Diskon tampil transparan</span>
+                    <span><i class="fa-solid fa-circle-check"></i> Lokasi cabang bisa dicek di peta</span>
+                    <span><i class="fa-solid fa-circle-check"></i> Dashboard member untuk riwayat sewa</span>
+                </div>
+            </div>
+
+            <div class="home-testimonial-stack">
+                <article>
+                    <div>
+                        <strong>Nanda</strong>
+                        <span>Mahasiswa</span>
+                    </div>
+                    <p>"Cari kamar jadi lebih cepat karena harga dan fasilitasnya sudah kelihatan dari awal."</p>
+                </article>
+                <article>
+                    <div>
+                        <strong>Pramana</strong>
+                        <span>Pekerja</span>
+                    </div>
+                    <p>"Admin responsif, bisa tanya dulu lewat WhatsApp sebelum lihat lokasi."</p>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="home-section home-section-soft">
+    <div class="container">
+        <div class="home-faq-cta">
+            <div>
+                <span class="home-eyebrow"><i class="fa-solid fa-circle-question"></i> Pertanyaan umum</span>
+                <h2>Masih ragu sebelum booking?</h2>
+                <p>Cek jawaban singkat di bawah, atau langsung tanya admin untuk info paling terbaru.</p>
+                <a href="<?php echo e($whatsappUrl); ?>" target="_blank" rel="noopener noreferrer" class="home-btn-primary"><i class="fa-brands fa-whatsapp"></i> Tanya via WhatsApp</a>
+            </div>
+            <div class="home-faq-list">
+                <details open>
+                    <summary>Apakah kamar yang tampil pasti tersedia?</summary>
+                    <p>Daftar kamar mengikuti status dari admin. Sebelum booking, tetap disarankan konfirmasi cepat lewat WhatsApp.</p>
+                </details>
+                <details>
+                    <summary>Bisa survei kamar dulu?</summary>
+                    <p>Bisa. Hubungi admin untuk menentukan jadwal survei dan cabang kos yang ingin dilihat.</p>
+                </details>
+                <details>
+                    <summary>Apakah pembayaran sudah online?</summary>
+                    <p>Saat ini alur pembayaran sudah disiapkan di website. Verifikasi bukti pembayaran bisa menjadi fitur lanjutan berikutnya.</p>
+                </details>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="home-bottom-cta">
+    <div class="container">
+        <div>
+            <span>Kamar cocok bisa cepat terisi.</span>
+            <h2>Mulai cari kamar kos terbaikmu sekarang.</h2>
+        </div>
+        <a href="<?php echo e(url('/rooms')); ?>" class="home-btn-primary"><i class="fa-solid fa-bed"></i> Cari Kamar</a>
+    </div>
+</section>
+
 <?php
 $content = ob_get_clean();
-$title = 'KosOnline - Home';
+$title = 'Cari Kos Mudah & Cepat - KosOnline';
 require base_path('app/Views/layouts/public.php');
+?>

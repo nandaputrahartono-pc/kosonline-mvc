@@ -1,0 +1,4 @@
+/config/database.local.php
+/kosonline.sql
+/public/assets/images/uploads/*
+!/public/assets/images/uploads/.gitkeep

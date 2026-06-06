@@ -105,3 +105,27 @@ function clear_old_input(): void
 {
     unset($_SESSION['_old']);
 }
+
+function csrf_token(): string
+{
+    if (!isset($_SESSION['_csrf_token']) || !is_string($_SESSION['_csrf_token'])) {
+        $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['_csrf_token'];
+}
+
+function csrf_field(): string
+{
+    return '<input type="hidden" name="_token" value="' . e(csrf_token()) . '">';
+}
+
+function csrf_token_is_valid(): bool
+{
+    $sessionToken = $_SESSION['_csrf_token'] ?? null;
+    $requestToken = $_POST['_token'] ?? null;
+
+    return is_string($sessionToken)
+        && is_string($requestToken)
+        && hash_equals($sessionToken, $requestToken);
+}

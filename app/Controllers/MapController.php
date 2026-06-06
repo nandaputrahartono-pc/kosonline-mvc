@@ -19,7 +19,7 @@ final class MapController extends Controller
     public function index(): void
     {
         $this->render('map/index', [
-            'locations' => $this->kostModel->getAll(),
+            'locations' => $this->kostModel->getAllWithAvailableCount(),
         ]);
     }
 }

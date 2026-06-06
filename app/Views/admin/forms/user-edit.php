@@ -1,17 +1,21 @@
 <?php ob_start(); ?>
 <h2 style="text-align: center; margin-bottom: 20px;">Edit Data User</h2>
 <form method="POST">
+    <?php echo csrf_field(); ?>
     <label>Nama Lengkap</label>
     <input type="text" name="nama" value="<?php echo e($user['nama_lengkap']); ?>" required>
+
+    <label>Username</label>
+    <input type="text" name="username" value="<?php echo e($user['username']); ?>" pattern="[a-z0-9_]{3,30}" required>
 
     <label>Email</label>
     <input type="email" name="email" value="<?php echo e($user['email']); ?>" required>
 
     <label>Nomor HP (WhatsApp)</label>
-    <input type="number" name="no_hp" value="<?php echo e($user['no_hp']); ?>" required>
+    <input type="tel" name="no_hp" value="<?php echo e($user['no_hp']); ?>" required>
 
     <label>Password Baru</label>
-    <input type="text" name="password" placeholder="Biarkan kosong jika tidak ingin mengganti password">
+    <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak ingin mengganti password">
     <small style="color: red; font-style: italic;">*Isi hanya jika ingin mengubah password</small>
 
     <button type="submit" name="update">Simpan Perubahan</button>

@@ -29,10 +29,18 @@ final class AdminLocationController extends Controller
         }
 
         if ($this->isPost() && isset($_POST['simpan'])) {
+            $latitude = filter_var($_POST['latitude'] ?? null, FILTER_VALIDATE_FLOAT);
+            $longitude = filter_var($_POST['longitude'] ?? null, FILTER_VALIDATE_FLOAT);
+
+            if ($latitude === false || $longitude === false || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+                set_flash('error', 'Koordinat latitude atau longitude tidak valid.');
+                redirect_to('/admin/locations/edit?id=' . $id);
+            }
+
             $this->kostModel->updateLocation(
                 $id,
-                trim((string) $_POST['latitude']),
-                trim((string) $_POST['longitude'])
+                (string) $latitude,
+                (string) $longitude
             );
 
             set_flash('success', 'Lokasi berhasil disimpan!');

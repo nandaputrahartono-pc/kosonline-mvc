@@ -31,7 +31,7 @@ abstract class Controller
 
     protected function requireUser(): void
     {
-        if (!isset($_SESSION['id_user'])) {
+        if (($_SESSION['status'] ?? null) !== 'login_user' || !isset($_SESSION['id_user'])) {
             set_flash('error', 'Silakan login terlebih dahulu.');
             redirect_to('/login');
         }
