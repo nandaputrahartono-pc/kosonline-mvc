@@ -20,7 +20,7 @@ final class AdminMessageController extends Controller
     {
         $this->requireAdmin();
 
-        $messageId = (int) ($_GET['id'] ?? 0);
+        $messageId = (int) ($_POST['id'] ?? 0);
         $this->messageModel->delete($messageId);
         set_flash('success', 'Pesan dihapus');
         redirect_to('/admin/dashboard');

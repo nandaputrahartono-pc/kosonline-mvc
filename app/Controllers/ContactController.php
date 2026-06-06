@@ -19,10 +19,19 @@ final class ContactController extends Controller
     public function index(): void
     {
         if ($this->isPost() && isset($_POST['kirim_pesan'])) {
+            $name = trim((string) ($_POST['nama'] ?? ''));
+            $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+            $message = trim((string) ($_POST['pesan'] ?? ''));
+
+            if ($name === '' || $message === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                set_flash('error', 'Nama, email valid, dan isi pesan wajib diisi.');
+                redirect_to('/contact');
+            }
+
             $this->messageModel->create(
-                trim((string) $_POST['nama']),
-                trim((string) $_POST['email']),
-                trim((string) $_POST['pesan'])
+                $name,
+                $email,
+                $message
             );
 
             set_flash('success', 'Pesan berhasil dikirim! Kami akan segera menghubungi Anda via Email.');
@@ -31,6 +40,7 @@ final class ContactController extends Controller
 
         $this->render('contact/index', [
             'successMessage' => flash('success'),
+            'errorMessage' => flash('error'),
         ]);
     }
 }

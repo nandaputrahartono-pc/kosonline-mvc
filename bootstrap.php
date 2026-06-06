@@ -5,6 +5,13 @@ declare(strict_types=1);
 date_default_timezone_set('Asia/Jakarta');
 
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_samesite', 'Lax');
+    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        ini_set('session.cookie_secure', '1');
+    }
+
     $sessionPath = session_save_path();
     if ($sessionPath === '' || !is_writable($sessionPath)) {
         session_save_path('/tmp');

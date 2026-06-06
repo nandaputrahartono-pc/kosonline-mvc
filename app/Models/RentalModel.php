@@ -27,6 +27,30 @@ final class RentalModel extends Model
         );
     }
 
+    public function getDashboardRowsByUserId(int $userId): array
+    {
+        return $this->db->selectAll(
+            "SELECT sewa.*, kamar.nomor_kamar, kamar.harga, kamar.lantai, kamar.fasilitas,
+                    kost.nama_kost, kost.alamat, kost.foto_kost,
+                    pembayaran.id_pembayaran, pembayaran.invoice_no, pembayaran.total_bayar,
+                    pembayaran.status_verifikasi, pembayaran.metode_bayar,
+                    pembayaran.periode_mulai, pembayaran.periode_selesai
+             FROM sewa
+             JOIN kamar ON sewa.id_kamar = kamar.id_kamar
+             JOIN kost ON kamar.id_kost = kost.id_kost
+             LEFT JOIN pembayaran ON pembayaran.id_pembayaran = (
+                SELECT p.id_pembayaran
+                FROM pembayaran p
+                WHERE p.id_sewa = sewa.id_sewa
+                ORDER BY p.id_pembayaran DESC
+                LIMIT 1
+             )
+             WHERE sewa.id_user = ?
+             ORDER BY sewa.id_sewa DESC",
+            [$userId]
+        );
+    }
+
     public function getActiveTenantByRoomId(int $roomId): ?array
     {
         return $this->db->selectOne(
@@ -45,9 +69,60 @@ final class RentalModel extends Model
 
     public function createActive(int $userId, int $roomId): int
     {
+        $moveInDate = date('Y-m-d');
+        $dueDate = date('Y-m-d', strtotime($moveInDate . ' +1 month'));
+
         return $this->db->insert(
-            "INSERT INTO sewa (id_user, id_kamar, tanggal_masuk, status_sewa) VALUES (?, ?, ?, 'Aktif')",
-            [$userId, $roomId, date('Y-m-d')]
+            "INSERT INTO sewa (id_user, id_kamar, tanggal_masuk, jatuh_tempo, status_sewa)
+             VALUES (?, ?, ?, ?, 'Aktif')",
+            [$userId, $roomId, $moveInDate, $dueDate]
+        );
+    }
+
+    public function createPending(int $userId, int $roomId, string $moveInDate, string $dueDate, string $bookingCode): int
+    {
+        return $this->db->insert(
+            "INSERT INTO sewa (id_user, id_kamar, kode_booking, tanggal_masuk, jatuh_tempo, status_sewa)
+             VALUES (?, ?, ?, ?, ?, 'Menunggu Pembayaran')",
+            [$userId, $roomId, $bookingCode, $moveInDate, $dueDate]
+        );
+    }
+
+    public function findActiveById(int $rentalId): ?array
+    {
+        return $this->db->selectOne(
+            "SELECT sewa.*, kamar.harga
+             FROM sewa
+             JOIN kamar ON sewa.id_kamar = kamar.id_kamar
+             WHERE sewa.id_sewa = ? AND sewa.status_sewa = 'Aktif'",
+            [$rentalId]
+        );
+    }
+
+    public function findByIdWithRoom(int $rentalId): ?array
+    {
+        return $this->db->selectOne(
+            "SELECT sewa.*, kamar.harga, kamar.id_kamar
+             FROM sewa
+             JOIN kamar ON sewa.id_kamar = kamar.id_kamar
+             WHERE sewa.id_sewa = ?",
+            [$rentalId]
+        );
+    }
+
+    public function activate(int $rentalId): void
+    {
+        $this->db->execute(
+            "UPDATE sewa SET status_sewa = 'Aktif' WHERE id_sewa = ?",
+            [$rentalId]
+        );
+    }
+
+    public function cancelPending(int $rentalId): void
+    {
+        $this->db->execute(
+            "UPDATE sewa SET status_sewa = 'Dibatalkan', tanggal_keluar = ? WHERE id_sewa = ?",
+            [date('Y-m-d'), $rentalId]
         );
     }
 
@@ -77,18 +152,35 @@ final class RentalModel extends Model
         return $this->db->selectAll(
             "SELECT
                 sewa.id_sewa,
-                users.nama_lengkap,
-                users.no_hp,
+                COALESCE(pembayaran.nama_penyewa, users.nama_lengkap) AS nama_lengkap,
+                COALESCE(pembayaran.no_hp_penyewa, users.no_hp) AS no_hp,
                 kost.nama_kost,
                 kamar.nomor_kamar,
                 kamar.harga,
-                pembayaran.status_verifikasi
+                pembayaran.status_verifikasi,
+                sewa.status_sewa,
+                pembayaran.id_pembayaran,
+                pembayaran.invoice_no,
+                pembayaran.total_bayar,
+                pembayaran.metode_bayar,
+                pembayaran.periode_mulai,
+                pembayaran.periode_selesai,
+                pembayaran.nama_penyewa,
+                pembayaran.email_penyewa,
+                pembayaran.no_hp_penyewa
              FROM sewa
-             JOIN users ON sewa.id_user = users.id_user
+             LEFT JOIN users ON sewa.id_user = users.id_user
              JOIN kamar ON sewa.id_kamar = kamar.id_kamar
              JOIN kost ON kamar.id_kost = kost.id_kost
-             LEFT JOIN pembayaran ON sewa.id_sewa = pembayaran.id_sewa AND pembayaran.bulan_tagihan = ?
-             WHERE sewa.status_sewa = 'Aktif'",
+             LEFT JOIN pembayaran ON pembayaran.id_pembayaran = (
+                SELECT p.id_pembayaran
+                FROM pembayaran p
+                WHERE p.id_sewa = sewa.id_sewa
+                AND (p.bulan_tagihan = ? OR sewa.status_sewa = 'Menunggu Pembayaran')
+                ORDER BY p.id_pembayaran DESC
+                LIMIT 1
+             )
+             WHERE sewa.status_sewa IN ('Menunggu Pembayaran', 'Aktif')",
             [$billingMonth]
         );
     }

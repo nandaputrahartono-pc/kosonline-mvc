@@ -29,20 +29,44 @@ final class MemberController extends Controller
         $userId = (int) $_SESSION['id_user'];
 
         if ($this->isPost() && isset($_POST['update_profil'])) {
-            $email = trim((string) $_POST['email']);
+            $name = trim((string) ($_POST['nama'] ?? ''));
+            $username = strtolower(trim((string) ($_POST['username'] ?? '')));
+            $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+            $phone = trim((string) ($_POST['no_hp'] ?? ''));
+
+            if ($name === '' || $username === '' || $phone === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                set_flash('error', 'Nama, username, email valid, dan nomor handphone wajib diisi.');
+                redirect_to('/member/dashboard');
+            }
+
+            if (!preg_match('/^[a-z0-9_]{3,30}$/', $username)) {
+                set_flash('error', 'Username hanya boleh huruf kecil, angka, underscore, minimal 3 karakter.');
+                redirect_to('/member/dashboard');
+            }
+
+            if ($this->userModel->usernameExists($username, $userId)) {
+                set_flash('error', 'Username sudah dipakai user lain.');
+                redirect_to('/member/dashboard');
+            }
+
             if ($this->userModel->emailExists($email, $userId)) {
                 set_flash('error', 'Email sudah dipakai user lain.');
                 redirect_to('/member/dashboard');
             }
 
             $payload = [
-                'nama_lengkap' => trim((string) $_POST['nama']),
+                'nama_lengkap' => $name,
+                'username' => $username,
                 'email' => $email,
-                'no_hp' => trim((string) $_POST['no_hp']),
+                'no_hp' => $phone,
             ];
 
             $password = trim((string) ($_POST['password'] ?? ''));
             if ($password !== '') {
+                if (strlen($password) < 6) {
+                    set_flash('error', 'Password minimal 6 karakter.');
+                    redirect_to('/member/dashboard');
+                }
                 $payload['password'] = $password;
             }
 
@@ -53,8 +77,25 @@ final class MemberController extends Controller
         }
 
         $user = $this->userModel->findById($userId);
-        $rental = $this->rentalModel->getActiveByUserId($userId);
-        $paymentHistory = [];
+        if ($user === null) {
+            set_flash('error', 'Sesi login tidak valid. Silakan login ulang.');
+            redirect_to('/login');
+        }
+
+        $_SESSION['nama'] = $user['nama_lengkap'];
+        $_SESSION['foto_profil'] = $user['foto_profil'] ?? 'default.jpg';
+
+        $rentals = $this->rentalModel->getDashboardRowsByUserId($userId);
+        $rental = null;
+        foreach ($rentals as $row) {
+            if (in_array($row['status_sewa'], ['Menunggu Pembayaran', 'Aktif'], true)) {
+                $rental = $row;
+                break;
+            }
+        }
+
+        $paymentHistory = $this->paymentModel->getHistoryByUserId($userId);
+        $latestInvoice = $paymentHistory[0] ?? null;
 
         $summary = [
             'nama_kost' => '-',
@@ -63,23 +104,30 @@ final class MemberController extends Controller
             'status_bayar' => 'Tidak Ada Tagihan',
             'class_badge' => 'success',
             'jatuh_tempo' => '-',
+            'total_pesanan' => count($rentals),
+            'total_invoice' => count($paymentHistory),
+            'tagihan_terdekat' => 0,
         ];
 
         if ($rental !== null) {
-            $paymentHistory = $this->paymentModel->getHistoryByRentalId((int) $rental['id_sewa']);
             $summary['nama_kost'] = $rental['nama_kost'];
             $summary['kamar_info'] = 'Kamar ' . $rental['nomor_kamar'] . ' (Lt. ' . $rental['lantai'] . ')';
-            $summary['harga'] = (float) $rental['harga'];
+            $summary['harga'] = (float) ($rental['total_bayar'] ?? $rental['harga']);
+            $summary['tagihan_terdekat'] = (float) ($rental['total_bayar'] ?? $rental['harga']);
 
-            $dueDate = '-';
-            if (!empty($rental['tanggal_masuk'])) {
-                $dueDate = date('Y-m-d', strtotime($rental['tanggal_masuk'] . ' +1 month'));
+            $dueDate = (string) ($rental['jatuh_tempo'] ?? '-');
+            if ($dueDate === '' || $dueDate === '0000-00-00') {
+                $dueDate = !empty($rental['tanggal_masuk'])
+                    ? date('Y-m-d', strtotime($rental['tanggal_masuk'] . ' +1 month'))
+                    : '-';
             }
 
             $summary['jatuh_tempo'] = $dueDate;
 
-            $latestPayment = $paymentHistory[0] ?? null;
-            if ($latestPayment !== null && $latestPayment['status_verifikasi'] === 'Lunas') {
+            if (($rental['status_sewa'] ?? '') === 'Menunggu Pembayaran') {
+                $summary['status_bayar'] = 'Menunggu Verifikasi';
+                $summary['class_badge'] = 'warning';
+            } elseif ($latestInvoice !== null && $latestInvoice['status_verifikasi'] === 'Lunas') {
                 $summary['status_bayar'] = 'Lunas';
                 $summary['class_badge'] = 'success';
             } elseif ($dueDate !== '-' && date('Y-m-d') > $dueDate) {
@@ -94,7 +142,9 @@ final class MemberController extends Controller
         $this->render('member/dashboard', [
             'user' => $user,
             'rental' => $rental,
+            'rentals' => $rentals,
             'paymentHistory' => $paymentHistory,
+            'latestInvoice' => $latestInvoice,
             'summary' => $summary,
             'successMessage' => flash('success'),
             'errorMessage' => flash('error'),

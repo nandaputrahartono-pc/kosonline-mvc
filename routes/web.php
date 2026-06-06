@@ -21,6 +21,10 @@ use App\Core\Router;
 
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/rooms', [RoomController::class, 'index']);
+$router->get('/rooms/detail', [RoomController::class, 'detail']);
+$router->get('/rooms/payment', [RoomController::class, 'payment']);
+$router->post('/rooms/payment', [RoomController::class, 'payment']);
+$router->get('/rooms/invoice', [RoomController::class, 'invoice']);
 $router->get('/contact', [ContactController::class, 'index']);
 $router->post('/contact', [ContactController::class, 'index']);
 $router->get('/map', [MapController::class, 'index']);
@@ -28,10 +32,11 @@ $router->get('/map', [MapController::class, 'index']);
 // Unified Login Route
 $router->get('/login', [AuthController::class, 'login']);
 $router->post('/login', [AuthController::class, 'login']);
+$router->post('/register', [AuthController::class, 'register']);
 
 // Logout Routes
-$router->get('/logout', [AuthController::class, 'memberLogout']);
-$router->get('/admin/logout', [AuthController::class, 'adminLogout']);
+$router->post('/logout', [AuthController::class, 'memberLogout']);
+$router->post('/admin/logout', [AuthController::class, 'adminLogout']);
 
 $router->get('/member/dashboard', [MemberController::class, 'dashboard']);
 $router->post('/member/dashboard', [MemberController::class, 'dashboard']);
@@ -43,25 +48,25 @@ $router->get('/admin/kost/create', [AdminKostController::class, 'create']);
 $router->post('/admin/kost/create', [AdminKostController::class, 'create']);
 $router->get('/admin/kost/edit', [AdminKostController::class, 'edit']);
 $router->post('/admin/kost/edit', [AdminKostController::class, 'edit']);
-$router->get('/admin/kost/delete', [AdminKostController::class, 'delete']);
+$router->post('/admin/kost/delete', [AdminKostController::class, 'delete']);
 
 $router->get('/admin/rooms/create', [AdminRoomController::class, 'create']);
 $router->post('/admin/rooms/create', [AdminRoomController::class, 'create']);
 $router->get('/admin/rooms/edit', [AdminRoomController::class, 'edit']);
 $router->post('/admin/rooms/edit', [AdminRoomController::class, 'edit']);
-$router->get('/admin/rooms/delete', [AdminRoomController::class, 'delete']);
-$router->get('/admin/rooms/toggle-status', [AdminRoomController::class, 'toggleStatus']);
+$router->post('/admin/rooms/delete', [AdminRoomController::class, 'delete']);
+$router->post('/admin/rooms/toggle-status', [AdminRoomController::class, 'toggleStatus']);
 
 $router->get('/admin/users/create', [AdminUserController::class, 'create']);
 $router->post('/admin/users/create', [AdminUserController::class, 'create']);
 $router->get('/admin/users/edit', [AdminUserController::class, 'edit']);
 $router->post('/admin/users/edit', [AdminUserController::class, 'edit']);
-$router->get('/admin/users/delete', [AdminUserController::class, 'delete']);
+$router->post('/admin/users/delete', [AdminUserController::class, 'delete']);
 
 $router->get('/admin/locations/edit', [AdminLocationController::class, 'edit']);
 $router->post('/admin/locations/edit', [AdminLocationController::class, 'edit']);
-$router->get('/admin/payments/update', [AdminPaymentController::class, 'update']);
-$router->get('/admin/messages/delete', [AdminMessageController::class, 'delete']);
+$router->post('/admin/payments/update', [AdminPaymentController::class, 'update']);
+$router->post('/admin/messages/delete', [AdminMessageController::class, 'delete']);
 
 // Redirect old admin login to unified login
 $router->get('/admin/login', static fn (): never => redirect_to('/login'));

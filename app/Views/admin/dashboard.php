@@ -1,9 +1,19 @@
+<?php
+$jsonFlags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
+$revenueLabelsJson = json_encode($revenueTrend['labels'] ?? [], $jsonFlags);
+$revenueValuesJson = json_encode($revenueTrend['values'] ?? [], $jsonFlags | JSON_NUMERIC_CHECK);
+$hour = (int) date('H');
+$greeting = $hour < 11 ? 'Good Morning' : ($hour < 15 ? 'Good Afternoon' : 'Good Evening');
+$todayLabel = date('d M Y');
+$trendTotal = (float) ($revenueTrend['total'] ?? 0);
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - KosOnline</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="<?php echo e(asset('css/admin.css')); ?>">
 </head>
@@ -17,52 +27,187 @@
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2>ADMIN PANEL</h2>
+            <div class="brand-icon">K</div>
+            <h2>Kos<span>Admin</span></h2>
         </div>
         <ul class="menu">
+            <li class="menu-label">Main Menu</li>
             <li><a href="#" data-page="dashboard" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li class="menu-label">Manajemen Kost</li>
             <li><a href="#" data-page="data-kost"><i class="fa-solid fa-building"></i> Data Kost</a></li>
             <li><a href="#" data-page="data-kamar"><i class="fa-solid fa-bed"></i> Data Kamar</a></li>
             <li><a href="#" data-page="data-user"><i class="fa-solid fa-users"></i> Data User</a></li>
             <li><a href="#" data-page="pembayaran"><i class="fa-solid fa-money-bill-wave"></i> Pembayaran</a></li>
+            <li class="menu-label">Support</li>
             <li><a href="#" data-page="pesan-masuk"><i class="fa-solid fa-envelope"></i> Pesan Masuk</a></li>
             <li><a href="#" data-page="atur-lokasi"><i class="fa-solid fa-map-location-dot"></i> Atur Lokasi</a></li>
         </ul>
         <div class="logout">
-            <a href="<?php echo e(url('/admin/logout')); ?>"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            <form method="POST" action="<?php echo e(url('/admin/logout')); ?>">
+                <?php echo csrf_field(); ?>
+                <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </form>
         </div>
     </aside>
 
     <main class="content">
-        <div class="header-mobile">
-            <button id="sidebar-toggle" class="btn-toggle">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <h3>Admin Panel</h3>
+        <div class="admin-topbar">
+            <div class="header-mobile d-md-none d-flex align-items-center gap-3">
+                <button id="sidebar-toggle" class="btn-toggle">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h3 class="mb-0 fs-5">KosAdmin</h3>
+            </div>
+
+            <div class="topbar-greeting">
+                <p><?php echo e($greeting); ?>, <strong><?php echo e($adminName); ?></strong></p>
+                <span>Monitor performa kost, pembayaran, dan kamar dari satu tempat.</span>
+            </div>
+
+            <div class="topbar-actions">
+                <div class="topbar-date">
+                    <i class="fa-regular fa-calendar"></i>
+                    <?php echo e($todayLabel); ?>
+                </div>
+                <button type="button" class="topbar-icon" title="Cari">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button type="button" class="topbar-icon" title="Notifikasi">
+                    <i class="fa-regular fa-bell"></i>
+                    <?php if ((int) $stats['belum_bayar'] > 0): ?>
+                        <span class="notification-dot"></span>
+                    <?php endif; ?>
+                </button>
+                <button id="theme-toggle" class="topbar-icon" title="Ubah tema">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
         </div>
 
         <section class="page active" id="dashboard">
-            <h2 class="page-title">Dashboard</h2>
-            <p class="page-subtitle">Ringkasan statistik kost kamu</p>
+            <div class="dashboard-hero">
+                <div>
+                    <span class="eyebrow">Overview</span>
+                    <h1>Dashboard Pendapatan Kost</h1>
+                    <p>Ringkasan bulan <?php echo e($billingMonth); ?> dengan grafik pendapatan dari pembayaran yang sudah lunas.</p>
+                </div>
+                <div class="hero-actions">
+                    <button type="button" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+                    <a href="#" data-page="pembayaran" class="hero-primary"><i class="fa-solid fa-wallet"></i> Cek Pembayaran</a>
+                </div>
+            </div>
 
-            <div class="stats">
-                <div class="stats-card">
-                    <h3>Total Cabang Kost</h3>
-                    <span><?php echo e($stats['total_kost']); ?></span>
-                </div>
-                <div class="stats-card">
-                    <h3>Total Kamar</h3>
-                    <span><?php echo e($stats['total_kamar']); ?></span>
-                    <small style="color:#666; font-size:12px;">(Isi: <?php echo e($stats['terisi']); ?>, Kosong: <?php echo e($stats['kosong']); ?>)</small>
-                </div>
-                <div class="stats-card">
-                    <h3>Penghuni Aktif</h3>
-                    <span><?php echo e($stats['penghuni_aktif']); ?></span>
-                </div>
-                <div class="stats-card">
-                    <h3>Belum Bayar (<?php echo e($billingMonth); ?>)</h3>
-                    <span style="color: #ef4444;"><?php echo e($stats['belum_bayar']); ?></span>
-                </div>
+            <div class="metric-grid">
+                <article class="metric-card primary">
+                    <div class="metric-icon"><i class="fa-solid fa-rupiah-sign"></i></div>
+                    <p>Total Pendapatan</p>
+                    <h3>Rp <?php echo number_format((float) $stats['pendapatan_total'], 0, ',', '.'); ?></h3>
+                    <span class="metric-note positive">Akumulasi pembayaran lunas</span>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-icon soft-blue"><i class="fa-solid fa-calendar-check"></i></div>
+                    <p>Pendapatan Bulan Ini</p>
+                    <h3>Rp <?php echo number_format((float) $stats['pendapatan_bulan_ini'], 0, ',', '.'); ?></h3>
+                    <span class="metric-note"><?php echo e($billingMonth); ?></span>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-icon soft-green"><i class="fa-solid fa-bed"></i></div>
+                    <p>Okupansi Kamar</p>
+                    <h3><?php echo e($stats['rasio_okupansi']); ?>%</h3>
+                    <span class="metric-note"><?php echo e($stats['terisi']); ?> terisi dari <?php echo e($stats['total_kamar']); ?> kamar</span>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-icon soft-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <p>Belum Bayar</p>
+                    <h3><?php echo e($stats['belum_bayar']); ?></h3>
+                    <span class="metric-note danger">Perlu ditagih bulan ini</span>
+                </article>
+            </div>
+
+            <div class="dashboard-grid">
+                <article class="dashboard-card chart-card">
+                    <div class="card-heading">
+                        <div>
+                            <h3>Grafik Pendapatan</h3>
+                            <p>Total 6 bulan terakhir: Rp <?php echo number_format($trendTotal, 0, ',', '.'); ?></p>
+                        </div>
+                        <span class="chart-legend"><i></i> Pembayaran lunas</span>
+                    </div>
+                    <div class="chart-shell">
+                        <canvas id="revenueChart" height="130"></canvas>
+                    </div>
+                </article>
+
+                <aside class="dashboard-card status-summary">
+                    <div class="status-blue">
+                        <span>Status Pembayaran</span>
+                        <strong><?php echo e($stats['rasio_pembayaran']); ?>%</strong>
+                        <small><?php echo e($billingMonth); ?></small>
+                        <div class="sparkline" aria-hidden="true"></div>
+                    </div>
+                    <div class="status-metrics">
+                        <div>
+                            <span>Penghuni Aktif</span>
+                            <strong><?php echo e($stats['penghuni_aktif']); ?></strong>
+                        </div>
+                        <div>
+                            <span>Kamar Kosong</span>
+                            <strong><?php echo e($stats['kosong']); ?></strong>
+                        </div>
+                    </div>
+                </aside>
+
+                <article class="dashboard-card">
+                    <div class="card-heading">
+                        <div>
+                            <h3>Tagihan Prioritas</h3>
+                            <p>Penyewa yang belum lunas bulan ini.</p>
+                        </div>
+                    </div>
+                    <div class="priority-list">
+                        <?php if (!empty($priorityBillings)): ?>
+                            <?php foreach ($priorityBillings as $billing): ?>
+                                <div class="priority-item">
+                                    <div>
+                                        <strong><?php echo e($billing['nama_lengkap']); ?></strong>
+                                        <span><?php echo e($billing['nama_kost'] . ' - ' . $billing['nomor_kamar']); ?></span>
+                                    </div>
+                                    <b>Rp <?php echo number_format((float) $billing['harga'], 0, ',', '.'); ?></b>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="empty-state">Semua tagihan aktif bulan ini sudah aman.</div>
+                        <?php endif; ?>
+                    </div>
+                </article>
+
+                <article class="dashboard-card">
+                    <div class="card-heading">
+                        <div>
+                            <h3>Ringkasan Aset</h3>
+                            <p>Kondisi unit kost yang dikelola.</p>
+                        </div>
+                    </div>
+                    <div class="asset-overview">
+                        <div class="asset-row">
+                            <span>Total Cabang</span>
+                            <strong><?php echo e($stats['total_kost']); ?></strong>
+                        </div>
+                        <div class="asset-row">
+                            <span>Total Kamar</span>
+                            <strong><?php echo e($stats['total_kamar']); ?></strong>
+                        </div>
+                        <div class="progress-wrap">
+                            <div class="progress-label">
+                                <span>Okupansi</span>
+                                <strong><?php echo e($stats['rasio_okupansi']); ?>%</strong>
+                            </div>
+                            <div class="progress-track">
+                                <span style="width: <?php echo e($stats['rasio_okupansi']); ?>%;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -77,6 +222,7 @@
                         <tr>
                             <th>Nama Kost</th>
                             <th>Alamat</th>
+                            <th>Diskon Cabang</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -85,9 +231,14 @@
                             <tr>
                                 <td><?php echo e($kost['nama_kost']); ?></td>
                                 <td><?php echo e($kost['alamat']); ?></td>
+                                <td><?php echo (int) ($kost['diskon_persen'] ?? 0) > 0 ? e($kost['diskon_persen']) . '%' : '-'; ?></td>
                                 <td>
                                     <a href="<?php echo e(url('/admin/kost/edit?id=' . $kost['id_kost'])); ?>" class="btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                    <a href="<?php echo e(url('/admin/kost/delete?id=' . $kost['id_kost'])); ?>" class="btn-delete" onclick="return confirm('Yakin hapus?')"><i class="fa-solid fa-trash"></i></a>
+                                    <form method="POST" action="<?php echo e(url('/admin/kost/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Yakin hapus?')">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id" value="<?php echo e($kost['id_kost']); ?>">
+                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -108,6 +259,7 @@
                             <th>No. Kamar</th>
                             <th>Cabang</th>
                             <th>Harga</th>
+                            <th>Diskon Kamar</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -125,14 +277,21 @@
                                 <td><?php echo e($room['nomor_kamar']); ?></td>
                                 <td><?php echo e($room['nama_kost']); ?></td>
                                 <td>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></td>
+                                <td><?php echo (int) ($room['diskon_persen'] ?? 0) > 0 ? e($room['diskon_persen']) . '%' : '-'; ?></td>
                                 <td><span class="badge <?php echo e($badgeClass); ?>"><?php echo e($room['status']); ?></span></td>
                                 <td>
-                                    <a href="<?php echo e(url('/admin/rooms/toggle-status?id=' . $room['id_kamar'] . '&status=' . urlencode($room['status']))); ?>" class="<?php echo e($buttonClass); ?>" style="margin-right: 5px;" onclick="return confirm('<?php echo e($confirmMessage); ?>')">
-                                        <i class="fa-solid <?php echo e($buttonIcon); ?>"></i> <?php echo e($buttonLabel); ?>
-                                    </a>
+                                    <form method="POST" action="<?php echo e(url('/admin/rooms/toggle-status')); ?>" class="inline-action-form" onsubmit="return confirm(<?php echo e(json_encode($confirmMessage)); ?>)">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id" value="<?php echo e($room['id_kamar']); ?>">
+                                        <button type="submit" class="<?php echo e($buttonClass); ?>"><i class="fa-solid <?php echo e($buttonIcon); ?>"></i> <?php echo e($buttonLabel); ?></button>
+                                    </form>
 
                                     <a href="<?php echo e(url('/admin/rooms/edit?id=' . $room['id_kamar'])); ?>" class="btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                    <a href="<?php echo e(url('/admin/rooms/delete?id=' . $room['id_kamar'])); ?>" class="btn-delete" onclick="return confirm('Hapus kamar?')"><i class="fa-solid fa-trash"></i></a>
+                                    <form method="POST" action="<?php echo e(url('/admin/rooms/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus kamar?')">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id" value="<?php echo e($room['id_kamar']); ?>">
+                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -164,7 +323,11 @@
                                 <td><?php echo e($user['no_hp']); ?></td>
                                 <td>
                                     <a href="<?php echo e(url('/admin/users/edit?id=' . $user['id_user'])); ?>" class="btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                    <a href="<?php echo e(url('/admin/users/delete?id=' . $user['id_user'])); ?>" class="btn-delete" onclick="return confirm('Hapus user?')"><i class="fa-solid fa-trash"></i></a>
+                                    <form method="POST" action="<?php echo e(url('/admin/users/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus user?')">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id" value="<?php echo e($user['id_user']); ?>">
+                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -182,7 +345,7 @@
                         <tr>
                             <th>Nama Penghuni</th>
                             <th>Kamar</th>
-                            <th>Bulan</th>
+                            <th>Invoice / Periode</th>
                             <th>Tagihan</th>
                             <th>Status</th>
                             <th>Aksi</th>
@@ -191,30 +354,53 @@
                     <tbody>
                         <?php foreach ($billings as $billing): ?>
                             <?php
-                            $billingMonthUrl = urlencode($billingMonth);
-                            if ($billing['status_verifikasi'] === 'Lunas') {
-                                $badge = '<span class="badge success">Lunas</span>';
-                                $actions = '<a href="' . url('/admin/payments/update?id=' . $billing['id_sewa'] . '&bulan=' . $billingMonthUrl . '&aksi=batal') . '" class="btn-delete" onclick="return confirm(\'Batalkan status bayar?\')"><i class="fa-solid fa-xmark"></i> Batal</a>';
-                            } else {
-                                if ($billing['status_verifikasi'] === 'Menunggu') {
-                                    $badge = '<span class="badge warning" style="background:orange; color:white;">Menunggu Konfirmasi</span>';
-                                } else {
-                                    $badge = '<span class="badge warning">Belum Bayar</span>';
-                                }
-                                
-                                $waMessage = 'Halo ' . $billing['nama_lengkap'] . ', tagihan kost bulan ' . $billingMonth . ' belum dibayar ya.';
-                                $waLink = 'https://wa.me/' . str_replace('08', '628', (string) $billing['no_hp']) . '?text=' . rawurlencode($waMessage);
-                                $actions = '<a href="' . url('/admin/payments/update?id=' . $billing['id_sewa'] . '&bulan=' . $billingMonthUrl . '&aksi=lunas&nominal=' . $billing['harga']) . '" class="btn-edit" style="background:#10b981; color:white; margin-right:5px;" onclick="return confirm(\'Konfirmasi lunas?\')"><i class="fa-solid fa-check"></i> Lunas</a>';
-                                $actions .= '<a href="' . $waLink . '" target="_blank" class="btn-edit" style="background:#25D366; color:white;"><i class="fa-brands fa-whatsapp"></i> Tagih</a>';
+                            $status = (string) ($billing['status_verifikasi'] ?? '');
+                            $isPaid = $status === 'Lunas';
+                            $isPendingBooking = ($billing['status_sewa'] ?? '') === 'Menunggu Pembayaran';
+                            $statusLabel = $isPaid ? 'Lunas' : ($status === 'Menunggu' ? 'Menunggu Konfirmasi' : 'Belum Bayar');
+                            $billAmount = (float) ($billing['total_bayar'] ?? 0);
+                            if ($billAmount <= 0) {
+                                $billAmount = (float) ($billing['harga'] ?? 0);
                             }
+                            $invoiceLabel = $billing['invoice_no'] ?? $billingMonth;
+                            $periodLabel = !empty($billing['periode_mulai']) && !empty($billing['periode_selesai'])
+                                ? date('d M Y', strtotime((string) $billing['periode_mulai'])) . ' - ' . date('d M Y', strtotime((string) $billing['periode_selesai']))
+                                : $billingMonth;
+                            $waMessage = 'Halo ' . $billing['nama_lengkap'] . ', tagihan kost bulan ' . $billingMonth . ' belum dibayar ya.';
+                            $phone = preg_replace('/\D+/', '', (string) $billing['no_hp']) ?? '';
+                            $waPhone = str_starts_with($phone, '0') ? '62' . substr($phone, 1) : $phone;
+                            $waLink = 'https://wa.me/' . $waPhone . '?text=' . rawurlencode($waMessage);
                             ?>
                             <tr>
                                 <td><?php echo e($billing['nama_lengkap']); ?></td>
                                 <td><?php echo e($billing['nama_kost'] . ' - ' . $billing['nomor_kamar']); ?></td>
-                                <td><?php echo e($billingMonth); ?></td>
-                                <td>Rp <?php echo number_format((float) $billing['harga'], 0, ',', '.'); ?></td>
-                                <td><?php echo $badge; ?></td>
-                                <td><?php echo $actions; ?></td>
+                                <td>
+                                    <strong><?php echo e($invoiceLabel); ?></strong><br>
+                                    <small style="color:#64748b;"><?php echo e($periodLabel); ?></small>
+                                </td>
+                                <td>Rp <?php echo number_format($billAmount, 0, ',', '.'); ?></td>
+                                <td><span class="badge <?php echo $isPaid ? 'success' : 'warning'; ?>"><?php echo e($statusLabel); ?></span></td>
+                                <td>
+                                    <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" onsubmit="return confirm('<?php echo $isPaid ? 'Batalkan status bayar?' : 'Konfirmasi lunas?'; ?>')">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
+                                        <input type="hidden" name="aksi" value="<?php echo $isPaid ? 'batal' : 'lunas'; ?>">
+                                        <button type="submit" class="<?php echo $isPaid ? 'btn-delete' : 'btn-edit'; ?>">
+                                            <i class="fa-solid <?php echo $isPaid ? 'fa-xmark' : 'fa-check'; ?>"></i> <?php echo $isPaid ? 'Batal' : 'Lunas'; ?>
+                                        </button>
+                                    </form>
+                                    <?php if ($isPendingBooking && !$isPaid): ?>
+                                        <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" onsubmit="return confirm('Batalkan booking pending ini?')">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
+                                            <input type="hidden" name="aksi" value="batal">
+                                            <button type="submit" class="btn-delete"><i class="fa-solid fa-ban"></i> Batalkan</button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <?php if (!$isPaid): ?>
+                                        <a href="<?php echo e($waLink); ?>" target="_blank" rel="noopener noreferrer" class="btn-edit" style="background:#25D366; color:white;"><i class="fa-brands fa-whatsapp"></i> Tagih</a>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -245,7 +431,11 @@
                                 <td><?php echo e($message['isi_pesan']); ?></td>
                                 <td>
                                     <a href="mailto:<?php echo e($message['email_pengirim']); ?>" class="btn-edit" style="background: #3b82f6; margin-bottom: 5px;"><i class="fa-solid fa-paper-plane"></i> Balas</a>
-                                    <a href="<?php echo e(url('/admin/messages/delete?id=' . $message['id_pesan'])); ?>" class="btn-delete" onclick="return confirm('Hapus pesan?')"><i class="fa-solid fa-trash"></i></a>
+                                    <form method="POST" action="<?php echo e(url('/admin/messages/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus pesan?')">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id" value="<?php echo e($message['id_pesan']); ?>">
+                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -294,6 +484,13 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.adminRevenueChart = {
+            labels: <?php echo $revenueLabelsJson; ?>,
+            values: <?php echo $revenueValuesJson; ?>
+        };
+    </script>
     <script src="<?php echo e(asset('js/admin.js')); ?>"></script>
 </body>
 </html>

@@ -8,11 +8,12 @@
 </div>
 
 <form method="POST">
+    <?php echo csrf_field(); ?>
     <label>Latitude (Garis Lintang)</label>
-    <input type="text" name="latitude" value="<?php echo e($kost['latitude']); ?>" placeholder="Contoh: -6.70423" required>
+    <input type="number" name="latitude" min="-90" max="90" step="any" value="<?php echo e($kost['latitude']); ?>" placeholder="Contoh: -6.70423" required>
 
     <label>Longitude (Garis Bujur)</label>
-    <input type="text" name="longitude" value="<?php echo e($kost['longitude']); ?>" placeholder="Contoh: 108.55612" required>
+    <input type="number" name="longitude" min="-180" max="180" step="any" value="<?php echo e($kost['longitude']); ?>" placeholder="Contoh: 108.55612" required>
 
     <button type="submit" name="simpan">Simpan Lokasi</button>
     <a href="<?php echo e(url('/admin/dashboard')); ?>" class="btn-batal">Batal</a>

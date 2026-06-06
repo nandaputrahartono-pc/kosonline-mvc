@@ -26,7 +26,7 @@ final class Database
         try {
             $this->connection = new PDO($dsn, $config['username'], $config['password'], $options);
         } catch (PDOException $e) {
-            throw new RuntimeException('Koneksi gagal: ' . $e->getMessage(), (int)$e->getCode());
+            throw new RuntimeException('Tidak dapat terhubung ke database.', 0, $e);
         }
     }
 

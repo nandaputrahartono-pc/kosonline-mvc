@@ -41,6 +41,12 @@ final class Router
             return;
         }
 
+        if ($normalizedMethod === 'POST' && !csrf_token_is_valid()) {
+            http_response_code(419);
+            echo '419 - Sesi formulir kedaluwarsa. Muat ulang halaman lalu coba lagi.';
+            return;
+        }
+
         if (is_array($handler)) {
             [$controllerClass, $action] = $handler;
             $controller = new $controllerClass();
