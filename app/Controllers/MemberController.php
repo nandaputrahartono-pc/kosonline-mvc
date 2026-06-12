@@ -5,21 +5,27 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\ChatModel;
 use App\Models\PaymentModel;
 use App\Models\RentalModel;
 use App\Models\UserModel;
+use App\Models\WishlistModel;
 
 final class MemberController extends Controller
 {
     private UserModel $userModel;
     private RentalModel $rentalModel;
     private PaymentModel $paymentModel;
+    private WishlistModel $wishlistModel;
+    private ChatModel $chatModel;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->rentalModel = new RentalModel();
         $this->paymentModel = new PaymentModel();
+        $this->wishlistModel = new WishlistModel();
+        $this->chatModel = new ChatModel();
     }
 
     public function dashboard(): void
@@ -96,6 +102,14 @@ final class MemberController extends Controller
 
         $paymentHistory = $this->paymentModel->getHistoryByUserId($userId);
         $latestInvoice = $paymentHistory[0] ?? null;
+        $wishlistRooms = $this->wishlistModel->getByUserId($userId);
+        $chatThreads = $this->chatModel->getThreadsByUserId($userId);
+        $currentThreadId = (int) ($_GET['thread'] ?? 0);
+        if ($currentThreadId <= 0 && $chatThreads !== []) {
+            $currentThreadId = (int) $chatThreads[0]['id_thread'];
+        }
+        $currentThread = $currentThreadId > 0 ? $this->chatModel->getThreadForUser($currentThreadId, $userId) : null;
+        $chatMessages = $currentThread !== null ? $this->chatModel->getMessages((int) $currentThread['id_thread']) : [];
 
         $summary = [
             'nama_kost' => '-',
@@ -145,6 +159,11 @@ final class MemberController extends Controller
             'rentals' => $rentals,
             'paymentHistory' => $paymentHistory,
             'latestInvoice' => $latestInvoice,
+            'wishlistRooms' => $wishlistRooms,
+            'chatThreads' => $chatThreads,
+            'currentThread' => $currentThread,
+            'chatMessages' => $chatMessages,
+            'activeTab' => (string) ($_GET['tab'] ?? 'dashboard'),
             'summary' => $summary,
             'successMessage' => flash('success'),
             'errorMessage' => flash('error'),

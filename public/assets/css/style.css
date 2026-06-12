@@ -327,6 +327,75 @@ a {
   color: var(--accent-blue);
 }
 
+.public-icon-link {
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: #e11d48;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+}
+
+.public-icon-link:hover {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.room-modern-card {
+  position: relative;
+}
+
+.room-wishlist-form {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+}
+
+.room-wishlist-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #e11d48;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+}
+
+.room-wishlist-btn.saved {
+  background: #e11d48;
+  color: #fff;
+}
+
+.room-rating-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.room-rating-mini i {
+  color: #f59e0b;
+}
+
+.room-rating-mini span {
+  color: #9a3412;
+  opacity: 0.72;
+}
+
 .menu-toggle {
   display: none;
   flex-direction: column;

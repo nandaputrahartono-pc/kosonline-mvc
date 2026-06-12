@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\ChatModel;
 use App\Models\KostModel;
 use App\Models\MessageModel;
 use App\Models\PaymentModel;
@@ -20,6 +21,7 @@ final class AdminDashboardController extends Controller
     private MessageModel $messageModel;
     private RentalModel $rentalModel;
     private PaymentModel $paymentModel;
+    private ChatModel $chatModel;
 
     public function __construct()
     {
@@ -29,6 +31,7 @@ final class AdminDashboardController extends Controller
         $this->messageModel = new MessageModel();
         $this->rentalModel = new RentalModel();
         $this->paymentModel = new PaymentModel();
+        $this->chatModel = new ChatModel();
     }
 
     public function index(): void
@@ -65,6 +68,12 @@ final class AdminDashboardController extends Controller
         $occupancyRate = $totalRooms > 0 ? (int) round(($occupiedRooms / $totalRooms) * 100) : 0;
         $paymentRate = $billingCount > 0 ? (int) round(($paidBillings / $billingCount) * 100) : 0;
         $revenueTrend = $this->paymentModel->monthlyRevenueTrend(6);
+        $chatThreads = $this->chatModel->getAllThreads();
+        $currentChatThreadId = (int) ($_GET['thread'] ?? 0);
+        if ($currentChatThreadId <= 0 && $chatThreads !== []) {
+            $currentChatThreadId = (int) $chatThreads[0]['id_thread'];
+        }
+        $currentChatThread = $currentChatThreadId > 0 ? $this->chatModel->getThreadForAdmin($currentChatThreadId) : null;
 
         $this->render('admin/dashboard', [
             'billingMonth' => $billingMonth,
@@ -91,6 +100,10 @@ final class AdminDashboardController extends Controller
             'billings' => $billings,
             'messages' => $this->messageModel->getAll(),
             'locations' => $this->kostModel->getAll(),
+            'chatThreads' => $chatThreads,
+            'currentChatThread' => $currentChatThread,
+            'chatMessages' => $currentChatThread !== null ? $this->chatModel->getMessages((int) $currentChatThread['id_thread']) : [],
+            'activeTab' => (string) ($_GET['tab'] ?? 'dashboard'),
         ]);
     }
 }

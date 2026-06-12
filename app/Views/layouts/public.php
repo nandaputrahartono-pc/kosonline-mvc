@@ -60,6 +60,8 @@ $currentUserAvatar = $currentUserPhoto !== '' && $currentUserPhoto !== 'default.
                     <li><a href="<?php echo e(url('/map')); ?>">Peta Lokasi</a></li>
                     <li class="d-lg-none mt-4 w-100">
                         <?php if ($isLoggedInUser): ?>
+                            <a href="<?php echo e(url('/member/dashboard?tab=wishlist')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: #fff1f2; color: #e11d48 !important; border-radius: 50px;">Wishlist</a>
+                            <a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue) !important; border-radius: 50px;">Chat Admin</a>
                             <a href="<?php echo e(url('/member/dashboard')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue); color: white !important; border-radius: 50px; box-shadow: 0 4px 14px rgba(37,99,235,0.3);">Dashboard User</a>
                             <form method="POST" action="<?php echo e(url('/logout')); ?>">
                                 <?php echo csrf_field(); ?>
@@ -73,6 +75,9 @@ $currentUserAvatar = $currentUserPhoto !== '' && $currentUserPhoto !== 'default.
             </nav>
 
             <div class="d-flex align-items-center gap-3">
+                <a href="<?php echo e($isLoggedInUser ? url('/member/dashboard?tab=wishlist') : url('/login')); ?>" class="public-icon-link d-none d-lg-inline-flex" title="Wishlist">
+                    <i class="fa-regular fa-heart"></i>
+                </a>
                 <button id="theme-toggle" class="btn btn-link text-decoration-none p-0 m-0 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; background: var(--card-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: var(--text-main);">
                     <i class="fa-solid fa-moon"></i>
                 </button>
@@ -92,6 +97,8 @@ $currentUserAvatar = $currentUserPhoto !== '' && $currentUserPhoto !== 'default.
                                 </div>
                             </div>
                             <a href="<?php echo e(url('/member/dashboard')); ?>"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                            <a href="<?php echo e(url('/member/dashboard?tab=wishlist')); ?>"><i class="fa-regular fa-heart"></i> Wishlist</a>
+                            <a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a>
                             <form method="POST" action="<?php echo e(url('/logout')); ?>">
                                 <?php echo csrf_field(); ?>
                                 <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>

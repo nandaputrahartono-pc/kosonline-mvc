@@ -11,8 +11,10 @@ use App\Models\KostModel;
 use App\Models\PaymentModel;
 use App\Models\PromoCodeModel;
 use App\Models\RentalModel;
+use App\Models\RoomReviewModel;
 use App\Models\RoomGalleryModel;
 use App\Models\UserModel;
+use App\Models\WishlistModel;
 
 final class RoomController extends Controller
 {
@@ -23,6 +25,8 @@ final class RoomController extends Controller
     private RentalModel $rentalModel;
     private PaymentModel $paymentModel;
     private PromoCodeModel $promoCodeModel;
+    private RoomReviewModel $reviewModel;
+    private WishlistModel $wishlistModel;
 
     public function __construct()
     {
@@ -33,6 +37,8 @@ final class RoomController extends Controller
         $this->rentalModel = new RentalModel();
         $this->paymentModel = new PaymentModel();
         $this->promoCodeModel = new PromoCodeModel();
+        $this->reviewModel = new RoomReviewModel();
+        $this->wishlistModel = new WishlistModel();
     }
 
     public function index(): void
@@ -49,6 +55,11 @@ final class RoomController extends Controller
         $rooms = $this->roomModel->searchAvailableFiltered($keyword, $idKost);
         $branches = $this->kostModel->getAll();
         $allAvailableRooms = $this->roomModel->searchAvailableFiltered();
+        $roomIds = array_map(static fn(array $room): int => (int) $room['id_kamar'], $rooms);
+        $reviewSummaries = $this->reviewModel->getSummariesForRooms($roomIds);
+        $savedRoomIds = (($_SESSION['status'] ?? null) === 'login_user' && isset($_SESSION['id_user']))
+            ? $this->wishlistModel->getSavedRoomIds((int) $_SESSION['id_user'])
+            : [];
 
         if ($promoOnly) {
             $rooms = array_values(array_filter($rooms, static fn(array $room): bool => (int) ($room['diskon_persen'] ?? 0) > 0));
@@ -85,6 +96,8 @@ final class RoomController extends Controller
             'rooms' => $rooms,
             'branches' => $branches,
             'roomsSummary' => $roomsSummary,
+            'reviewSummaries' => $reviewSummaries,
+            'savedRoomIds' => $savedRoomIds,
         ]);
     }
 
@@ -97,10 +110,41 @@ final class RoomController extends Controller
             redirect_to('/rooms');
         }
 
+        $userId = (($_SESSION['status'] ?? null) === 'login_user' && isset($_SESSION['id_user']))
+            ? (int) $_SESSION['id_user']
+            : null;
+
         $this->render('room/detail', [
             'room' => $room,
             'gallery' => $this->galleryModel->getByRoomId($id),
+            'reviews' => $this->reviewModel->getByRoomId($id),
+            'reviewSummary' => $this->reviewModel->summaryByRoomId($id),
+            'isWishlisted' => $userId !== null && $this->wishlistModel->isSaved($userId, $id),
+            'isLoggedInUser' => $userId !== null,
         ]);
+    }
+
+    public function review(): void
+    {
+        $this->requireUser();
+
+        $roomId = (int) ($_POST['id_kamar'] ?? 0);
+        $rating = (int) ($_POST['rating'] ?? 0);
+        $comment = trim((string) ($_POST['komentar'] ?? ''));
+
+        if ($roomId <= 0 || $this->roomModel->findByIdWithKost($roomId) === null) {
+            set_flash('error', 'Kamar tidak ditemukan.');
+            redirect_to('/rooms');
+        }
+
+        if ($rating < 1 || $rating > 5 || $comment === '') {
+            set_flash('error', 'Rating dan komentar wajib diisi.');
+            redirect_to('/rooms/detail?id=' . $roomId);
+        }
+
+        $this->reviewModel->upsert((int) $_SESSION['id_user'], $roomId, $rating, $comment);
+        set_flash('success', 'Ulasan kamu berhasil disimpan.');
+        redirect_to('/rooms/detail?id=' . $roomId . '#ulasan');
     }
 
     public function payment(): void
@@ -130,13 +174,15 @@ final class RoomController extends Controller
             $moveInDate = trim((string) ($_POST['tanggal_masuk'] ?? ''));
             $promoCode = strtoupper(trim((string) ($_POST['kode_promo'] ?? '')));
             $method = trim((string) ($_POST['metode_bayar'] ?? ''));
+            $confirmed = (string) ($_POST['konfirmasi_booking'] ?? '') === '1';
             $allowedMethods = ['manual_bca', 'manual_bri', 'manual_mandiri', 'manual_cash'];
 
             if (
                 $moveInDate === '' ||
-                !in_array($method, $allowedMethods, true)
+                !in_array($method, $allowedMethods, true) ||
+                !$confirmed
             ) {
-                set_flash('error', 'Pilih tanggal mulai ngekos dan metode pembayaran.');
+                set_flash('error', 'Pilih tanggal mulai ngekos, metode pembayaran, lalu setujui konfirmasi booking.');
                 redirect_to('/rooms/payment?id=' . $id);
             }
 
@@ -224,6 +270,7 @@ final class RoomController extends Controller
         $this->render('room/payment', [
             'room' => $room,
             'user' => $user,
+            'availablePromos' => $this->promoCodeModel->getActivePublic(),
         ]);
     }
 

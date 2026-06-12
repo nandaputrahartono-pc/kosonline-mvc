@@ -9,6 +9,13 @@ $user = array_merge([
 $rentals = $rentals ?? [];
 $paymentHistory = $paymentHistory ?? [];
 $latestInvoice = $latestInvoice ?? null;
+$wishlistRooms = $wishlistRooms ?? [];
+$chatThreads = $chatThreads ?? [];
+$currentThread = $currentThread ?? null;
+$chatMessages = $chatMessages ?? [];
+$activeTab = in_array((string) ($activeTab ?? 'dashboard'), ['dashboard', 'pesananku', 'pembayaran', 'wishlist', 'chat', 'profil'], true)
+    ? (string) $activeTab
+    : 'dashboard';
 $summary = array_merge([
     'nama_kost' => '-',
     'kamar_info' => 'Belum Sewa',
@@ -38,6 +45,19 @@ $statusClass = static function (?string $status): string {
 $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'default.jpg'
     ? upload_asset((string) $user['foto_profil'])
     : site_image('images.jpg');
+$wsHost = preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? '127.0.0.1'));
+$wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
+$currentThreadContext = null;
+if ($currentThread !== null && !empty($currentThread['id_kamar'])) {
+    $currentThreadContext = [
+        'title' => ($currentThread['nama_kost'] ?? 'KosOnline') . ' - Kamar ' . ($currentThread['nomor_kamar'] ?? '-'),
+        'subtitle' => $currentThread['alamat'] ?? '',
+        'harga' => (float) ($currentThread['harga'] ?? 0),
+        'status' => $currentThread['status_kamar'] ?? '-',
+        'image' => upload_asset((string) ($currentThread['foto_kost'] ?? '')),
+        'url' => url('/rooms/detail?id=' . (int) $currentThread['id_kamar']),
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -73,10 +93,12 @@ $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'defaul
             </div>
         </div>
         <ul class="menu">
-            <li><a href="#" data-page="dashboard" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="#" data-page="pesananku"><i class="fa-solid fa-bed"></i> Pesananku</a></li>
-            <li><a href="#" data-page="pembayaran"><i class="fa-solid fa-file-invoice-dollar"></i> Invoice</a></li>
-            <li><a href="#" data-page="profil"><i class="fa-solid fa-user-gear"></i> Profil</a></li>
+            <li><a href="#" data-page="dashboard" class="<?php echo $activeTab === 'dashboard' ? 'active' : ''; ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="#" data-page="pesananku" class="<?php echo $activeTab === 'pesananku' ? 'active' : ''; ?>"><i class="fa-solid fa-bed"></i> Pesananku</a></li>
+            <li><a href="#" data-page="pembayaran" class="<?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>"><i class="fa-solid fa-file-invoice-dollar"></i> Invoice</a></li>
+            <li><a href="#" data-page="wishlist" class="<?php echo $activeTab === 'wishlist' ? 'active' : ''; ?>"><i class="fa-regular fa-heart"></i> Wishlist</a></li>
+            <li><a href="#" data-page="chat" class="<?php echo $activeTab === 'chat' ? 'active' : ''; ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a></li>
+            <li><a href="#" data-page="profil" class="<?php echo $activeTab === 'profil' ? 'active' : ''; ?>"><i class="fa-solid fa-user-gear"></i> Profil</a></li>
         </ul>
         <div class="logout">
             <form method="POST" action="<?php echo e(url('/logout')); ?>">
@@ -92,7 +114,7 @@ $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'defaul
             <h3>KosOnline</h3>
         </div>
 
-        <section class="page active" id="dashboard">
+        <section class="page <?php echo $activeTab === 'dashboard' ? 'active' : ''; ?>" id="dashboard">
             <div class="topbar">
                 <div>
                     <p class="eyebrow">Dashboard User</p>
@@ -158,7 +180,7 @@ $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'defaul
             </div>
         </section>
 
-        <section class="page" id="pesananku">
+        <section class="page <?php echo $activeTab === 'pesananku' ? 'active' : ''; ?>" id="pesananku">
             <div class="topbar">
                 <div>
                     <p class="eyebrow">Pesananku</p>
@@ -203,7 +225,7 @@ $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'defaul
             </div>
         </section>
 
-        <section class="page" id="pembayaran">
+        <section class="page <?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>" id="pembayaran">
             <div class="topbar">
                 <div>
                     <p class="eyebrow">Invoice</p>
@@ -242,7 +264,149 @@ $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'defaul
             </div>
         </section>
 
-        <section class="page" id="profil">
+        <section class="page <?php echo $activeTab === 'wishlist' ? 'active' : ''; ?>" id="wishlist">
+            <div class="topbar">
+                <div>
+                    <p class="eyebrow">Wishlist</p>
+                    <h1>Kamar yang Disimpan</h1>
+                    <p class="page-subtitle">Tempat aman untuk kamar yang masih kamu pikir-pikir dulu.</p>
+                </div>
+                <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary"><i class="fa-solid fa-bed"></i> Cari Kamar Lagi</a>
+            </div>
+
+            <div class="order-list">
+                <?php if ($wishlistRooms !== []): ?>
+                    <?php foreach ($wishlistRooms as $item): ?>
+                        <?php
+                        $imageSource = !empty($item['foto_kost']) ? upload_asset((string) $item['foto_kost']) : site_image('images.jpg');
+                        $discount = max(0, min(100, (int) ($item['diskon_cabang'] ?? 0)));
+                        $finalPrice = (float) $item['harga'] * (1 - ($discount / 100));
+                        ?>
+                        <article class="order-card">
+                            <img src="<?php echo e($imageSource); ?>" alt="Foto kos">
+                            <div class="order-body">
+                                <div class="order-title">
+                                    <div>
+                                        <h3><?php echo e($item['nama_kost']); ?></h3>
+                                        <p>Kamar <?php echo e($item['nomor_kamar']); ?>, Lantai <?php echo e($item['lantai']); ?></p>
+                                    </div>
+                                    <span class="badge <?php echo $item['status'] === 'Tersedia' ? 'success' : 'warning'; ?>"><?php echo e($item['status']); ?></span>
+                                </div>
+                                <div class="mini-grid">
+                                    <span><b>Harga</b><?php echo e($formatRupiah($finalPrice)); ?></span>
+                                    <span><b>Diskon</b><?php echo $discount > 0 ? e((string) $discount) . '%' : '-'; ?></span>
+                                    <span><b>Disimpan</b><?php echo e($formatDate((string) $item['dibuat_pada'])); ?></span>
+                                </div>
+                                <p class="muted"><i class="fa-solid fa-location-dot"></i> <?php echo e($item['alamat']); ?></p>
+                                <div class="invoice-actions">
+                                    <a href="<?php echo e(url('/rooms/detail?id=' . $item['id_kamar'])); ?>" class="btn-primary soft">Lihat Detail</a>
+                                    <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id_kamar" value="<?php echo e($item['id_kamar']); ?>">
+                                        <input type="hidden" name="redirect" value="/member/dashboard?tab=wishlist">
+                                        <button type="submit" class="btn-whatsapp wishlist-remove"><i class="fa-solid fa-heart-crack"></i> Hapus</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fa-regular fa-heart"></i>
+                        <h3>Wishlist masih kosong</h3>
+                        <p>Simpan kamar dari halaman detail atau daftar kamar biar gampang dibandingkan nanti.</p>
+                        <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary">Cari Kamar</a>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <section class="page <?php echo $activeTab === 'chat' ? 'active' : ''; ?>" id="chat">
+            <div class="topbar">
+                <div>
+                    <p class="eyebrow">Chat Admin</p>
+                    <h1>Obrolan dengan Admin</h1>
+                    <p class="page-subtitle">Riwayat chat tersimpan, termasuk pertanyaan spesifik kamar dari halaman detail.</p>
+                </div>
+            </div>
+
+            <div class="chat-dashboard"
+                 data-chat-realtime
+                 data-thread-id="<?php echo e($currentThread['id_thread'] ?? ''); ?>"
+                 data-fetch-url="<?php echo e(url('/member/chat/messages')); ?>"
+                 data-typing-url="<?php echo e(url('/member/chat/typing')); ?>"
+                 data-csrf="<?php echo e(csrf_token()); ?>"
+                 data-me-type="user"
+                 data-me-label="Kamu"
+                 data-peer-label="Admin"
+                 data-ws-url="ws://<?php echo e($wsHost); ?>:8098">
+                <aside class="chat-thread-list">
+                    <?php if ($chatThreads !== []): ?>
+                        <?php foreach ($chatThreads as $thread): ?>
+                            <?php $context = !empty($thread['id_kamar']) ? (($thread['nama_kost'] ?? 'Kamar') . ' - Kamar ' . ($thread['nomor_kamar'] ?? '-')) : 'Chat umum'; ?>
+                            <a href="<?php echo e(url('/member/dashboard?tab=chat&thread=' . $thread['id_thread'])); ?>" class="<?php echo $currentThread !== null && (int) $currentThread['id_thread'] === (int) $thread['id_thread'] ? 'active' : ''; ?>">
+                                <strong><?php echo e($thread['subjek']); ?></strong>
+                                <span><?php echo e($context); ?></span>
+                                <small><?php echo e((string) ($thread['pesan_terakhir'] ?? 'Belum ada pesan')); ?></small>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="chat-empty-list">Belum ada chat. Mulai tanya admin dari form di bawah.</div>
+                    <?php endif; ?>
+                </aside>
+
+                <section class="chat-panel">
+                    <div class="chat-panel-head">
+                        <div>
+                            <strong><?php echo e($currentThread['subjek'] ?? 'Chat umum dengan Admin'); ?></strong>
+                            <span>
+                                <?php echo $currentThread !== null && !empty($currentThread['id_kamar'])
+                                    ? e(($currentThread['nama_kost'] ?? 'Kamar') . ' - Kamar ' . ($currentThread['nomor_kamar'] ?? '-'))
+                                    : 'Admin akan membalas dari dashboard admin.'; ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chat-room-card-wrap" data-chat-context>
+                        <?php if ($currentThreadContext !== null): ?>
+                            <a href="<?php echo e($currentThreadContext['url']); ?>" class="chat-room-card">
+                                <img src="<?php echo e($currentThreadContext['image']); ?>" alt="Foto kamar">
+                                <div>
+                                    <strong><?php echo e($currentThreadContext['title']); ?></strong>
+                                    <span><?php echo e($currentThreadContext['subtitle']); ?></span>
+                                    <b><?php echo e($formatRupiah((float) $currentThreadContext['harga'])); ?></b>
+                                </div>
+                                <small><?php echo e($currentThreadContext['status']); ?></small>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                    <div class="chat-message-list" data-chat-messages>
+                        <?php if ($chatMessages !== []): ?>
+                            <?php foreach ($chatMessages as $message): ?>
+                                <div class="chat-bubble <?php echo $message['sender_type'] === 'user' ? 'mine' : 'admin'; ?>">
+                                    <span><?php echo $message['sender_type'] === 'user' ? 'Kamu' : 'Admin'; ?></span>
+                                    <p><?php echo nl2br(e($message['isi_pesan'])); ?></p>
+                                    <small><?php echo e(date('d M Y H:i', strtotime((string) $message['dibuat_pada']))); ?></small>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="empty-state compact">
+                                <i class="fa-regular fa-comments"></i>
+                                <p>Mulai chat baru dengan admin.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="chat-typing-indicator" data-chat-typing hidden></div>
+                    <form method="POST" action="<?php echo e(url('/member/chat/send')); ?>" class="chat-compose" data-chat-compose>
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="id_thread" value="<?php echo e($currentThread['id_thread'] ?? 0); ?>">
+                        <textarea name="isi_pesan" rows="3" placeholder="Tulis pesan untuk admin..." required></textarea>
+                        <button type="submit"><i class="fa-solid fa-paper-plane"></i> Kirim</button>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <section class="page <?php echo $activeTab === 'profil' ? 'active' : ''; ?>" id="profil">
             <div class="topbar">
                 <div>
                     <p class="eyebrow">Profil</p>
@@ -282,6 +446,7 @@ $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'defaul
         </section>
     </main>
 
+    <script src="<?php echo e(asset('js/chat-realtime.js')); ?>"></script>
     <script src="<?php echo e(asset('js/admin.js')); ?>"></script>
 </body>
 </html>
