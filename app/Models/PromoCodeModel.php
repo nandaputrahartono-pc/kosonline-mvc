@@ -8,6 +8,19 @@ use App\Core\Model;
 
 final class PromoCodeModel extends Model
 {
+    public function getActivePublic(): array
+    {
+        return $this->db->selectAll(
+            "SELECT kode, nama_promo, tipe_diskon, nilai_diskon, minimal_transaksi, kuota, digunakan, selesai
+             FROM promo_codes
+             WHERE aktif = 1
+             AND (mulai IS NULL OR mulai <= CURDATE())
+             AND (selesai IS NULL OR selesai >= CURDATE())
+             AND (kuota IS NULL OR digunakan < kuota)
+             ORDER BY minimal_transaksi ASC, nilai_diskon DESC"
+        );
+    }
+
     public function findValid(string $code, float $subtotal): ?array
     {
         $normalizedCode = strtoupper(trim($code));

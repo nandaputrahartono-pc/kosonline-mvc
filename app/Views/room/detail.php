@@ -17,6 +17,10 @@
             'longitude' => null,
         ], $room ?? []);
         $gallery = $gallery ?? [];
+        $reviews = $reviews ?? [];
+        $reviewSummary = array_merge(['rating_avg' => 0, 'total_review' => 0], $reviewSummary ?? []);
+        $isWishlisted = (bool) ($isWishlisted ?? false);
+        $isLoggedInUser = (bool) ($isLoggedInUser ?? false);
         $hasPromo = isset($room['diskon_persen']) && $room['diskon_persen'] > 0;
         $finalPrice = $hasPromo ? $room['harga'] * (1 - ($room['diskon_persen'] / 100)) : $room['harga'];
         $facilitiesList = array_map('trim', explode(',', $room['fasilitas'] ?? ''));
@@ -121,6 +125,10 @@
                     <div class="detail-info-card p-4 position-sticky" style="top: 100px; background: var(--card-bg); border-color: var(--border-soft);">
                         <span class="badge mb-3 px-3 py-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue); font-weight: 600;"><?php echo e($room['nama_kost']); ?></span>
                         <h2 class="fw-bold mb-2" style="color: var(--text-main); letter-spacing: -0.5px;">Kamar No. <?php echo e($room['nomor_kamar']); ?></h2>
+                        <div class="detail-rating-row mb-3">
+                            <span><i class="fa-solid fa-star"></i> <?php echo e((string) $reviewSummary['rating_avg']); ?></span>
+                            <b><?php echo e((string) $reviewSummary['total_review']); ?> ulasan</b>
+                        </div>
                         <p class="text-muted mb-4"><i class="fa-solid fa-arrow-up-1-9 me-2"></i> Lantai <?php echo e($room['lantai']); ?></p>
                         
                         <hr class="my-4" style="border-color: var(--border-soft);">
@@ -144,6 +152,15 @@
 
                         <!-- Action Buttons -->
                         <div class="d-flex flex-column gap-3">
+                            <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
+                                <input type="hidden" name="redirect" value="<?php echo e('/rooms/detail?id=' . $room['id_kamar']); ?>">
+                                <button type="submit" class="btn btn-lg w-100 py-3 fw-bold wishlist-detail-btn <?php echo $isWishlisted ? 'saved' : ''; ?>">
+                                    <i class="<?php echo $isWishlisted ? 'fa-solid' : 'fa-regular'; ?> fa-heart me-2"></i>
+                                    <?php echo $isWishlisted ? 'Tersimpan di Wishlist' : 'Simpan ke Wishlist'; ?>
+                                </button>
+                            </form>
                             <a href="<?php echo e(url('/rooms/payment?id=' . $room['id_kamar'])); ?>" class="btn btn-primary btn-lg w-100 py-3 fw-bold" style="background-color: var(--accent-blue); border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(37,99,235,0.3);">
                                 <i class="fa-solid fa-credit-card me-2"></i> Pesan & Bayar Sekarang
                             </a>
@@ -152,11 +169,107 @@
                             </a>
                         </div>
 
+                        <div class="detail-chat-card mt-4">
+                            <h5><i class="fa-solid fa-comments text-primary me-2"></i>Chat Admin soal kamar ini</h5>
+                            <?php if ($isLoggedInUser): ?>
+                                <form method="POST" action="<?php echo e(url('/rooms/chat')); ?>">
+                                    <?php echo csrf_field(); ?>
+                                    <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
+                                    <textarea name="isi_pesan" rows="3" class="form-control" required>Halo Admin, saya mau tanya tentang <?php echo e($room['nama_kost']); ?> Kamar <?php echo e($room['nomor_kamar']); ?>.</textarea>
+                                    <button type="submit" class="btn btn-primary w-100 fw-bold mt-3">
+                                        <i class="fa-solid fa-paper-plane me-2"></i>Kirim ke Admin
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <p class="text-muted small mb-3">Login dulu supaya chat tersimpan dan admin tahu akun kamu.</p>
+                                <a href="<?php echo e(url('/login')); ?>" class="btn btn-primary w-100 fw-bold">Login untuk Chat</a>
+                            <?php endif; ?>
+                        </div>
+
                         <!-- Safety Info Badge -->
                         <div class="mt-4 p-3 bg-light rounded-3 text-center d-flex align-items-center justify-content-center gap-2" style="background-color: var(--bg-main) !important;">
                             <i class="fa-solid fa-shield-halved text-success" style="font-size: 1.2rem;"></i>
                             <span class="small fw-semibold text-muted">Jaminan Keamanan Transaksi 100%</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4" id="ulasan">
+                <div class="col-lg-7">
+                    <div class="review-section-card">
+                        <div class="review-heading">
+                            <div>
+                                <span class="section-eyebrow">Ulasan Penghuni</span>
+                                <h3>Rating kamar ini <?php echo e((string) $reviewSummary['rating_avg']); ?>/5</h3>
+                            </div>
+                            <div class="review-score">
+                                <i class="fa-solid fa-star"></i>
+                                <strong><?php echo e((string) $reviewSummary['rating_avg']); ?></strong>
+                                <span><?php echo e((string) $reviewSummary['total_review']); ?> ulasan</span>
+                            </div>
+                        </div>
+
+                        <?php if ($reviews !== []): ?>
+                            <div class="review-list">
+                                <?php foreach ($reviews as $review): ?>
+                                    <?php
+                                    $reviewAvatar = !empty($review['foto_profil']) && $review['foto_profil'] !== 'default.jpg'
+                                        ? upload_asset((string) $review['foto_profil'])
+                                        : site_image('images.jpg');
+                                    ?>
+                                    <article class="review-item">
+                                        <img src="<?php echo e($reviewAvatar); ?>" alt="Foto <?php echo e($review['nama_lengkap']); ?>">
+                                        <div>
+                                            <div class="review-item-head">
+                                                <strong><?php echo e($review['nama_lengkap']); ?></strong>
+                                                <span><?php echo e(date('d M Y', strtotime((string) $review['dibuat_pada']))); ?></span>
+                                            </div>
+                                            <div class="review-stars">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <i class="<?php echo $i <= (int) $review['rating'] ? 'fa-solid' : 'fa-regular'; ?> fa-star"></i>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <p><?php echo nl2br(e($review['komentar'])); ?></p>
+                                        </div>
+                                    </article>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="review-empty">
+                                <i class="fa-regular fa-star"></i>
+                                <p>Belum ada ulasan. Jadilah yang pertama memberi pengalaman tentang kamar ini.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="review-section-card">
+                        <h4 class="fw-bold mb-3" style="color: var(--text-main);">Tulis Ulasan</h4>
+                        <?php if ($isLoggedInUser): ?>
+                            <form method="POST" action="<?php echo e(url('/rooms/review')); ?>" class="review-form">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
+                                <label class="form-label fw-bold text-muted small">Rating</label>
+                                <select name="rating" class="form-select mb-3" required>
+                                    <option value="">Pilih rating</option>
+                                    <option value="5">5 - Sangat bagus</option>
+                                    <option value="4">4 - Bagus</option>
+                                    <option value="3">3 - Cukup</option>
+                                    <option value="2">2 - Kurang</option>
+                                    <option value="1">1 - Perlu diperbaiki</option>
+                                </select>
+                                <label class="form-label fw-bold text-muted small">Komentar</label>
+                                <textarea name="komentar" rows="5" class="form-control mb-3" placeholder="Ceritakan pengalaman atau kesanmu tentang kamar ini..." required></textarea>
+                                <button type="submit" class="btn btn-primary w-100 fw-bold py-3">
+                                    <i class="fa-solid fa-star me-2"></i>Kirim Ulasan
+                                </button>
+                            </form>
+                        <?php else: ?>
+                            <p class="text-muted">Login dulu untuk memberi rating dan komentar.</p>
+                            <a href="<?php echo e(url('/login')); ?>" class="btn btn-primary fw-bold">Login untuk Ulasan</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -225,6 +338,91 @@ $extraHead = <<<HTML
             font-size: 0.68rem;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .detail-rating-row {
+            display: inline-flex;
+            gap: 10px;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #fff7ed;
+            color: #9a3412;
+            font-weight: 800;
+        }
+        .detail-rating-row i,
+        .review-score i,
+        .review-stars i,
+        .room-rating-mini i { color: #f59e0b; }
+        .wishlist-detail-btn {
+            border-radius: 12px;
+            border: 2px solid #fecdd3;
+            color: #e11d48;
+            background: #fff1f2;
+        }
+        .wishlist-detail-btn.saved {
+            background: #e11d48;
+            color: #fff;
+            border-color: #e11d48;
+        }
+        .detail-chat-card,
+        .review-section-card {
+            border: 1px solid var(--border-soft);
+            border-radius: 24px;
+            padding: 22px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow-soft);
+        }
+        .detail-chat-card h5 { color: var(--text-main); font-weight: 800; margin-bottom: 14px; }
+        .review-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .review-heading h3 { color: var(--text-main); font-weight: 800; }
+        .review-score {
+            display: grid;
+            justify-items: center;
+            min-width: 120px;
+            padding: 14px;
+            border-radius: 18px;
+            background: #fff7ed;
+            color: #9a3412;
+        }
+        .review-score strong { font-size: 2rem; line-height: 1; }
+        .review-list { display: grid; gap: 14px; }
+        .review-item {
+            display: flex;
+            gap: 14px;
+            padding: 16px;
+            border-radius: 18px;
+            background: var(--bg-main);
+        }
+        .review-item img {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            object-fit: cover;
+        }
+        .review-item-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--text-main);
+        }
+        .review-item-head span { color: var(--text-muted); font-size: 0.82rem; }
+        .review-stars { margin: 5px 0; }
+        .review-item p { color: var(--text-muted); margin-bottom: 0; line-height: 1.7; }
+        .review-empty {
+            display: grid;
+            justify-items: center;
+            gap: 10px;
+            padding: 32px;
+            border-radius: 18px;
+            background: var(--bg-main);
+            color: var(--text-muted);
+            text-align: center;
         }
         @media (max-width: 576px) {
             #main-gallery-img { height: 300px !important; }

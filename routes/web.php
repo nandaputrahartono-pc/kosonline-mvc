@@ -10,11 +10,13 @@ use App\Controllers\AdminPaymentController;
 use App\Controllers\AdminRoomController;
 use App\Controllers\AdminUserController;
 use App\Controllers\AuthController;
+use App\Controllers\ChatController;
 use App\Controllers\ContactController;
 use App\Controllers\HomeController;
 use App\Controllers\MapController;
 use App\Controllers\MemberController;
 use App\Controllers\RoomController;
+use App\Controllers\WishlistController;
 use App\Core\Router;
 
 /** @var Router $router */
@@ -25,6 +27,9 @@ $router->get('/rooms/detail', [RoomController::class, 'detail']);
 $router->get('/rooms/payment', [RoomController::class, 'payment']);
 $router->post('/rooms/payment', [RoomController::class, 'payment']);
 $router->get('/rooms/invoice', [RoomController::class, 'invoice']);
+$router->post('/rooms/review', [RoomController::class, 'review']);
+$router->post('/rooms/chat', [ChatController::class, 'sendFromRoom']);
+$router->post('/wishlist/toggle', [WishlistController::class, 'toggle']);
 $router->get('/contact', [ContactController::class, 'index']);
 $router->post('/contact', [ContactController::class, 'index']);
 $router->get('/map', [MapController::class, 'index']);
@@ -40,9 +45,15 @@ $router->post('/admin/logout', [AuthController::class, 'adminLogout']);
 
 $router->get('/member/dashboard', [MemberController::class, 'dashboard']);
 $router->post('/member/dashboard', [MemberController::class, 'dashboard']);
+$router->post('/member/chat/send', [ChatController::class, 'sendFromMember']);
+$router->get('/member/chat/messages', [ChatController::class, 'memberMessages']);
+$router->post('/member/chat/typing', [ChatController::class, 'memberTyping']);
 
 $router->get('/admin', [AdminDashboardController::class, 'index']);
 $router->get('/admin/dashboard', [AdminDashboardController::class, 'dashboard']);
+$router->post('/admin/chat/send', [ChatController::class, 'sendFromAdmin']);
+$router->get('/admin/chat/messages', [ChatController::class, 'adminMessages']);
+$router->post('/admin/chat/typing', [ChatController::class, 'adminTyping']);
 
 $router->get('/admin/kost/create', [AdminKostController::class, 'create']);
 $router->post('/admin/kost/create', [AdminKostController::class, 'create']);

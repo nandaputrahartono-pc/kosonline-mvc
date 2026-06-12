@@ -444,6 +444,245 @@ h1 {
   flex-wrap: wrap;
 }
 
+.wishlist-remove {
+  border: 0;
+}
+
+.chat-dashboard {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 22px;
+}
+
+.chat-thread-list,
+.chat-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 28px;
+  box-shadow: var(--shadow-soft);
+}
+
+.chat-thread-list {
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  height: fit-content;
+}
+
+.chat-thread-list a {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border-radius: 18px;
+  color: var(--text-main);
+}
+
+.chat-thread-list a.active,
+.chat-thread-list a:hover {
+  background: var(--accent-blue-soft);
+}
+
+.chat-thread-list span,
+.chat-thread-list small {
+  color: var(--text-muted);
+}
+
+.chat-empty-list {
+  padding: 22px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.chat-panel {
+  overflow: hidden;
+}
+
+.chat-panel-head {
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.chat-panel-head strong,
+.chat-panel-head span {
+  display: block;
+}
+
+.chat-panel-head span {
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.chat-message-list {
+  min-height: 330px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 22px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-bubble {
+  max-width: 78%;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+}
+
+.chat-bubble.mine {
+  align-self: flex-end;
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.chat-bubble span,
+.chat-bubble small {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  opacity: 0.75;
+}
+
+.chat-bubble p {
+  margin: 5px 0;
+  line-height: 1.55;
+}
+
+.chat-room-card-wrap {
+  padding: 14px 18px 0;
+  background: #f8fafc;
+}
+
+.chat-room-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: #ffffff;
+  color: var(--text-main);
+  text-decoration: none;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+}
+
+.chat-room-card img {
+  width: 96px;
+  height: 78px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.chat-room-card strong,
+.chat-room-card span,
+.chat-room-card b {
+  display: block;
+}
+
+.chat-room-card strong {
+  font-size: 0.94rem;
+}
+
+.chat-room-card span {
+  margin: 4px 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.chat-room-card b {
+  color: var(--accent-blue);
+}
+
+.chat-room-card small {
+  align-self: end;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: var(--accent-blue);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.chat-compose {
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.chat-typing-indicator {
+  padding: 0 22px 12px;
+  background: #f8fafc;
+}
+
+.typing-bubble {
+  width: fit-content;
+  min-width: 170px;
+}
+
+.typing-bubble p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: inherit;
+}
+
+.typing-bubble p i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.35;
+  animation: chatTypingPulse 1s infinite ease-in-out;
+}
+
+.typing-bubble p i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-bubble p i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chatTypingPulse {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+
+  40% {
+    transform: translateY(-3px);
+    opacity: 0.9;
+  }
+}
+
+.chat-compose textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 13px 14px;
+}
+
+.chat-compose button {
+  width: fit-content;
+  justify-self: end;
+  border: 0;
+  border-radius: 16px;
+  padding: 12px 18px;
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 800;
+}
+
 .profile-layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
@@ -559,7 +798,8 @@ h1 {
   .stats,
   .dashboard-grid,
   .profile-layout,
-  .invoice-card {
+  .invoice-card,
+  .chat-dashboard {
     grid-template-columns: 1fr;
   }
 

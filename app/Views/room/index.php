@@ -5,6 +5,8 @@ $keyword = (string) ($keyword ?? '');
 $idKost = $idKost ?? null;
 $promoOnly = (bool) ($promoOnly ?? false);
 $sort = (string) ($sort ?? 'recommended');
+$reviewSummaries = $reviewSummaries ?? [];
+$savedRoomIds = $savedRoomIds ?? [];
 $summary = $roomsSummary ?? [
     'total_available' => count($rooms),
     'result_count' => count($rooms),
@@ -137,6 +139,9 @@ ob_start();
                         <?php
                         $hasPromo = (int) ($room['diskon_persen'] ?? 0) > 0;
                         $priceAfterDiscount = $finalPrice($room);
+                        $roomId = (int) $room['id_kamar'];
+                        $ratingSummary = $reviewSummaries[$roomId] ?? ['rating_avg' => 0, 'total_review' => 0];
+                        $isSaved = in_array($roomId, $savedRoomIds, true);
                         $waText = sprintf(
                             'Halo Admin KosOnline, saya tertarik dengan Kamar No. %s di %s. Boleh dibantu info ketersediaannya?',
                             (string) ($room['nomor_kamar'] ?? ''),
@@ -151,13 +156,26 @@ ob_start();
                                     <span class="room-card-promo">Diskon <?php echo e((string) $room['diskon_persen']); ?>%</span>
                                 <?php endif; ?>
                             </a>
+                            <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="room-wishlist-form">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="id_kamar" value="<?php echo e($roomId); ?>">
+                                <input type="hidden" name="redirect" value="<?php echo e('/rooms'); ?>">
+                                <button type="submit" class="room-wishlist-btn <?php echo $isSaved ? 'saved' : ''; ?>" aria-label="Simpan kamar">
+                                    <i class="<?php echo $isSaved ? 'fa-solid' : 'fa-regular'; ?> fa-heart"></i>
+                                </button>
+                            </form>
                             <div class="room-card-body">
                                 <div class="room-card-title">
                                     <div>
                                         <span>Lantai <?php echo e($room['lantai']); ?></span>
-                                        <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
+                                        <h3><?php echo e($room['nomor_kamar']); ?></h3>
                                     </div>
                                     <i class="fa-solid fa-door-open"></i>
+                                </div>
+                                <div class="room-rating-mini">
+                                    <i class="fa-solid fa-star"></i>
+                                    <strong><?php echo e((string) $ratingSummary['rating_avg']); ?></strong>
+                                    <span><?php echo e((string) $ratingSummary['total_review']); ?> ulasan</span>
                                 </div>
                                 <p class="room-address"><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
                                 <div class="room-facility-list">
