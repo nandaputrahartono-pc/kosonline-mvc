@@ -20,9 +20,24 @@
         $reviews = $reviews ?? [];
         $reviewSummary = array_merge(['rating_avg' => 0, 'total_review' => 0], $reviewSummary ?? []);
         $isWishlisted = (bool) ($isWishlisted ?? false);
+        $ratingCounts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+        foreach ($reviews as $rev) {
+            $r = (int) ($rev['rating'] ?? 0);
+            if (isset($ratingCounts[$r])) {
+                $ratingCounts[$r]++;
+            }
+        }
         $isLoggedInUser = (bool) ($isLoggedInUser ?? false);
         $hasPromo = isset($room['diskon_persen']) && $room['diskon_persen'] > 0;
         $finalPrice = $hasPromo ? $room['harga'] * (1 - ($room['diskon_persen'] / 100)) : $room['harga'];
+        $roomLabel = static function (mixed $roomNumber): string {
+            $label = trim((string) $roomNumber);
+            if ($label === '') {
+                return 'Kamar -';
+            }
+
+            return preg_match('/^kamar\b/i', $label) === 1 ? $label : 'Kamar ' . $label;
+        };
         $facilitiesList = array_map('trim', explode(',', $room['fasilitas'] ?? ''));
         $galleryItems = $gallery ?? [];
         if ($galleryItems === []) {
@@ -123,29 +138,36 @@
                 <!-- Info and Call to Action Column (Right) -->
                 <div class="col-lg-5">
                     <div class="detail-info-card p-4 position-sticky" style="top: 100px; background: var(--card-bg); border-color: var(--border-soft);">
-                        <span class="badge mb-3 px-3 py-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue); font-weight: 600;"><?php echo e($room['nama_kost']); ?></span>
-                        <h2 class="fw-bold mb-2" style="color: var(--text-main); letter-spacing: -0.5px;">Kamar No. <?php echo e($room['nomor_kamar']); ?></h2>
-                        <div class="detail-rating-row mb-3">
-                            <span><i class="fa-solid fa-star"></i> <?php echo e((string) $reviewSummary['rating_avg']); ?></span>
-                            <b><?php echo e((string) $reviewSummary['total_review']); ?> ulasan</b>
+                        <span class="badge mb-3 px-3 py-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue); font-weight: 600; border-radius: 8px;"><?php echo e($room['nama_kost']); ?></span>
+                        <h2 class="fw-bold mb-2" style="color: var(--text-main); letter-spacing: -0.5px; font-size: 1.65rem;">Kamar No. <?php echo e($room['nomor_kamar']); ?></h2>
+
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div class="d-flex align-items-center gap-1 px-2.5 py-1 rounded-pill bg-warning bg-opacity-10 text-warning fw-bold" style="font-size: 0.8rem;">
+                                <i class="fa-solid fa-star"></i>
+                                <span><?php echo e(number_format((float)$reviewSummary['rating_avg'], 1)); ?></span>
+                            </div>
+                            <span class="text-muted small">|</span>
+                            <span class="text-muted small fw-semibold"><?php echo e($reviewSummary['total_review']); ?> Ulasan</span>
                         </div>
-                        <p class="text-muted mb-4"><i class="fa-solid fa-arrow-up-1-9 me-2"></i> Lantai <?php echo e($room['lantai']); ?></p>
-                        
+
+                        <p class="text-muted mb-4 small"><i class="fa-solid fa-arrow-up-1-9 me-2 text-primary"></i> Lantai <?php echo e($room['lantai']); ?></p>
+
                         <hr class="my-4" style="border-color: var(--border-soft);">
 
                         <div class="mb-4">
                             <span class="text-muted d-block mb-1 small fw-semibold">Biaya Sewa Bulanan</span>
-                            <div class="d-flex align-items-center">
-                                <?php if ($hasPromo): ?>
-                                    <div class="me-3">
-                                        <span class="price-slash fs-5">Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></span>
-                                        <span class="badge bg-danger rounded-pill px-2 py-1 small" style="font-size: 0.75rem;">DISKON <?php echo e($room['diskon_persen']); ?>%</span>
-                                    </div>
-                                <?php endif; ?>
+                            <div class="d-flex align-items-baseline gap-2 flex-wrap mb-1">
+                                <h3 class="fw-bold mb-0 text-primary" style="color: var(--accent-blue) !important; font-size: 1.85rem; letter-spacing: -0.5px;">
+                                    Rp <?php echo number_format((float) $finalPrice, 0, ',', '.'); ?>
+                                </h3>
+                                <span class="fs-6 text-muted fw-normal">/ bulan</span>
                             </div>
-                            <h3 class="fw-bold display-6 mb-0 text-primary" style="color: var(--accent-blue) !important;">
-                                Rp <?php echo number_format((float) $finalPrice, 0, ',', '.'); ?> <span class="fs-5 text-muted fw-normal">/ bulan</span>
-                            </h3>
+                            <?php if ($hasPromo): ?>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <span class="text-muted text-decoration-line-through small">Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></span>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2.5 py-0.5" style="font-size: 0.72rem; font-weight: 700;">DISKON <?php echo e($room['diskon_persen']); ?>%</span>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <hr class="my-4" style="border-color: var(--border-soft);">
@@ -161,115 +183,195 @@
                                     <?php echo $isWishlisted ? 'Tersimpan di Wishlist' : 'Simpan ke Wishlist'; ?>
                                 </button>
                             </form>
-                            <a href="<?php echo e(url('/rooms/payment?id=' . $room['id_kamar'])); ?>" class="btn btn-primary btn-lg w-100 py-3 fw-bold" style="background-color: var(--accent-blue); border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(37,99,235,0.3);">
+                            <a href="<?php echo e(url('/rooms/payment?id=' . $room['id_kamar'])); ?>" class="btn btn-primary btn-lg w-100 py-3 fw-bold btn-pesan-sekarang">
                                 <i class="fa-solid fa-credit-card me-2"></i> Pesan & Bayar Sekarang
                             </a>
-                            <a href="https://wa.me/6287748703029?text=<?php echo urlencode('Halo Admin, saya tertarik dengan ' . $room['nama_kost'] . ' Kamar ' . $room['nomor_kamar']); ?>" target="_blank" class="btn btn-outline-success btn-lg w-100 py-3 fw-bold" style="border-radius: 12px; border-width: 2px;">
+                            <a href="https://wa.me/6287748703029?text=<?php echo urlencode('Halo Admin, saya tertarik dengan ' . $room['nama_kost'] . ' - ' . $roomLabel($room['nomor_kamar'])); ?>" target="_blank" class="btn btn-outline-success btn-lg w-100 py-3 fw-bold btn-tanya-whatsapp">
                                 <i class="fa-brands fa-whatsapp me-2"></i> Tanya via WhatsApp
                             </a>
                         </div>
 
-                        <div class="detail-chat-card mt-4">
-                            <h5><i class="fa-solid fa-comments text-primary me-2"></i>Chat Admin soal kamar ini</h5>
+                        <div class="detail-chat-card mt-4 p-4 rounded-4" style="background: var(--bg-main); border: 1px solid var(--border-soft);">
+                            <h5 class="fw-bold mb-3" style="font-size: 1rem;"><i class="fa-solid fa-comments text-primary me-2"></i>Chat Admin Soal Kamar Ini</h5>
                             <?php if ($isLoggedInUser): ?>
                                 <form method="POST" action="<?php echo e(url('/rooms/chat')); ?>">
                                     <?php echo csrf_field(); ?>
                                     <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
-                                    <textarea name="isi_pesan" rows="3" class="form-control" required>Halo Admin, saya mau tanya tentang <?php echo e($room['nama_kost']); ?> Kamar <?php echo e($room['nomor_kamar']); ?>.</textarea>
-                                    <button type="submit" class="btn btn-primary w-100 fw-bold mt-3">
-                                        <i class="fa-solid fa-paper-plane me-2"></i>Kirim ke Admin
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold btn-chat-admin-room">
+                                        <i class="fa-regular fa-comments me-2"></i> Chat Admin
                                     </button>
+                                    <p class="text-muted small mb-0 mt-2 text-center">Kartu kamar ini akan otomatis ikut masuk ke ruang chat.</p>
                                 </form>
                             <?php else: ?>
-                                <p class="text-muted small mb-3">Login dulu supaya chat tersimpan dan admin tahu akun kamu.</p>
-                                <a href="<?php echo e(url('/login')); ?>" class="btn btn-primary w-100 fw-bold">Login untuk Chat</a>
+                                <a href="<?php echo e(url('/login')); ?>" class="btn btn-primary btn-lg w-100 py-3 fw-bold btn-chat-admin-room">
+                                    <i class="fa-solid fa-right-to-bracket me-2"></i> Login untuk Chat Admin
+                                </a>
+                                <p class="text-muted small mb-0 mt-2 text-center">Setelah login, kamu bisa chat sambil membawa detail kamar ini.</p>
                             <?php endif; ?>
                         </div>
 
                         <!-- Safety Info Badge -->
-                        <div class="mt-4 p-3 bg-light rounded-3 text-center d-flex align-items-center justify-content-center gap-2" style="background-color: var(--bg-main) !important;">
-                            <i class="fa-solid fa-shield-halved text-success" style="font-size: 1.2rem;"></i>
-                            <span class="small fw-semibold text-muted">Jaminan Keamanan Transaksi 100%</span>
+                        <div class="mt-4 p-3 bg-light rounded-3 text-center d-flex align-items-center justify-content-center gap-2" style="background-color: var(--bg-main) !important; border: 1px solid var(--border-soft);">
+                            <i class="fa-solid fa-shield-halved text-success" style="font-size: 1.1rem;"></i>
+                            <span class="small fw-semibold text-muted" style="font-size: 0.82rem;">Jaminan Keamanan Transaksi 100%</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="row mt-4" id="ulasan">
-                <div class="col-lg-7">
-                    <div class="review-section-card">
-                        <div class="review-heading">
-                            <div>
-                                <span class="section-eyebrow">Ulasan Penghuni</span>
-                                <h3>Rating kamar ini <?php echo e((string) $reviewSummary['rating_avg']); ?>/5</h3>
+            <!-- Unified Review Section -->
+            <div class="row mt-5" id="ulasan">
+                <div class="col-lg-12">
+                    <div class="p-4 p-md-5 bg-white border border-soft rounded-4 shadow-sm" style="background: var(--card-bg) !important; border-color: var(--border-soft) !important;">
+
+                        <!-- Header -->
+                        <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom" style="border-color: var(--border-soft) !important;">
+                            <h3 class="fw-bold mb-0 text-main" style="color: var(--text-main); font-size: 1.5rem; letter-spacing: -0.5px;">
+                                <i class="fa-solid fa-comments me-2 text-primary" style="color: var(--accent-blue) !important;"></i> Ulasan & Penilaian Kamar
+                            </h3>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold" style="color: var(--accent-blue) !important; background-color: var(--accent-blue-soft) !important; font-size: 0.85rem;">
+                                <?php echo e((string) $reviewSummary['total_review']); ?> Ulasan
+                            </span>
+                        </div>
+
+                        <!-- Rating summary and distribution -->
+                        <div class="row g-4 mb-5">
+                            <!-- Left: Rating Card -->
+                            <div class="col-md-4">
+                                <div class="p-4 rounded-4 text-center d-flex flex-column align-items-center justify-content-center h-100" style="background: var(--bg-main); border: 1px solid var(--border-soft); min-height: 180px;">
+                                    <span class="text-muted small fw-bold text-uppercase mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">RATING RATA-RATA</span>
+                                    <h1 class="display-3 fw-bold text-main mb-1" style="color: var(--text-main); line-height: 1; font-weight: 800;">
+                                        <?php echo e((string) $reviewSummary['rating_avg']); ?>
+                                    </h1>
+                                    <div class="my-2" style="font-size: 1.25rem;">
+                                        <?php
+                                        $avg = (float) $reviewSummary['rating_avg'];
+                                        for ($i = 1; $i <= 5; $i++) {
+                                            if ($i <= floor($avg)) {
+                                                echo '<i class="fa-solid fa-star text-warning"></i>';
+                                            } elseif ($i - $avg < 1) {
+                                                echo '<i class="fa-solid fa-star-half-stroke text-warning"></i>';
+                                            } else {
+                                                echo '<i class="fa-regular fa-star text-warning"></i>';
+                                            }
+                                        }
+                                        ?>
+                                    </div>
+                                    <span class="text-muted small">Berdasarkan <?php echo e((string) $reviewSummary['total_review']); ?> ulasan</span>
+                                </div>
                             </div>
-                            <div class="review-score">
-                                <i class="fa-solid fa-star"></i>
-                                <strong><?php echo e((string) $reviewSummary['rating_avg']); ?></strong>
-                                <span><?php echo e((string) $reviewSummary['total_review']); ?> ulasan</span>
+
+                            <!-- Right: Rating Bar Breakdown -->
+                            <div class="col-md-8">
+                                <div class="p-4 rounded-4 h-100 d-flex flex-column justify-content-center" style="background: var(--bg-main); border: 1px solid var(--border-soft);">
+                                    <?php
+                                    $totalReviewsCount = max(1, $reviewSummary['total_review']);
+                                    for ($ratingVal = 5; $ratingVal >= 1; $ratingVal--):
+                                        $count = $ratingCounts[$ratingVal] ?? 0;
+                                        $pct = round(($count / $totalReviewsCount) * 100);
+                                    ?>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="text-muted small fw-semibold me-3" style="width: 70px; text-align: right;"><?php echo $ratingVal; ?> Bintang</span>
+                                            <div class="progress flex-grow-1" style="height: 8px; border-radius: 4px; background-color: var(--border-soft);">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: <?php echo $pct; ?>%; border-radius: 4px;" aria-valuenow="<?php echo $pct; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <span class="text-muted small fw-semibold ms-3" style="width: 40px; text-align: left;"><?php echo $pct; ?>%</span>
+                                        </div>
+                                    <?php endfor; ?>
+                                </div>
                             </div>
                         </div>
 
-                        <?php if ($reviews !== []): ?>
-                            <div class="review-list">
-                                <?php foreach ($reviews as $review): ?>
-                                    <?php
-                                    $reviewAvatar = !empty($review['foto_profil']) && $review['foto_profil'] !== 'default.jpg'
-                                        ? upload_asset((string) $review['foto_profil'])
-                                        : site_image('images.jpg');
-                                    ?>
-                                    <article class="review-item">
-                                        <img src="<?php echo e($reviewAvatar); ?>" alt="Foto <?php echo e($review['nama_lengkap']); ?>">
-                                        <div>
-                                            <div class="review-item-head">
-                                                <strong><?php echo e($review['nama_lengkap']); ?></strong>
-                                                <span><?php echo e(date('d M Y', strtotime((string) $review['dibuat_pada']))); ?></span>
-                                            </div>
-                                            <div class="review-stars">
-                                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                    <i class="<?php echo $i <= (int) $review['rating'] ? 'fa-solid' : 'fa-regular'; ?> fa-star"></i>
-                                                <?php endfor; ?>
-                                            </div>
-                                            <p><?php echo nl2br(e($review['komentar'])); ?></p>
+                        <!-- Write Review Panel -->
+                        <div class="p-4 rounded-4 mb-5" style="background: var(--card-bg); border: 2px dashed var(--border-soft);">
+                            <h4 class="fw-bold mb-3 text-main" style="color: var(--text-main); font-size: 1.15rem;">
+                                <i class="fa-solid fa-pen-to-square me-2 text-primary"></i> Tulis Ulasan Anda
+                            </h4>
+                            <?php if ($isLoggedInUser): ?>
+                                <form method="POST" action="<?php echo e(url('/rooms/review')); ?>" class="review-form">
+                                    <?php echo csrf_field(); ?>
+                                    <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold text-muted small">Rating Kamar</label>
+                                            <select name="rating" class="form-select" style="border-radius: 8px; padding: 10px; border-color: var(--border-soft); background-color: var(--bg-main); color: var(--text-main);" required>
+                                                <option value="">Pilih rating...</option>
+                                                <option value="5">⭐⭐⭐⭐⭐ (5 - Sangat Bagus)</option>
+                                                <option value="4">⭐⭐⭐⭐ (4 - Bagus)</option>
+                                                <option value="3">⭐⭐⭐ (3 - Cukup)</option>
+                                                <option value="2">⭐⭐ (2 - Kurang)</option>
+                                                <option value="1">⭐ (1 - Perlu Perbaikan)</option>
+                                            </select>
                                         </div>
-                                    </article>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="review-empty">
-                                <i class="fa-regular fa-star"></i>
-                                <p>Belum ada ulasan. Jadilah yang pertama memberi pengalaman tentang kamar ini.</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label fw-bold text-muted small">Komentar / Pengalaman</label>
+                                            <textarea name="komentar" rows="3" class="form-control" placeholder="Ceritakan pengalaman Anda selama tinggal di kamar ini..." style="border-radius: 8px; border-color: var(--border-soft); background-color: var(--bg-main); color: var(--text-main);" required></textarea>
+                                        </div>
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn btn-primary px-4 py-2.5 fw-bold btn-animate-hover" style="background-color: var(--accent-blue); border: none; border-radius: 8px;">
+                                                <i class="fa-solid fa-paper-plane me-2"></i> Kirim Ulasan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            <?php else: ?>
+                                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 py-2">
+                                    <p class="text-muted mb-0 small"><i class="fa-solid fa-info-circle me-1 text-primary"></i> Anda harus login terlebih dahulu untuk memberikan ulasan pada kamar ini.</p>
+                                    <a href="<?php echo e(url('/login')); ?>" class="btn btn-primary fw-bold px-4 py-2 btn-animate-hover" style="background-color: var(--accent-blue); border: none; border-radius: 8px;">
+                                        <i class="fa-solid fa-right-to-bracket me-2"></i> Login untuk Ulasan
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
-                <div class="col-lg-5">
-                    <div class="review-section-card">
-                        <h4 class="fw-bold mb-3" style="color: var(--text-main);">Tulis Ulasan</h4>
-                        <?php if ($isLoggedInUser): ?>
-                            <form method="POST" action="<?php echo e(url('/rooms/review')); ?>" class="review-form">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
-                                <label class="form-label fw-bold text-muted small">Rating</label>
-                                <select name="rating" class="form-select mb-3" required>
-                                    <option value="">Pilih rating</option>
-                                    <option value="5">5 - Sangat bagus</option>
-                                    <option value="4">4 - Bagus</option>
-                                    <option value="3">3 - Cukup</option>
-                                    <option value="2">2 - Kurang</option>
-                                    <option value="1">1 - Perlu diperbaiki</option>
-                                </select>
-                                <label class="form-label fw-bold text-muted small">Komentar</label>
-                                <textarea name="komentar" rows="5" class="form-control mb-3" placeholder="Ceritakan pengalaman atau kesanmu tentang kamar ini..." required></textarea>
-                                <button type="submit" class="btn btn-primary w-100 fw-bold py-3">
-                                    <i class="fa-solid fa-star me-2"></i>Kirim Ulasan
-                                </button>
-                            </form>
-                        <?php else: ?>
-                            <p class="text-muted">Login dulu untuk memberi rating dan komentar.</p>
-                            <a href="<?php echo e(url('/login')); ?>" class="btn btn-primary fw-bold">Login untuk Ulasan</a>
-                        <?php endif; ?>
+                        <!-- Review List (Comments at the bottom) -->
+                        <div class="mt-4">
+                            <h4 class="fw-bold mb-4 text-main" style="color: var(--text-main); font-size: 1.25rem;">
+                                <i class="fa-solid fa-list-check me-2 text-primary"></i> Ulasan dari Penghuni
+                            </h4>
+
+                            <?php if ($reviews !== []): ?>
+                                <div class="d-flex flex-column gap-3">
+                                    <?php foreach ($reviews as $review): ?>
+                                        <?php
+                                        $reviewAvatar = !empty($review['foto_profil']) && $review['foto_profil'] !== 'default.jpg'
+                                            ? upload_asset((string) $review['foto_profil'])
+                                            : site_image('images.jpg');
+                                        ?>
+                                        <div class="p-4 rounded-4 transition-hover" style="background: var(--bg-main); border: 1px solid var(--border-soft);">
+                                            <div class="d-flex align-items-start gap-3">
+                                                <img src="<?php echo e($reviewAvatar); ?>" class="rounded-circle border" style="width: 48px; height: 48px; object-fit: cover;" alt="Foto <?php echo e($review['nama_lengkap']); ?>">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1 mb-2">
+                                                        <div>
+                                                            <h6 class="fw-bold text-main mb-0" style="color: var(--text-main);"><?php echo e($review['nama_lengkap']); ?></h6>
+                                                            <span class="text-muted small"><?php echo e(date('d M Y', strtotime((string) $review['dibuat_pada']))); ?></span>
+                                                        </div>
+                                                        <div class="rating-stars">
+                                                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                                <i class="<?php echo $i <= (int) $review['rating'] ? 'fa-solid' : 'fa-regular'; ?> fa-star text-warning" style="font-size: 0.9rem;"></i>
+                                                            <?php endfor; ?>
+                                                        </div>
+                                                    </div>
+                                                    <p class="text-muted mb-0" style="line-height: 1.6; font-size: 0.95rem;">
+                                                        <?php echo nl2br(e($review['komentar'])); ?>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-center py-5 rounded-4" style="background: var(--bg-main); border: 1px dashed var(--border-soft);">
+                                    <div class="mb-3">
+                                        <i class="fa-regular fa-star text-muted" style="font-size: 3rem; opacity: 0.5;"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-muted">Belum Ada Ulasan</h6>
+                                    <p class="text-muted mb-0 small">Jadilah yang pertama memberikan ulasan dan pengalaman Anda tinggal di kamar ini!</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -278,7 +380,7 @@
 
 <?php
 $content = ob_get_clean();
-$title = 'Detail Kamar ' . $room['nomor_kamar'] . ' - ' . $room['nama_kost'];
+$title = 'Detail ' . $roomLabel($room['nomor_kamar']) . ' - ' . $room['nama_kost'];
 $extraHead = <<<HTML
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
@@ -358,76 +460,132 @@ $extraHead = <<<HTML
             border: 2px solid #fecdd3;
             color: #e11d48;
             background: #fff1f2;
+            transition: all 0.25s ease;
+        }
+        .wishlist-detail-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(225, 29, 72, 0.15);
         }
         .wishlist-detail-btn.saved {
             background: #e11d48;
             color: #fff;
             border-color: #e11d48;
         }
-        .detail-chat-card,
-        .review-section-card {
-            border: 1px solid var(--border-soft);
-            border-radius: 24px;
-            padding: 22px;
-            background: var(--card-bg);
-            box-shadow: var(--shadow-soft);
+        .btn-pesan-sekarang {
+            background-color: var(--accent-blue) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 14px rgba(37,99,235,0.25) !important;
+            transition: all 0.25s ease !important;
+            color: #fff !important;
         }
-        .detail-chat-card h5 { color: var(--text-main); font-weight: 800; margin-bottom: 14px; }
-        .review-heading {
+        .btn-pesan-sekarang:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 22px rgba(37,99,235,0.4) !important;
+            filter: brightness(1.05);
+        }
+        .btn-tanya-whatsapp {
+            border-radius: 12px !important;
+            border-width: 2px !important;
+            transition: all 0.25s ease !important;
+        }
+        .btn-tanya-whatsapp:hover {
+            transform: translateY(-2px) !important;
+            background-color: var(--bs-success) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 15px rgba(25,135,84,0.2) !important;
+        }
+        .btn-animate-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-animate-hover:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+            box-shadow: 0 8px 20px rgba(37,99,235,0.3) !important;
+        }
+        .transition-hover {
+            transition: all 0.25s ease;
+        }
+        .transition-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            border-color: var(--accent-blue) !important;
+        }
+        /* Chat Input - Modern Messenger Style */
+        .chat-input-wrapper {
             display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .review-heading h3 { color: var(--text-main); font-weight: 800; }
-        .review-score {
-            display: grid;
-            justify-items: center;
-            min-width: 120px;
-            padding: 14px;
-            border-radius: 18px;
-            background: #fff7ed;
-            color: #9a3412;
-        }
-        .review-score strong { font-size: 2rem; line-height: 1; }
-        .review-list { display: grid; gap: 14px; }
-        .review-item {
-            display: flex;
-            gap: 14px;
-            padding: 16px;
-            border-radius: 18px;
-            background: var(--bg-main);
-        }
-        .review-item img {
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
-            object-fit: cover;
-        }
-        .review-item-head {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            color: var(--text-main);
-        }
-        .review-item-head span { color: var(--text-muted); font-size: 0.82rem; }
-        .review-stars { margin: 5px 0; }
-        .review-item p { color: var(--text-muted); margin-bottom: 0; line-height: 1.7; }
-        .review-empty {
-            display: grid;
-            justify-items: center;
+            align-items: flex-end;
             gap: 10px;
-            padding: 32px;
-            border-radius: 18px;
-            background: var(--bg-main);
+            padding: 8px 8px 8px 20px;
+            border-radius: 28px;
+            background: var(--card-bg);
+            border: 1.5px solid var(--border-soft);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .chat-input-wrapper:focus-within {
+            border-color: var(--accent-blue);
+            box-shadow: 0 2px 16px rgba(37, 99, 235, 0.12);
+        }
+        .chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: none;
+            max-height: 120px;
+            padding: 8px 0;
+            font-family: inherit;
+        }
+        .chat-input::placeholder {
             color: var(--text-muted);
-            text-align: center;
+            opacity: 0.65;
+        }
+        .chat-send-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+        .chat-send-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            filter: brightness(1.08);
+            color: #fff;
+        }
+        .chat-send-btn:active {
+            transform: scale(0.95);
+        }
+        .chat-input-disabled {
+            opacity: 0.7;
+            cursor: default;
+        }
+        .chat-input-placeholder {
+            flex: 1;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            padding: 10px 0;
         }
         @media (max-width: 576px) {
             #main-gallery-img { height: 300px !important; }
             .gallery-caption { display: block; }
             .gallery-caption span { display: block; margin-top: 3px; }
+            .chat-input-wrapper { padding: 6px 6px 6px 14px; }
+            .chat-send-btn { width: 38px; height: 38px; min-width: 38px; font-size: 0.9rem; }
         }
     </style>
 HTML;
@@ -515,6 +673,27 @@ $extraScripts = <<<HTML
 
         var marker = L.marker([lat, lng]).addTo(map);
         marker.bindPopup('<b>' + kostName + '</b><br>Kamar No. ' + roomNum).openPopup();
+
+        // Chat Input: auto-resize + Enter to send
+        (function() {
+            const chatInput = document.getElementById('chatInput');
+            const chatForm = document.getElementById('chatForm');
+            if (!chatInput || !chatForm) return;
+
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (this.value.trim()) {
+                        chatForm.submit();
+                    }
+                }
+            });
+        })();
     </script>
 HTML;
 

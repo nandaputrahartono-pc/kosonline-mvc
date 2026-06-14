@@ -92,12 +92,16 @@ if (!$hasTable('chat_messages')) {
                 `id_message` INT NOT NULL AUTO_INCREMENT,
                 `id_thread` INT NOT NULL,
                 `sender_type` ENUM('user','admin') NOT NULL,
+                `tipe_pesan` ENUM('text','room_card') NOT NULL DEFAULT 'text',
+                `id_kamar` INT NULL,
                 `isi_pesan` TEXT NOT NULL,
                 `dibaca` TINYINT(1) NOT NULL DEFAULT 0,
                 `dibuat_pada` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id_message`),
                 KEY `idx_chat_messages_thread` (`id_thread`),
-                CONSTRAINT `fk_chat_messages_thread` FOREIGN KEY (`id_thread`) REFERENCES `chat_threads` (`id_thread`) ON DELETE CASCADE
+                KEY `idx_chat_messages_room` (`id_kamar`),
+                CONSTRAINT `fk_chat_messages_thread` FOREIGN KEY (`id_thread`) REFERENCES `chat_threads` (`id_thread`) ON DELETE CASCADE,
+                CONSTRAINT `fk_chat_messages_room` FOREIGN KEY (`id_kamar`) REFERENCES `kamar` (`id_kamar`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
         );
     }
