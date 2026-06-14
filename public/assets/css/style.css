@@ -212,6 +212,10 @@ a {
   animation: flashSlide 0.35s ease;
 }
 
+.app-flash span {
+  flex: 1;
+}
+
 .app-flash-success i {
   color: #16a34a;
 }

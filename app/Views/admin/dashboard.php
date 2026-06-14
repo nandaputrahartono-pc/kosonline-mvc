@@ -1,4 +1,32 @@
 <?php
+$successMessage = $successMessage ?? null;
+$errorMessage = $errorMessage ?? null;
+$adminName = (string) ($adminName ?? 'Admin');
+$billingMonth = (string) ($billingMonth ?? date('F Y'));
+$revenueTrend = array_merge([
+    'labels' => [],
+    'values' => [],
+    'total' => 0,
+], (array) ($revenueTrend ?? []));
+$stats = array_merge([
+    'total_kost' => 0,
+    'total_kamar' => 0,
+    'terisi' => 0,
+    'kosong' => 0,
+    'penghuni_aktif' => 0,
+    'belum_bayar' => 0,
+    'pendapatan_total' => 0,
+    'pendapatan_bulan_ini' => 0,
+    'rasio_okupansi' => 0,
+    'rasio_pembayaran' => 0,
+], (array) ($stats ?? []));
+$priorityBillings = $priorityBillings ?? [];
+$kosts = $kosts ?? [];
+$rooms = $rooms ?? [];
+$users = $users ?? [];
+$billings = $billings ?? [];
+$messages = $messages ?? [];
+$locations = $locations ?? [];
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
 $revenueLabelsJson = json_encode($revenueTrend['labels'] ?? [], $jsonFlags);
 $revenueValuesJson = json_encode($revenueTrend['values'] ?? [], $jsonFlags | JSON_NUMERIC_CHECK);
@@ -10,19 +38,46 @@ $activeTab = (string) ($activeTab ?? 'dashboard');
 $chatThreads = $chatThreads ?? [];
 $currentChatThread = $currentChatThread ?? null;
 $chatMessages = $chatMessages ?? [];
+$roomLabel = static function (mixed $roomNumber): string {
+    $label = trim((string) $roomNumber);
+    if ($label === '') {
+        return 'Kamar -';
+    }
+
+    return preg_match('/^kamar\b/i', $label) === 1 ? $label : 'Kamar ' . $label;
+};
+$roomCardFromMessage = static function (array $message) use ($roomLabel): ?array {
+    if (empty($message['id_kamar'])) {
+        return null;
+    }
+
+    return [
+        'title' => ($message['nama_kost'] ?? 'KosOnline') . ' - ' . $roomLabel($message['nomor_kamar'] ?? null),
+        'subtitle' => (string) ($message['alamat'] ?? ''),
+        'harga' => (float) ($message['harga'] ?? 0),
+        'status' => (string) ($message['status_kamar'] ?? '-'),
+        'image' => upload_asset((string) ($message['foto_kost'] ?? '')),
+        'url' => url('/rooms/detail?id=' . (int) $message['id_kamar']),
+    ];
+};
+$chatInitials = static function (?string $name): string {
+    $words = preg_split('/\s+/', trim((string) $name)) ?: [];
+    $letters = '';
+
+    foreach ($words as $word) {
+        if ($word !== '') {
+            $letters .= strtoupper(substr($word, 0, 1));
+        }
+
+        if (strlen($letters) >= 2) {
+            break;
+        }
+    }
+
+    return $letters !== '' ? $letters : 'KO';
+};
 $wsHost = preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? '127.0.0.1'));
 $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
-$currentChatContext = null;
-if ($currentChatThread !== null && !empty($currentChatThread['id_kamar'])) {
-    $currentChatContext = [
-        'title' => ($currentChatThread['nama_kost'] ?? 'KosOnline') . ' - Kamar ' . ($currentChatThread['nomor_kamar'] ?? '-'),
-        'subtitle' => $currentChatThread['alamat'] ?? '',
-        'harga' => (float) ($currentChatThread['harga'] ?? 0),
-        'status' => $currentChatThread['status_kamar'] ?? '-',
-        'image' => upload_asset((string) ($currentChatThread['foto_kost'] ?? '')),
-        'url' => url('/rooms/detail?id=' . (int) $currentChatThread['id_kamar']),
-    ];
-}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -35,11 +90,21 @@ if ($currentChatThread !== null && !empty($currentChatThread['id_kamar'])) {
     <link rel="stylesheet" href="<?php echo e(asset('css/admin.css')); ?>">
 </head>
 <body>
-    <?php if ($successMessage !== null): ?>
-        <script>alert(<?php echo json_encode($successMessage); ?>);</script>
-    <?php endif; ?>
-    <?php if ($errorMessage !== null): ?>
-        <script>alert(<?php echo json_encode($errorMessage); ?>);</script>
+    <?php if ($successMessage !== null || $errorMessage !== null): ?>
+        <div class="admin-flash-stack" aria-live="polite">
+            <?php if ($successMessage !== null): ?>
+                <div class="admin-flash success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span><?php echo e($successMessage); ?></span>
+                </div>
+            <?php endif; ?>
+            <?php if ($errorMessage !== null): ?>
+                <div class="admin-flash danger">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span><?php echo e($errorMessage); ?></span>
+                </div>
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
 
     <aside class="sidebar">
@@ -427,9 +492,6 @@ if ($currentChatThread !== null && !empty($currentChatThread['id_kamar'])) {
         </section>
 
         <section class="page <?php echo $activeTab === 'chat-user' ? 'active' : ''; ?>" id="chat-user">
-            <h2 class="page-title">Chat User</h2>
-            <p class="page-subtitle">Balas pertanyaan user dari website. Konteks kamar otomatis ikut tampil kalau chat dimulai dari detail kamar.</p>
-
             <div class="admin-chat-layout"
                  data-chat-realtime
                  data-thread-id="<?php echo e($currentChatThread['id_thread'] ?? ''); ?>"
@@ -441,67 +503,98 @@ if ($currentChatThread !== null && !empty($currentChatThread['id_kamar'])) {
                  data-peer-label="<?php echo e($currentChatThread['nama_lengkap'] ?? 'User'); ?>"
                  data-ws-url="ws://<?php echo e($wsHost); ?>:8098">
                 <aside class="admin-chat-contacts">
+                    <div class="admin-chat-sidebar-head">
+                        <div>
+                            <p>Pusat Chat</p>
+                            <h3>Pesan User</h3>
+                            <span>Pantau pertanyaan kamar, booking, dan pembayaran dari satu ruang.</span>
+                        </div>
+                    </div>
+                    <button type="button" class="admin-chat-sidebar-rule">
+                        <span>Kontak Aktif</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
                     <?php if ($chatThreads !== []): ?>
                         <?php foreach ($chatThreads as $thread): ?>
                             <?php
                             $isActiveThread = $currentChatThread !== null && (int) $currentChatThread['id_thread'] === (int) $thread['id_thread'];
-                            $context = !empty($thread['id_kamar'])
-                                ? (($thread['nama_kost'] ?? 'Kamar') . ' - Kamar ' . ($thread['nomor_kamar'] ?? '-'))
-                                : 'Chat umum';
+                            $context = $thread['email'] ?? 'User KosOnline';
                             ?>
                             <a href="<?php echo e(url('/admin/dashboard?tab=chat-user&thread=' . $thread['id_thread'])); ?>" class="<?php echo $isActiveThread ? 'active' : ''; ?>">
-                                <strong><?php echo e($thread['nama_lengkap']); ?></strong>
-                                <span><?php echo e($context); ?></span>
-                                <small><?php echo e($thread['pesan_terakhir'] ?? 'Belum ada pesan'); ?></small>
+                                <i><?php echo e($chatInitials($thread['nama_lengkap'] ?? 'User')); ?></i>
+                                <span class="thread-copy">
+                                    <strong><?php echo e($thread['nama_lengkap']); ?></strong>
+                                    <em><?php echo e($context); ?></em>
+                                    <small><?php echo e($thread['pesan_terakhir'] ?? 'Belum ada pesan'); ?></small>
+                                </span>
                             </a>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <div class="empty-state">Belum ada chat user.</div>
                     <?php endif; ?>
+                    <div class="admin-chat-sidebar-foot">
+                        <span><?php echo count($chatThreads); ?> kontak</span>
+                        <strong><i></i> Admin Online</strong>
+                    </div>
                 </aside>
 
                 <section class="admin-chat-panel">
                     <?php if ($currentChatThread !== null): ?>
                         <div class="admin-chat-head">
-                            <div>
-                                <h3><?php echo e($currentChatThread['nama_lengkap']); ?></h3>
-                                <p>
-                                    <?php echo e($currentChatThread['email']); ?> &bull; <?php echo e($currentChatThread['no_hp']); ?>
-                                    <?php if (!empty($currentChatThread['id_kamar'])): ?>
-                                        <br>Konteks: <?php echo e(($currentChatThread['nama_kost'] ?? 'Kamar') . ' - Kamar ' . ($currentChatThread['nomor_kamar'] ?? '-')); ?>
-                                    <?php endif; ?>
-                                </p>
-                            </div>
-                            <span class="badge success"><?php echo e($currentChatThread['status']); ?></span>
-                        </div>
-                        <div class="admin-chat-room-card-wrap" data-chat-context>
-                            <?php if ($currentChatContext !== null): ?>
-                                <a href="<?php echo e($currentChatContext['url']); ?>" class="admin-chat-room-card" target="_blank">
-                                    <img src="<?php echo e($currentChatContext['image']); ?>" alt="Foto kamar">
-                                    <div>
-                                        <strong><?php echo e($currentChatContext['title']); ?></strong>
-                                        <span><?php echo e($currentChatContext['subtitle']); ?></span>
-                                        <b>Rp <?php echo number_format((float) $currentChatContext['harga'], 0, ',', '.'); ?></b>
-                                    </div>
-                                    <small><?php echo e($currentChatContext['status']); ?></small>
-                                </a>
-                            <?php endif; ?>
-                        </div>
-                        <div class="admin-chat-messages" data-chat-messages>
-                            <?php foreach ($chatMessages as $message): ?>
-                                <div class="admin-chat-bubble <?php echo $message['sender_type'] === 'admin' ? 'mine' : 'user'; ?>">
-                                    <span><?php echo $message['sender_type'] === 'admin' ? 'Admin' : e($currentChatThread['nama_lengkap']); ?></span>
-                                    <p><?php echo nl2br(e($message['isi_pesan'])); ?></p>
-                                    <small><?php echo e(date('d M Y H:i', strtotime((string) $message['dibuat_pada']))); ?></small>
+                            <div class="admin-chat-head-user">
+                                <i><?php echo e($chatInitials($currentChatThread['nama_lengkap'] ?? 'User')); ?></i>
+                                <div>
+                                    <h3><?php echo e($currentChatThread['nama_lengkap']); ?></h3>
+                                    <p>
+                                        <?php echo e($currentChatThread['email']); ?> &bull; <?php echo e($currentChatThread['no_hp']); ?>
+                                    </p>
                                 </div>
-                            <?php endforeach; ?>
+                            </div>
+                            <div class="admin-chat-head-actions">
+                                <span><i></i> Online</span>
+                                <button type="button" aria-label="Pin chat"><i class="fa-solid fa-thumbtack"></i></button>
+                                <button type="button" aria-label="Favorit chat"><i class="fa-solid fa-star"></i></button>
+                            </div>
+                        </div>
+                        <div class="admin-chat-messages" data-chat-scroll>
+                            <div class="admin-chat-message-feed" data-chat-messages>
+                                <?php foreach ($chatMessages as $message): ?>
+                                    <?php
+                                    $card = $roomCardFromMessage($message);
+                                    $isRoomCardOnly = ($message['tipe_pesan'] ?? 'text') === 'room_card';
+                                    ?>
+                                    <?php if ($card !== null): ?>
+                                        <div class="admin-chat-sent-room-card user<?php echo !$isRoomCardOnly ? ' grouped' : ''; ?>" data-initials="<?php echo e($chatInitials($currentChatThread['nama_lengkap'] ?? 'User')); ?>">
+                                            <a href="<?php echo e($card['url']); ?>" class="admin-chat-room-card admin-chat-room-card-message" target="_blank">
+                                                <img src="<?php echo e($card['image']); ?>" alt="Foto kamar">
+                                                <div>
+                                                    <strong><?php echo e($card['title']); ?></strong>
+                                                    <span><?php echo e($card['subtitle']); ?></span>
+                                                    <b>Rp <?php echo number_format((float) $card['harga'], 0, ',', '.'); ?></b>
+                                                </div>
+                                                <small><?php echo e($card['status']); ?></small>
+                                            </a>
+                                        </div>
+                                        <?php if ($isRoomCardOnly): ?>
+                                            <?php continue; ?>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    <div class="admin-chat-bubble <?php echo $message['sender_type'] === 'admin' ? 'mine' : 'user'; ?><?php echo $card !== null ? ' grouped-with-card' : ''; ?>" data-initials="<?php echo e($chatInitials($message['sender_type'] === 'admin' ? 'Admin' : ($currentChatThread['nama_lengkap'] ?? 'User'))); ?>">
+                                        <span><?php echo $message['sender_type'] === 'admin' ? 'Admin' : e($currentChatThread['nama_lengkap']); ?></span>
+                                        <p><?php echo nl2br(e($message['isi_pesan'])); ?></p>
+                                        <small><?php echo e(date('d M Y H:i', strtotime((string) $message['dibuat_pada']))); ?></small>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                         <div class="admin-chat-typing" data-chat-typing hidden></div>
                         <form method="POST" action="<?php echo e(url('/admin/chat/send')); ?>" class="admin-chat-compose" data-chat-compose>
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="id_thread" value="<?php echo e($currentChatThread['id_thread']); ?>">
-                            <textarea name="isi_pesan" rows="3" placeholder="Tulis balasan untuk user..." required></textarea>
-                            <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Kirim Balasan</button>
+                            <div class="admin-chat-compose-box">
+                                <textarea name="isi_pesan" rows="1" placeholder="Tulis balasan... Enter untuk kirim, Shift+Enter untuk baris baru" required></textarea>
+                                <button type="submit" aria-label="Kirim balasan"><i class="fa-solid fa-paper-plane"></i></button>
+                            </div>
                         </form>
                     <?php else: ?>
                         <div class="empty-state">Pilih chat user untuk mulai membalas.</div>
@@ -593,6 +686,7 @@ if ($currentChatThread !== null && !empty($currentChatThread['id_kamar'])) {
             values: <?php echo $revenueValuesJson; ?>
         };
     </script>
+    <script src="<?php echo e(asset('js/notifications.js')); ?>"></script>
     <script src="<?php echo e(asset('js/chat-realtime.js')); ?>"></script>
     <script src="<?php echo e(asset('js/admin.js')); ?>"></script>
 </body>

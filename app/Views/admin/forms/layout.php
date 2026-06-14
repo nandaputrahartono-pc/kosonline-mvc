@@ -202,6 +202,30 @@ $errorMessage = flash('error');
             grid-template-columns: minmax(0, 1fr) 130px;
             gap: 14px;
         }
+        .admin-form-flash-stack {
+            position: fixed;
+            top: 22px;
+            right: 22px;
+            z-index: 3000;
+            display: grid;
+            gap: 12px;
+            width: min(420px, calc(100vw - 32px));
+        }
+        .admin-form-flash {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+            color: #0f172a;
+            font-weight: 800;
+        }
+        .admin-form-flash span { flex: 1; }
+        .admin-form-flash.success { color: #16a34a; }
+        .admin-form-flash.danger { color: #ef4444; }
         @media (max-width: 480px) {
             body { padding: 15px; }
             .form-container { padding: 20px; }
@@ -213,15 +237,24 @@ $errorMessage = flash('error');
     </style>
 </head>
 <body>
-    <?php if ($successMessage !== null): ?>
-        <script>alert(<?php echo json_encode($successMessage); ?>);</script>
-    <?php endif; ?>
-    <?php if ($errorMessage !== null): ?>
-        <script>alert(<?php echo json_encode($errorMessage); ?>);</script>
+    <?php if ($successMessage !== null || $errorMessage !== null): ?>
+        <div class="admin-form-flash-stack" aria-live="polite">
+            <?php if ($successMessage !== null): ?>
+                <div class="admin-form-flash success" data-notification>
+                    <span><?php echo e($successMessage); ?></span>
+                </div>
+            <?php endif; ?>
+            <?php if ($errorMessage !== null): ?>
+                <div class="admin-form-flash danger" data-notification>
+                    <span><?php echo e($errorMessage); ?></span>
+                </div>
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
 
     <div class="form-container">
         <?php echo $content; ?>
     </div>
+    <script src="<?php echo e(asset('js/notifications.js')); ?>"></script>
 </body>
 </html>

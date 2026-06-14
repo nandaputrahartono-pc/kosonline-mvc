@@ -103,6 +103,7 @@ final class MemberController extends Controller
         $paymentHistory = $this->paymentModel->getHistoryByUserId($userId);
         $latestInvoice = $paymentHistory[0] ?? null;
         $wishlistRooms = $this->wishlistModel->getByUserId($userId);
+        $this->chatModel->getOrCreateThread($userId);
         $chatThreads = $this->chatModel->getThreadsByUserId($userId);
         $currentThreadId = (int) ($_GET['thread'] ?? 0);
         if ($currentThreadId <= 0 && $chatThreads !== []) {
@@ -110,6 +111,11 @@ final class MemberController extends Controller
         }
         $currentThread = $currentThreadId > 0 ? $this->chatModel->getThreadForUser($currentThreadId, $userId) : null;
         $chatMessages = $currentThread !== null ? $this->chatModel->getMessages((int) $currentThread['id_thread']) : [];
+        $pendingRoomId = (int) ($_GET['pending_room'] ?? 0);
+        $pendingRoomCard = $pendingRoomId > 0 ? $this->chatModel->roomCardByRoomId($pendingRoomId) : null;
+        if ($pendingRoomCard === null) {
+            $pendingRoomId = 0;
+        }
 
         $summary = [
             'nama_kost' => '-',
@@ -163,6 +169,8 @@ final class MemberController extends Controller
             'chatThreads' => $chatThreads,
             'currentThread' => $currentThread,
             'chatMessages' => $chatMessages,
+            'pendingRoomId' => $pendingRoomId,
+            'pendingRoomCard' => $pendingRoomCard,
             'activeTab' => (string) ($_GET['tab'] ?? 'dashboard'),
             'summary' => $summary,
             'successMessage' => flash('success'),

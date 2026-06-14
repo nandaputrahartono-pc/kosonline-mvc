@@ -3,11 +3,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!widget) return;
 
   const messagesEl = widget.querySelector('[data-chat-messages]');
+  const scrollEl = widget.querySelector('[data-chat-scroll]') || messagesEl;
   const contextEl = widget.querySelector('[data-chat-context]');
   const typingEl = widget.querySelector('[data-chat-typing]');
   const form = widget.querySelector('[data-chat-compose]');
   const textarea = form ? form.querySelector('textarea[name="isi_pesan"]') : null;
   const threadInput = form ? form.querySelector('input[name="id_thread"]') : null;
+  const roomInput = form ? form.querySelector('input[name="id_kamar"]') : null;
   const submitButton = form ? form.querySelector('button[type="submit"], button:not([type])') : null;
 
   const config = {
@@ -38,27 +40,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function messageSignature(messages) {
-    return messages.map((message) => `${message.id_message}:${message.sender_type}`).join('|');
+    return messages.map((message) => `${message.id_message}:${message.sender_type}:${message.tipe_pesan || 'text'}`).join('|');
   }
 
   function scrollToBottom() {
-    if (!messagesEl) return;
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (!scrollEl) return;
+    scrollEl.scrollTop = scrollEl.scrollHeight;
+  }
+
+  function resizeTextarea() {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 130) + 'px';
   }
 
   function rupiah(value) {
     return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
   }
 
-  function renderContext(card) {
-    if (!contextEl) return;
-    if (!card) {
-      contextEl.innerHTML = '';
-      return;
-    }
+  function initials(label) {
+    const words = String(label || 'KO').trim().split(/\s+/).filter(Boolean);
+    const letters = words.map((word) => word.charAt(0).toUpperCase()).join('').slice(0, 2);
+    return letters || 'KO';
+  }
 
-    contextEl.innerHTML = `
-      <a href="${escapeHtml(card.detail_url || '#')}" class="${config.meType === 'admin' ? 'admin-chat-room-card' : 'chat-room-card'}">
+  function renderRoomCard(card, className) {
+    return `
+      <a href="${escapeHtml(card.detail_url || '#')}" class="${className}">
         <img src="${escapeHtml(card.image_url || '')}" alt="Foto kamar">
         <div>
           <strong>${escapeHtml(card.title || 'Kamar Kos')}</strong>
@@ -67,6 +75,39 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <small>${escapeHtml(card.status || '-')}</small>
       </a>
+    `;
+  }
+
+  function renderContext(card) {
+    if (!contextEl) return;
+    if (!card) {
+      contextEl.innerHTML = '';
+      contextEl.hidden = true;
+      return;
+    }
+
+    contextEl.hidden = false;
+    contextEl.innerHTML = renderRoomCard(card, config.meType === 'admin' ? 'admin-chat-room-card' : 'chat-room-card');
+  }
+
+  function renderRoomCardMessage(message, grouped = false) {
+    const card = message.room_card || null;
+    if (!card) return '';
+
+    const mine = message.sender_type === config.meType;
+    const wrapperClass = config.meType === 'admin'
+      ? 'admin-chat-sent-room-card user'
+      : 'chat-sent-room-card mine';
+    const cardClass = config.meType === 'admin'
+      ? 'admin-chat-room-card admin-chat-room-card-message'
+      : 'chat-room-card chat-room-card-message';
+    const label = mine ? config.meLabel : config.peerLabel;
+    const groupedClass = grouped ? ' grouped' : '';
+
+    return `
+      <div class="${wrapperClass}${groupedClass}" data-initials="${escapeHtml(initials(label))}">
+        ${renderRoomCard(card, cardClass)}
+      </div>
     `;
   }
 
@@ -87,19 +128,29 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    messagesEl.innerHTML = messages.map((message) => {
+    const renderedMessages = messages.map((message) => {
+      const isRoomCardOnly = (message.tipe_pesan || 'text') === 'room_card';
+      const hasGroupedCard = Boolean(message.room_card) && !isRoomCardOnly;
+      const cardMarkup = message.room_card ? renderRoomCardMessage(message, hasGroupedCard) : '';
+      if (isRoomCardOnly) {
+        return cardMarkup;
+      }
+
       const mine = message.sender_type === config.meType;
       const bubbleClass = mine ? 'mine' : (config.meType === 'admin' ? 'user' : 'admin');
+      const groupedClass = hasGroupedCard ? ' grouped-with-card' : '';
       const label = mine ? config.meLabel : config.peerLabel;
 
-      return `
-        <div class="${config.meType === 'admin' ? 'admin-chat-bubble' : 'chat-bubble'} ${bubbleClass}">
+      return `${cardMarkup}
+        <div class="${config.meType === 'admin' ? 'admin-chat-bubble' : 'chat-bubble'} ${bubbleClass}${groupedClass}" data-initials="${escapeHtml(initials(label))}">
           <span>${escapeHtml(label)}</span>
-          <p>${escapeHtml(message.isi_pesan).replaceAll('\\n', '<br>')}</p>
+          <p>${escapeHtml(message.isi_pesan).replaceAll('\n', '<br>')}</p>
           <small>${escapeHtml(message.waktu_label || message.dibuat_pada || '')}</small>
         </div>
       `;
     }).join('');
+
+    messagesEl.innerHTML = renderedMessages;
     scrollToBottom();
   }
 
@@ -114,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     typingEl.hidden = false;
     const bubbleClass = config.meType === 'admin' ? 'admin-chat-bubble user typing-bubble' : 'chat-bubble admin typing-bubble';
     typingEl.innerHTML = `
-      <div class="${bubbleClass}">
+      <div class="${bubbleClass}" data-initials="${escapeHtml(initials(peerLabel || config.peerLabel))}">
         <span>${escapeHtml(peerLabel || config.peerLabel)}</span>
         <p><i></i><i></i><i></i> sedang mengetik...</p>
       </div>
@@ -125,7 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!data || !data.ok) return;
     if (data.peer_label) config.peerLabel = data.peer_label;
     if (data.me_label) config.meLabel = data.me_label;
-    renderContext(data.context_card || null);
+    if (!contextEl || contextEl.dataset.pendingContext !== '1') {
+      renderContext(data.context_card || null);
+    }
     renderMessages(data.messages || []);
     renderTyping(Boolean(data.peer_typing), data.peer_label);
   }
@@ -177,12 +230,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (textarea) {
     textarea.addEventListener('input', () => {
+      resizeTextarea();
       setTyping(textarea.value.trim() !== '');
       window.clearTimeout(typingTimer);
       typingTimer = window.setTimeout(() => setTyping(false), 1600);
     });
 
+    textarea.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+      event.preventDefault();
+
+      if (!textarea.value.trim()) return;
+      if (form && typeof form.requestSubmit === 'function') {
+        form.requestSubmit(submitButton || undefined);
+      } else if (form) {
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      }
+    });
+
     textarea.addEventListener('blur', () => setTyping(false));
+    resizeTextarea();
   }
 
   if (form && textarea) {
@@ -210,9 +277,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await response.json();
         if (data.ok) {
+          const hadPendingRoom = roomInput && roomInput.value && roomInput.value !== '0';
           textarea.value = '';
+          resizeTextarea();
           setTyping(false);
           if (threadInput) threadInput.value = String(data.thread_id || config.threadId);
+          if (roomInput) roomInput.value = '';
+          if (contextEl && hadPendingRoom) {
+            delete contextEl.dataset.pendingContext;
+            renderContext(null);
+          }
           applyPayload(data);
         } else {
           form.submit();

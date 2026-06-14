@@ -69,6 +69,35 @@ $oldIdentifier = $oldIdentifier ?? '';
             text-align: center;
         }
 
+        .sign-up-container form {
+            justify-content: flex-start;
+            padding-top: 24px;
+            padding-bottom: 18px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .sign-up-container h1 {
+            font-size: 2rem;
+            line-height: 1.1;
+        }
+
+        .sign-up-container .social-container {
+            margin: 12px 0;
+        }
+
+        .sign-up-container .input-group {
+            margin-bottom: 12px;
+        }
+
+        .sign-up-container .input-group.mb-4 {
+            margin-bottom: 12px !important;
+        }
+
+        .sign-up-container .btn-auth {
+            margin-top: 4px;
+        }
+
         .input-group { position: relative; margin-bottom: 15px; width: 100%; }
         .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
         .input-group input {
@@ -322,6 +351,38 @@ $oldIdentifier = $oldIdentifier ?? '';
             h1 { font-size: 1.8rem; margin-bottom: 10px; }
         }
 
+        @media (max-height: 720px) and (min-width: 769px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .auth-container {
+                min-height: calc(100vh - 48px);
+            }
+
+            .sign-up-container form {
+                padding-top: 18px;
+                padding-bottom: 14px;
+            }
+
+            .sign-up-container h1 {
+                font-size: 1.8rem;
+            }
+
+            .sign-up-container .social-container {
+                margin: 8px 0;
+            }
+
+            .sign-up-container span.mb-3 {
+                margin-bottom: 0.65rem !important;
+            }
+
+            .sign-up-container .input-group input {
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .form-container,
             .gooey-background,
@@ -477,6 +538,7 @@ $oldIdentifier = $oldIdentifier ?? '';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo e(asset('js/notifications.js')); ?>"></script>
     <script>
         const signUpButton = document.getElementById('signUp');
         const signInButton = document.getElementById('signIn');
@@ -497,12 +559,12 @@ $oldIdentifier = $oldIdentifier ?? '';
             }, 950);
         }
 
-        signUpButton.addEventListener('click', () => switchAuthPanel(true));
-        signInButton.addEventListener('click', () => switchAuthPanel(false));
+        if (signUpButton) signUpButton.addEventListener('click', () => switchAuthPanel(true));
+        if (signInButton) signInButton.addEventListener('click', () => switchAuthPanel(false));
 
         // Logic for Mobile Toggle
-        mobileToRegister.addEventListener('click', () => switchAuthPanel(true));
-        mobileToLogin.addEventListener('click', () => switchAuthPanel(false));
+        if (mobileToRegister) mobileToRegister.addEventListener('click', () => switchAuthPanel(true));
+        if (mobileToLogin) mobileToLogin.addEventListener('click', () => switchAuthPanel(false));
 
         // Check hash on load
         if(window.location.hash === '#register') {

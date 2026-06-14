@@ -24,11 +24,15 @@ final class ChatController extends Controller
         $this->requireUser();
 
         $threadId = (int) ($_POST['id_thread'] ?? 0);
+        $roomId = (int) ($_POST['id_kamar'] ?? 0);
         $message = trim((string) ($_POST['isi_pesan'] ?? ''));
 
         if ($message === '') {
             set_flash('error', 'Pesan tidak boleh kosong.');
-            redirect_to('/member/dashboard?tab=chat');
+            $target = '/member/dashboard?tab=chat';
+            $target .= $threadId > 0 ? '&thread=' . $threadId : '';
+            $target .= $roomId > 0 ? '&pending_room=' . $roomId : '';
+            redirect_to($target);
         }
 
         if ($threadId <= 0) {
@@ -38,7 +42,9 @@ final class ChatController extends Controller
             redirect_to('/member/dashboard?tab=chat');
         }
 
-        $this->chatModel->addMessage($threadId, 'user', $message);
+        $roomId = $roomId > 0 && $this->chatModel->roomCardByRoomId($roomId) !== null ? $roomId : 0;
+
+        $this->chatModel->addMessage($threadId, 'user', $message, $roomId > 0 ? $roomId : null);
         $this->chatModel->setTyping($threadId, 'user', false);
 
         if ($this->expectsJson()) {
@@ -61,17 +67,30 @@ final class ChatController extends Controller
             redirect_to('/rooms');
         }
 
-        if ($message === '') {
-            set_flash('error', 'Pesan chat tidak boleh kosong.');
-            redirect_to('/rooms/detail?id=' . $roomId);
+        $threadId = $this->chatModel->getOrCreateThread((int) $_SESSION['id_user']);
+
+        if ($message !== '') {
+            $this->chatModel->addMessage($threadId, 'user', $message, $roomId);
+            $this->chatModel->setTyping($threadId, 'user', false);
+            set_flash('success', 'Pesan dan detail kamar dikirim ke admin.');
+
+            if ($this->expectsJson()) {
+                $this->json($this->memberThreadPayload($threadId));
+            }
+
+            redirect_to('/member/dashboard?tab=chat&thread=' . $threadId);
         }
 
-        $subject = 'Tanya ' . $room['nama_kost'] . ' - Kamar ' . $room['nomor_kamar'];
-        $threadId = $this->chatModel->getOrCreateThread((int) $_SESSION['id_user'], $roomId, $subject);
-        $this->chatModel->addMessage($threadId, 'user', $message);
+        set_flash('success', 'Detail kamar siap dikirim. Tulis pertanyaanmu lalu kirim ke admin.');
 
-        set_flash('success', 'Pesan terkirim ke admin. Kamu bisa lanjut chat dari dashboard.');
-        redirect_to('/member/dashboard?tab=chat&thread=' . $threadId);
+        if ($this->expectsJson()) {
+            $payload = $this->memberThreadPayload($threadId);
+            $payload['pending_room_id'] = $roomId;
+            $payload['pending_room_card'] = $this->chatModel->roomCardByRoomId($roomId);
+            $this->json($payload);
+        }
+
+        redirect_to('/member/dashboard?tab=chat&thread=' . $threadId . '&pending_room=' . $roomId);
     }
 
     public function sendFromAdmin(): void
@@ -162,7 +181,7 @@ final class ChatController extends Controller
             'peer_typing' => $this->chatModel->isTyping($threadId, 'admin'),
             'peer_label' => 'Admin',
             'me_label' => 'Kamu',
-            'context_card' => $this->chatModel->roomContextForJson($thread),
+            'context_card' => null,
         ];
     }
 
@@ -177,7 +196,7 @@ final class ChatController extends Controller
             'peer_typing' => $this->chatModel->isTyping($threadId, 'user'),
             'peer_label' => (string) ($thread['nama_lengkap'] ?? 'User'),
             'me_label' => 'Admin',
-            'context_card' => $this->chatModel->roomContextForJson($thread),
+            'context_card' => null,
         ];
     }
 
@@ -185,6 +204,16 @@ final class ChatController extends Controller
     {
         return str_contains((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json')
             || strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'fetch';
+    }
+
+    private function formatRoomLabel(mixed $roomNumber): string
+    {
+        $label = trim((string) $roomNumber);
+        if ($label === '') {
+            return 'Kamar -';
+        }
+
+        return preg_match('/^kamar\b/i', $label) === 1 ? $label : 'Kamar ' . $label;
     }
 
     private function json(array $payload, int $status = 200): never
