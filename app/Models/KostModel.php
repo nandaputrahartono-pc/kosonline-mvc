@@ -8,19 +8,30 @@ use App\Core\Model;
 
 final class KostModel extends Model
 {
+    /** @var array<string, bool> */
+    private static array $columnCache = [];
+
     private function hasColumn(string $table, string $column): bool
     {
+        $cacheKey = strtolower($table . '.' . $column);
+        if (array_key_exists($cacheKey, self::$columnCache)) {
+            return self::$columnCache[$cacheKey];
+        }
+
         try {
             $columns = $this->db->selectAll("DESCRIBE `$table`");
             foreach ($columns as $col) {
                 if (strtolower($col['Field']) === strtolower($column)) {
-                    return true;
+                    self::$columnCache[$cacheKey] = true;
+                    return self::$columnCache[$cacheKey];
                 }
             }
         } catch (\Throwable $e) {
             // ignore
         }
-        return false;
+
+        self::$columnCache[$cacheKey] = false;
+        return self::$columnCache[$cacheKey];
     }
 
     public function getRecommendations(int $limit = 6): array

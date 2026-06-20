@@ -1661,6 +1661,107 @@ body {
   color: #f8fafc;
 }
 
+[data-theme="dark"] body,
+[data-theme="dark"] .content {
+  background: #0b1120;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .page-subtitle,
+[data-theme="dark"] .stats-card h3,
+[data-theme="dark"] .info-box p,
+[data-theme="dark"] .dashboard-hero p,
+[data-theme="dark"] .card-heading p,
+[data-theme="dark"] .chart-legend,
+[data-theme="dark"] .metric-card p,
+[data-theme="dark"] .metric-note,
+[data-theme="dark"] thead th {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .sidebar {
+  box-shadow: 12px 0 40px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="dark"] .menu-label {
+  color: #93a4bd;
+}
+
+[data-theme="dark"] .menu li a i {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .menu li a:hover,
+[data-theme="dark"] .menu li a.active {
+  background: rgba(59, 130, 246, 0.16);
+  color: #bfdbfe;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .menu li a:hover i,
+[data-theme="dark"] .menu li a.active i {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .logout {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .admin-flash,
+[data-theme="dark"] .info-box,
+[data-theme="dark"] .stats-card,
+[data-theme="dark"] tbody tr,
+[data-theme="dark"] .page-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] tbody td,
+[data-theme="dark"] table td {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .kost-image {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .table-search input {
+  background: #111827;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .table-search input::placeholder {
+  color: #64748b;
+}
+
+[data-theme="dark"] .page-btn:hover {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .topbar-date,
+[data-theme="dark"] .topbar-icon,
+[data-theme="dark"] .hero-actions button,
+[data-theme="dark"] .hero-actions a {
+  box-shadow: none;
+}
+
+[data-theme="dark"] .metric-icon.soft-blue {
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .metric-icon.soft-green {
+  background: rgba(16, 185, 129, 0.14);
+  color: #86efac;
+}
+
+[data-theme="dark"] .metric-icon.soft-red {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+}
+
 @media (max-width: 1180px) {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

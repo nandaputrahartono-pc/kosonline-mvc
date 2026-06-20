@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
               localStorage.setItem('admin_theme', 'dark');
               themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
           }
+          window.dispatchEvent(new Event('resize'));
       });
   }
 
@@ -110,6 +111,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       context.clearRect(0, 0, cssWidth, cssHeight);
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      const gridColor = isDark ? "rgba(148, 163, 184, 0.18)" : "rgba(148, 163, 184, 0.2)";
+      const labelColor = isDark ? "#cbd5e1" : "#64748b";
+      const lineColor = isDark ? "#60a5fa" : "#2563eb";
+      const pointStroke = isDark ? "#0f172a" : "#ffffff";
 
       const padding = { top: 20, right: 46, bottom: 42, left: 70 };
       const chartWidth = cssWidth - padding.left - padding.right;
@@ -119,8 +125,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       context.font = "700 11px Segoe UI, sans-serif";
       context.textBaseline = "middle";
-      context.strokeStyle = "rgba(148, 163, 184, 0.2)";
-      context.fillStyle = "#64748b";
+      context.strokeStyle = gridColor;
+      context.fillStyle = labelColor;
       context.lineWidth = 1;
 
       for (let i = 0; i <= stepCount; i++) {
@@ -142,8 +148,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (points.length === 0) return;
 
       const fillGradient = context.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
-      fillGradient.addColorStop(0, "rgba(37, 99, 235, 0.22)");
-      fillGradient.addColorStop(1, "rgba(37, 99, 235, 0.02)");
+      fillGradient.addColorStop(0, isDark ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.22)");
+      fillGradient.addColorStop(1, isDark ? "rgba(96, 165, 250, 0.03)" : "rgba(37, 99, 235, 0.02)");
 
       context.beginPath();
       context.moveTo(points[0].x, padding.top + chartHeight);
@@ -161,7 +167,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (index === 0) context.moveTo(point.x, point.y);
         else context.lineTo(point.x, point.y);
       });
-      context.strokeStyle = "#2563eb";
+      context.strokeStyle = lineColor;
       context.lineWidth = 3;
       context.lineJoin = "round";
       context.lineCap = "round";
@@ -170,13 +176,13 @@ document.addEventListener("DOMContentLoaded", function () {
       points.forEach((point, index) => {
         context.beginPath();
         context.arc(point.x, point.y, 4, 0, Math.PI * 2);
-        context.fillStyle = "#2563eb";
+        context.fillStyle = lineColor;
         context.fill();
         context.lineWidth = 2;
-        context.strokeStyle = "#ffffff";
+        context.strokeStyle = pointStroke;
         context.stroke();
 
-        context.fillStyle = "#64748b";
+        context.fillStyle = labelColor;
         context.textAlign = "center";
         context.fillText(labels[index] || "", point.x, cssHeight - 18);
       });

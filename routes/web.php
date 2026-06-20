@@ -29,6 +29,7 @@ $router->post('/rooms/payment', [RoomController::class, 'payment']);
 $router->get('/rooms/invoice', [RoomController::class, 'invoice']);
 $router->post('/rooms/review', [RoomController::class, 'review']);
 $router->post('/rooms/chat', [ChatController::class, 'sendFromRoom']);
+$router->get('/wishlist', [WishlistController::class, 'index']);
 $router->post('/wishlist/toggle', [WishlistController::class, 'toggle']);
 $router->get('/contact', [ContactController::class, 'index']);
 $router->post('/contact', [ContactController::class, 'index']);

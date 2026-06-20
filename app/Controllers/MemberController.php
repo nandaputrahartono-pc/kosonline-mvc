@@ -9,14 +9,12 @@ use App\Models\ChatModel;
 use App\Models\PaymentModel;
 use App\Models\RentalModel;
 use App\Models\UserModel;
-use App\Models\WishlistModel;
 
 final class MemberController extends Controller
 {
     private UserModel $userModel;
     private RentalModel $rentalModel;
     private PaymentModel $paymentModel;
-    private WishlistModel $wishlistModel;
     private ChatModel $chatModel;
 
     public function __construct()
@@ -24,13 +22,16 @@ final class MemberController extends Controller
         $this->userModel = new UserModel();
         $this->rentalModel = new RentalModel();
         $this->paymentModel = new PaymentModel();
-        $this->wishlistModel = new WishlistModel();
         $this->chatModel = new ChatModel();
     }
 
     public function dashboard(): void
     {
         $this->requireUser();
+
+        if ((string) ($_GET['tab'] ?? '') === 'wishlist') {
+            redirect_to('/wishlist');
+        }
 
         $userId = (int) $_SESSION['id_user'];
 
@@ -102,7 +103,6 @@ final class MemberController extends Controller
 
         $paymentHistory = $this->paymentModel->getHistoryByUserId($userId);
         $latestInvoice = $paymentHistory[0] ?? null;
-        $wishlistRooms = $this->wishlistModel->getByUserId($userId);
         $this->chatModel->getOrCreateThread($userId);
         $chatThreads = $this->chatModel->getThreadsByUserId($userId);
         $currentThreadId = (int) ($_GET['thread'] ?? 0);
@@ -165,7 +165,6 @@ final class MemberController extends Controller
             'rentals' => $rentals,
             'paymentHistory' => $paymentHistory,
             'latestInvoice' => $latestInvoice,
-            'wishlistRooms' => $wishlistRooms,
             'chatThreads' => $chatThreads,
             'currentThread' => $currentThread,
             'chatMessages' => $chatMessages,
