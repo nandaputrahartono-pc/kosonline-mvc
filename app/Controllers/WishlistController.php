@@ -5,15 +5,35 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\RoomReviewModel;
 use App\Models\WishlistModel;
 
 final class WishlistController extends Controller
 {
     private WishlistModel $wishlistModel;
+    private RoomReviewModel $reviewModel;
 
     public function __construct()
     {
         $this->wishlistModel = new WishlistModel();
+        $this->reviewModel = new RoomReviewModel();
+    }
+
+    public function index(): void
+    {
+        $this->requireUser();
+
+        $userId = (int) $_SESSION['id_user'];
+        $rooms = $this->wishlistModel->getByUserId($userId);
+        $roomIds = array_map(static fn(array $room): int => (int) $room['id_kamar'], $rooms);
+
+        $this->render('wishlist/index', [
+            'rooms' => $rooms,
+            'reviewSummaries' => $this->reviewModel->getSummariesForRooms($roomIds),
+            'savedRoomIds' => $roomIds,
+            'successMessage' => flash('success'),
+            'errorMessage' => flash('error'),
+        ]);
     }
 
     public function toggle(): void

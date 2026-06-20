@@ -76,7 +76,7 @@ ob_start();
 
             <div class="col-lg-6">
                 <div class="home-hero-visual">
-                    <img src="<?php echo e($featuredImage); ?>" alt="Foto kos unggulan">
+                    <img src="<?php echo e($featuredImage); ?>" alt="Foto kos unggulan" fetchpriority="high" decoding="async">
                     <div class="hero-floating-card hero-card-price">
                         <span>Mulai dari</span>
                         <strong><?php echo $startingPrice > 0 ? 'Rp ' . number_format($startingPrice, 0, ',', '.') : 'Tanya admin'; ?></strong>
@@ -132,7 +132,7 @@ ob_start();
                 <div class="col">
                     <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
                         <div class="home-room-image">
-                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>">
+                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
                             <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
                             <span class="home-status-badge">Tersedia</span>
                         </div>
@@ -181,7 +181,7 @@ ob_start();
                 <div class="col">
                     <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
                         <div class="home-room-image">
-                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>">
+                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
                             <?php if ($hasPromo): ?>
                                 <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
                             <?php endif; ?>
@@ -255,7 +255,7 @@ ob_start();
         <div class="home-branch-grid">
             <?php foreach ($branches as $branch): ?>
                 <article class="home-branch-card">
-                    <img src="<?php echo e(upload_asset($branch['foto_kost'])); ?>" alt="<?php echo e($branch['nama_kost']); ?>">
+                    <img src="<?php echo e(upload_asset($branch['foto_kost'])); ?>" alt="<?php echo e($branch['nama_kost']); ?>" loading="lazy" decoding="async">
                     <div>
                         <span><?php echo e($branch['kamar_tersedia']); ?> kamar tersedia</span>
                         <h3><?php echo e($branch['nama_kost']); ?></h3>

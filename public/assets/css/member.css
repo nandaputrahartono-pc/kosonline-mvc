@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-:root {
+.member-page {
   --bg-main: #f4f7fb;
   --sidebar-bg: #ffffff;
   --card-bg: #ffffff;
@@ -15,38 +15,74 @@
   --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 
-* {
+[data-theme="dark"] .member-page {
+  --bg-main: #0b1120;
+  --sidebar-bg: #111827;
+  --card-bg: #111827;
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --accent-blue: #60a5fa;
+  --accent-blue-soft: rgba(96, 165, 250, 0.16);
+  --border-soft: rgba(148, 163, 184, 0.24);
+  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+.member-page,
+.member-page * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Outfit', sans-serif;
 }
 
-body {
-  min-height: 100vh;
-  display: flex;
+.member-page {
+  min-height: calc(100vh - 80px);
+  padding: 0;
   background:
     radial-gradient(circle at top right, rgba(37, 99, 235, 0.13), transparent 32rem),
     var(--bg-main);
   color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
 }
 
-a {
+.member-page button,
+.member-page input,
+.member-page textarea,
+.member-page select {
+  font: inherit;
+}
+
+.member-page a {
   color: inherit;
   text-decoration: none;
 }
 
+.member-dashboard-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: calc(100vh - 80px);
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+}
+
 .sidebar {
   width: 280px;
-  min-height: 100vh;
-  padding: 24px 18px;
+  height: calc(100vh - 80px);
+  min-height: calc(100vh - 80px);
+  padding: 32px 18px 24px;
   background: var(--sidebar-bg);
+  border: 0;
   border-right: 1px solid var(--border-soft);
+  border-radius: 0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 22px;
   position: sticky;
-  top: 0;
+  top: 80px;
+  overflow-y: auto;
 }
 
 .sidebar-brand a {
@@ -130,8 +166,8 @@ a {
 }
 
 .logout button,
-.btn-primary,
-.btn-whatsapp {
+.member-page .btn-primary,
+.member-page .btn-whatsapp {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -181,9 +217,10 @@ a {
   display: block;
 }
 
-#chat.page.active {
+.member-page #chat.page.active {
   display: block;
-  height: calc(100vh - 68px);
+  height: calc(100vh - 148px);
+  min-height: 620px;
 }
 
 @keyframes fadeIn {
@@ -214,7 +251,7 @@ a {
   margin-bottom: 7px;
 }
 
-h1 {
+.member-page h1 {
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 1;
   letter-spacing: -0.06em;
@@ -227,19 +264,19 @@ h1 {
   margin-top: 10px;
 }
 
-.btn-primary {
+.member-page .btn-primary {
   background: var(--accent-blue);
   color: #ffffff;
   box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
 }
 
-.btn-primary.soft {
+.member-page .btn-primary.soft {
   background: var(--accent-blue-soft);
   color: var(--accent-blue);
   box-shadow: none;
 }
 
-.btn-whatsapp {
+.member-page .btn-whatsapp {
   background: #dcfce7;
   color: #15803d;
 }
@@ -290,7 +327,7 @@ h1 {
   letter-spacing: -0.03em;
 }
 
-.badge {
+.member-page .badge {
   display: inline-flex;
   align-items: center;
   width: fit-content;
@@ -300,17 +337,17 @@ h1 {
   font-weight: 800;
 }
 
-.badge.success {
+.member-page .badge.success {
   background: #dcfce7;
   color: #166534;
 }
 
-.badge.warning {
+.member-page .badge.warning {
   background: #ffedd5;
   color: #9a3412;
 }
 
-.badge.danger {
+.member-page .badge.danger {
   background: #fee2e2;
   color: #991b1b;
 }
@@ -1087,7 +1124,85 @@ h1 {
   color: var(--red);
 }
 
+[data-theme="dark"] .member-page {
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 32rem),
+    var(--bg-main);
+}
+
+[data-theme="dark"] .stats-card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .order-card,
+[data-theme="dark"] .invoice-card,
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .form-panel,
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .member-flash {
+  background: var(--card-bg);
+  border-color: var(--border-soft);
+}
+
+[data-theme="dark"] .mini-grid span,
+[data-theme="dark"] .invoice-meta span,
+[data-theme="dark"] .form-panel input {
+  background: #0f172a;
+  border-color: var(--border-soft);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .chat-dashboard,
+[data-theme="dark"] .chat-thread-list,
+[data-theme="dark"] .chat-panel,
+[data-theme="dark"] .chat-panel-head,
+[data-theme="dark"] .chat-sidebar-rule,
+[data-theme="dark"] .chat-sidebar-foot,
+[data-theme="dark"] .chat-compose,
+[data-theme="dark"] .chat-room-card-wrap,
+[data-theme="dark"] .chat-typing-indicator {
+  background: var(--card-bg);
+  border-color: var(--border-soft);
+}
+
+[data-theme="dark"] .chat-message-list,
+[data-theme="dark"] .chat-thread-list a.active,
+[data-theme="dark"] .chat-thread-list a:hover {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .chat-thread-list a {
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+[data-theme="dark"] .chat-bubble,
+[data-theme="dark"] .chat-room-card,
+[data-theme="dark"] .chat-compose-box {
+  background: #111827;
+  border-color: var(--border-soft);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .chat-bubble.mine {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+[data-theme="dark"] .chat-panel-actions button {
+  background: #0f172a;
+  color: var(--text-muted);
+}
+
 @media (max-width: 1100px) {
+  .member-dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+
   .stats,
   .dashboard-grid,
   .profile-layout,
@@ -1111,20 +1226,20 @@ h1 {
 }
 
 @media (max-width: 768px) {
-  body {
-    display: block;
+  .member-page {
+    padding: 0;
+  }
+
+  .member-dashboard-shell {
+    width: 100%;
+    max-width: none;
+    gap: 0;
   }
 
   .sidebar {
-    position: fixed;
-    z-index: 30;
-    inset: 0 auto 0 0;
-    transform: translateX(-105%);
-    transition: transform 0.24s ease;
-  }
-
-  .sidebar.active {
-    transform: translateX(0);
+    padding: 18px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-soft);
   }
 
   .content {
@@ -1132,7 +1247,17 @@ h1 {
   }
 
   .header-mobile {
-    display: flex;
+    display: none;
+  }
+
+  .menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .menu a {
+    justify-content: center;
+    padding: 12px 10px;
+    font-size: 0.86rem;
   }
 
   .topbar,

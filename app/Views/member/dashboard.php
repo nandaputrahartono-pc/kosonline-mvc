@@ -9,13 +9,12 @@ $user = array_merge([
 $rentals = $rentals ?? [];
 $paymentHistory = $paymentHistory ?? [];
 $latestInvoice = $latestInvoice ?? null;
-$wishlistRooms = $wishlistRooms ?? [];
 $chatThreads = $chatThreads ?? [];
 $currentThread = $currentThread ?? null;
 $chatMessages = $chatMessages ?? [];
 $pendingRoomId = (int) ($pendingRoomId ?? 0);
 $pendingRoomCard = is_array($pendingRoomCard ?? null) ? $pendingRoomCard : null;
-$activeTab = in_array((string) ($activeTab ?? 'dashboard'), ['dashboard', 'pesananku', 'pembayaran', 'wishlist', 'chat', 'profil'], true)
+$activeTab = in_array((string) ($activeTab ?? 'dashboard'), ['dashboard', 'pesananku', 'pembayaran', 'chat', 'profil'], true)
     ? (string) $activeTab
     : 'dashboard';
 $summary = array_merge([
@@ -94,47 +93,17 @@ $avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'defaul
     : site_image('images.jpg');
 $wsHost = preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? '127.0.0.1'));
 $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
+ob_start();
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard User - KosOnline</title>
-    <link rel="stylesheet" href="<?php echo e(asset('css/member.css')); ?>">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-</head>
-<body>
-    <?php if ($successMessage !== null || $errorMessage !== null): ?>
-        <div class="member-flash-stack">
-            <?php if ($successMessage !== null): ?>
-                <div class="member-flash success"><i class="fa-solid fa-circle-check"></i><span><?php echo e($successMessage); ?></span></div>
-            <?php endif; ?>
-            <?php if ($errorMessage !== null): ?>
-                <div class="member-flash danger"><i class="fa-solid fa-circle-exclamation"></i><span><?php echo e($errorMessage); ?></span></div>
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
-
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <a href="<?php echo e(url('/')); ?>"><span>Kos</span>Online</a>
-            <small>User Panel</small>
-        </div>
-        <div class="sidebar-profile">
-            <img src="<?php echo e($avatarSource); ?>" alt="Foto profil">
-            <div>
-                <strong><?php echo e($user['nama_lengkap']); ?></strong>
-                <small>@<?php echo e($user['username']); ?></small>
-            </div>
-        </div>
+<main class="member-page">
+    <div class="member-dashboard-shell">
+        <aside class="sidebar">
         <ul class="menu">
-            <li><a href="#" data-page="dashboard" class="<?php echo $activeTab === 'dashboard' ? 'active' : ''; ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="#" data-page="pesananku" class="<?php echo $activeTab === 'pesananku' ? 'active' : ''; ?>"><i class="fa-solid fa-bed"></i> Pesananku</a></li>
-            <li><a href="#" data-page="pembayaran" class="<?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>"><i class="fa-solid fa-file-invoice-dollar"></i> Invoice</a></li>
-            <li><a href="#" data-page="wishlist" class="<?php echo $activeTab === 'wishlist' ? 'active' : ''; ?>"><i class="fa-regular fa-heart"></i> Wishlist</a></li>
-            <li><a href="#" data-page="chat" class="<?php echo $activeTab === 'chat' ? 'active' : ''; ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a></li>
-            <li><a href="#" data-page="profil" class="<?php echo $activeTab === 'profil' ? 'active' : ''; ?>"><i class="fa-solid fa-user-gear"></i> Profil</a></li>
+            <li><a href="<?php echo e(url('/member/dashboard?tab=dashboard')); ?>" data-page="dashboard" class="<?php echo $activeTab === 'dashboard' ? 'active' : ''; ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="<?php echo e(url('/member/dashboard?tab=pesananku')); ?>" data-page="pesananku" class="<?php echo $activeTab === 'pesananku' ? 'active' : ''; ?>"><i class="fa-solid fa-bed"></i> Pesananku</a></li>
+            <li><a href="<?php echo e(url('/member/dashboard?tab=pembayaran')); ?>" data-page="pembayaran" class="<?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>"><i class="fa-solid fa-file-invoice-dollar"></i> Invoice</a></li>
+            <li><a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>" data-page="chat" class="<?php echo $activeTab === 'chat' ? 'active' : ''; ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a></li>
+            <li><a href="<?php echo e(url('/member/dashboard?tab=profil')); ?>" data-page="profil" class="<?php echo $activeTab === 'profil' ? 'active' : ''; ?>"><i class="fa-solid fa-user-gear"></i> Profil</a></li>
         </ul>
         <div class="logout">
             <form method="POST" action="<?php echo e(url('/logout')); ?>">
@@ -142,9 +111,9 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                 <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </form>
         </div>
-    </aside>
+        </aside>
 
-    <main class="content">
+        <section class="content">
         <div class="header-mobile">
             <button id="sidebar-toggle" class="btn-toggle" type="button"><i class="fa-solid fa-bars"></i></button>
             <h3>KosOnline</h3>
@@ -295,63 +264,6 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                         <i class="fa-solid fa-file-invoice-dollar"></i>
                         <h3>Belum ada invoice</h3>
                         <p>Invoice otomatis muncul setelah kamu booking kamar.</p>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </section>
-
-        <section class="page <?php echo $activeTab === 'wishlist' ? 'active' : ''; ?>" id="wishlist">
-            <div class="topbar">
-                <div>
-                    <p class="eyebrow">Wishlist</p>
-                    <h1>Kamar yang Disimpan</h1>
-                    <p class="page-subtitle">Tempat aman untuk kamar yang masih kamu pikir-pikir dulu.</p>
-                </div>
-                <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary"><i class="fa-solid fa-bed"></i> Cari Kamar Lagi</a>
-            </div>
-
-            <div class="order-list">
-                <?php if ($wishlistRooms !== []): ?>
-                    <?php foreach ($wishlistRooms as $item): ?>
-                        <?php
-                        $imageSource = !empty($item['foto_kost']) ? upload_asset((string) $item['foto_kost']) : site_image('images.jpg');
-                        $discount = max(0, min(100, (int) ($item['diskon_cabang'] ?? 0)));
-                        $finalPrice = (float) $item['harga'] * (1 - ($discount / 100));
-                        ?>
-                        <article class="order-card">
-                            <img src="<?php echo e($imageSource); ?>" alt="Foto kos">
-                            <div class="order-body">
-                                <div class="order-title">
-                                    <div>
-                                        <h3><?php echo e($item['nama_kost']); ?></h3>
-                                        <p>Kamar <?php echo e($item['nomor_kamar']); ?>, Lantai <?php echo e($item['lantai']); ?></p>
-                                    </div>
-                                    <span class="badge <?php echo $item['status'] === 'Tersedia' ? 'success' : 'warning'; ?>"><?php echo e($item['status']); ?></span>
-                                </div>
-                                <div class="mini-grid">
-                                    <span><b>Harga</b><?php echo e($formatRupiah($finalPrice)); ?></span>
-                                    <span><b>Diskon</b><?php echo $discount > 0 ? e((string) $discount) . '%' : '-'; ?></span>
-                                    <span><b>Disimpan</b><?php echo e($formatDate((string) $item['dibuat_pada'])); ?></span>
-                                </div>
-                                <p class="muted"><i class="fa-solid fa-location-dot"></i> <?php echo e($item['alamat']); ?></p>
-                                <div class="invoice-actions">
-                                    <a href="<?php echo e(url('/rooms/detail?id=' . $item['id_kamar'])); ?>" class="btn-primary soft">Lihat Detail</a>
-                                    <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>">
-                                        <?php echo csrf_field(); ?>
-                                        <input type="hidden" name="id_kamar" value="<?php echo e($item['id_kamar']); ?>">
-                                        <input type="hidden" name="redirect" value="/member/dashboard?tab=wishlist">
-                                        <button type="submit" class="btn-whatsapp wishlist-remove"><i class="fa-solid fa-heart-crack"></i> Hapus</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </article>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="empty-state">
-                        <i class="fa-regular fa-heart"></i>
-                        <h3>Wishlist masih kosong</h3>
-                        <p>Simpan kamar dari halaman detail atau daftar kamar biar gampang dibandingkan nanti.</p>
-                        <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary">Cari Kamar</a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -518,10 +430,58 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                 </form>
             </div>
         </section>
-    </main>
+        </section>
+    </div>
+</main>
+<?php
+$content = ob_get_clean();
+$title = 'Dashboard User - KosOnline';
+$showFooter = false;
+$showChatbot = false;
+$extraHead = '<link rel="stylesheet" href="' . e(asset('css/member.css')) . '">';
+$extraScripts = '<script src="' . e(asset('js/chat-realtime.js')) . '"></script>' . <<<HTML
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const dashboard = document.querySelector('.member-dashboard-shell');
+  if (!dashboard) return;
 
-    <script src="<?php echo e(asset('js/notifications.js')); ?>"></script>
-    <script src="<?php echo e(asset('js/chat-realtime.js')); ?>"></script>
-    <script src="<?php echo e(asset('js/admin.js')); ?>"></script>
-</body>
-</html>
+  const links = dashboard.querySelectorAll('[data-page]');
+  const pages = dashboard.querySelectorAll('.page');
+  const sidebar = dashboard.querySelector('.sidebar');
+  const sidebarToggle = dashboard.querySelector('#sidebar-toggle');
+
+  function showPage(pageId, pushState) {
+    pages.forEach(function (page) {
+      page.classList.toggle('active', page.id === pageId);
+    });
+
+    links.forEach(function (link) {
+      link.classList.toggle('active', link.getAttribute('data-page') === pageId);
+    });
+
+    if (pushState) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', pageId);
+      window.history.replaceState({}, '', url);
+    }
+  }
+
+  links.forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      const pageId = this.getAttribute('data-page');
+      if (!pageId) return;
+      event.preventDefault();
+      showPage(pageId, true);
+      if (sidebar) sidebar.classList.remove('active');
+    });
+  });
+
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', function () {
+      sidebar.classList.toggle('active');
+    });
+  }
+});
+</script>
+HTML;
+require base_path('app/Views/layouts/public.php');

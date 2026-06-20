@@ -150,7 +150,7 @@ ob_start();
                         ?>
                         <article class="room-modern-card">
                             <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="room-card-image">
-                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto kamar <?php echo e($room['nomor_kamar']); ?>">
+                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto kamar <?php echo e($room['nomor_kamar']); ?>" loading="lazy" decoding="async">
                                 <span class="room-card-badge"><?php echo e($room['nama_kost']); ?></span>
                                 <?php if ($hasPromo): ?>
                                     <span class="room-card-promo">Diskon <?php echo e((string) $room['diskon_persen']); ?>%</span>
