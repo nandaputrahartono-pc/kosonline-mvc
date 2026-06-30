@@ -58,27 +58,28 @@ $navClass = static function (array $paths) use ($currentPath): string {
         <a href="<?php echo e($isLoggedInUser ? url('/wishlist') : url('/login')); ?>" class="public-icon-link d-none d-lg-inline-flex <?php echo $currentPath === '/wishlist' ? 'active' : ''; ?>" title="Wishlist">
             <i class="fa-regular fa-heart"></i>
         </a>
+        <a href="<?php echo e($isLoggedInUser ? url('/member/dashboard?tab=chat') : url('/login')); ?>" class="public-icon-link d-none d-lg-inline-flex <?php echo $currentPath === '/member/dashboard' && (string) ($_GET['tab'] ?? '') === 'chat' ? 'active' : ''; ?>" title="Chat Admin">
+            <i class="fa-regular fa-comments"></i>
+        </a>
         <button id="theme-toggle" class="btn btn-link text-decoration-none p-0 m-0 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; background: var(--card-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: var(--text-main);">
             <i class="fa-solid fa-moon"></i>
         </button>
         <?php if ($isLoggedInUser): ?>
             <div class="public-user-menu d-none d-lg-block">
                 <button type="button" class="public-user-trigger" aria-label="Menu akun">
-                    <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil <?php echo e($currentUserName); ?>">
+                    <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil <?php echo e($currentUserName); ?>" decoding="async">
                     <span><?php echo e(strtok($currentUserName, ' ') ?: 'User'); ?></span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="public-user-dropdown">
                     <div class="public-user-card">
-                        <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil">
+                        <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil" loading="lazy" decoding="async">
                         <div>
                             <strong><?php echo e($currentUserName); ?></strong>
                             <small>Sudah login</small>
                         </div>
                     </div>
                     <a href="<?php echo e(url('/member/dashboard')); ?>"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
-                    <a href="<?php echo e(url('/wishlist')); ?>"><i class="fa-regular fa-heart"></i> Wishlist</a>
-                    <a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a>
                     <form method="POST" action="<?php echo e(url('/logout')); ?>">
                         <?php echo csrf_field(); ?>
                         <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>

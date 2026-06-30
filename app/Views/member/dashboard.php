@@ -6,6 +6,7 @@ $user = array_merge([
     'no_hp' => '-',
     'foto_profil' => 'default.jpg',
 ], $user ?? []);
+$rental = $rental ?? null;
 $rentals = $rentals ?? [];
 $paymentHistory = $paymentHistory ?? [];
 $latestInvoice = $latestInvoice ?? null;
@@ -14,7 +15,7 @@ $currentThread = $currentThread ?? null;
 $chatMessages = $chatMessages ?? [];
 $pendingRoomId = (int) ($pendingRoomId ?? 0);
 $pendingRoomCard = is_array($pendingRoomCard ?? null) ? $pendingRoomCard : null;
-$activeTab = in_array((string) ($activeTab ?? 'dashboard'), ['dashboard', 'pesananku', 'pembayaran', 'chat', 'profil'], true)
+$activeTab = in_array((string) ($activeTab ?? 'dashboard'), ['dashboard', 'pesananku', 'pembayaran', 'chat', 'profil', 'kos-saya', 'riwayat-kos', 'verifikasi-akun'], true)
     ? (string) $activeTab
     : 'dashboard';
 $summary = array_merge([
@@ -96,96 +97,319 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
 ob_start();
 ?>
 <main class="member-page">
-    <div class="member-dashboard-shell">
-        <aside class="sidebar">
-        <ul class="menu">
-            <li><a href="<?php echo e(url('/member/dashboard?tab=dashboard')); ?>" data-page="dashboard" class="<?php echo $activeTab === 'dashboard' ? 'active' : ''; ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="<?php echo e(url('/member/dashboard?tab=pesananku')); ?>" data-page="pesananku" class="<?php echo $activeTab === 'pesananku' ? 'active' : ''; ?>"><i class="fa-solid fa-bed"></i> Pesananku</a></li>
-            <li><a href="<?php echo e(url('/member/dashboard?tab=pembayaran')); ?>" data-page="pembayaran" class="<?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>"><i class="fa-solid fa-file-invoice-dollar"></i> Invoice</a></li>
-            <li><a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>" data-page="chat" class="<?php echo $activeTab === 'chat' ? 'active' : ''; ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a></li>
-            <li><a href="<?php echo e(url('/member/dashboard?tab=profil')); ?>" data-page="profil" class="<?php echo $activeTab === 'profil' ? 'active' : ''; ?>"><i class="fa-solid fa-user-gear"></i> Profil</a></li>
-        </ul>
-        <div class="logout">
-            <form method="POST" action="<?php echo e(url('/logout')); ?>">
-                <?php echo csrf_field(); ?>
-                <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-            </form>
-        </div>
-        </aside>
+    <div class="member-dashboard-shell<?php echo $activeTab === 'chat' ? ' is-chat-open' : ''; ?>">
+        <section class="content w-100">
 
-        <section class="content">
-        <div class="header-mobile">
-            <button id="sidebar-toggle" class="btn-toggle" type="button"><i class="fa-solid fa-bars"></i></button>
-            <h3>KosOnline</h3>
-        </div>
-
+        <!-- Tab 1: Dashboard / Akun Saya Hub -->
         <section class="page <?php echo $activeTab === 'dashboard' ? 'active' : ''; ?>" id="dashboard">
-            <div class="topbar">
-                <div>
-                    <p class="eyebrow">Dashboard User</p>
-                    <h1>Halo, <?php echo e(strtok((string) $user['nama_lengkap'], ' ') ?: 'User'); ?></h1>
-                    <p class="page-subtitle">Pantau pesanan, invoice, dan deadline sewa kos kamu dari satu tempat.</p>
-                </div>
-                <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Cari Kamar</a>
+            <div class="account-hub-header">
+                <nav class="hub-breadcrumbs">
+                    <a href="<?php echo e(url('/')); ?>">Beranda</a>
+                    <span class="separator">/</span>
+                    <span class="current">Akun Saya</span>
+                </nav>
+                <h1>Akun Saya</h1>
+                <p class="hub-subtitle">Kelola kos, invoice, dan pengaturan akun kamu di sini.</p>
             </div>
 
-            <div class="stats">
-                <div class="stats-card">
-                    <i class="fa-solid fa-receipt"></i>
-                    <small>Tagihan Terdekat</small>
-                    <strong><?php echo e($formatRupiah((float) $summary['tagihan_terdekat'])); ?></strong>
-                </div>
-                <div class="stats-card">
-                    <i class="fa-solid fa-clock"></i>
-                    <small>Deadline</small>
-                    <strong><?php echo e($formatDate((string) $summary['jatuh_tempo'])); ?></strong>
-                </div>
-                <div class="stats-card">
-                    <i class="fa-solid fa-bed"></i>
-                    <small>Pesanan</small>
-                    <strong><?php echo e((string) $summary['total_pesanan']); ?></strong>
-                </div>
-                <div class="stats-card">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <small>Status</small>
-                    <strong><span class="badge <?php echo e($summary['class_badge']); ?>"><?php echo e($summary['status_bayar']); ?></span></strong>
-                </div>
-            </div>
-
-            <div class="dashboard-grid">
-                <div class="panel panel-hero">
-                    <div>
-                        <p class="eyebrow">Kamar Saat Ini</p>
-                        <h2><?php echo e($summary['nama_kost']); ?></h2>
-                        <p><?php echo e($summary['kamar_info']); ?></p>
+            <div class="account-hub-grid">
+                <!-- Left Column: Profile Card -->
+                <div class="hub-profile-card">
+                    <div class="hub-profile-avatar-wrap">
+                        <img src="<?php echo e($avatarSource); ?>" alt="Foto profil" class="hub-profile-avatar" decoding="async">
+                        <span class="hub-verification-badge verified">
+                            <i class="fa-solid fa-shield-halved"></i> Terverifikasi
+                        </span>
                     </div>
-                    <?php if ($rental !== null): ?>
-                        <span class="badge <?php echo e($statusClass((string) $rental['status_sewa'])); ?>"><?php echo e($rental['status_sewa']); ?></span>
-                    <?php endif; ?>
+                    <h2 class="hub-profile-name"><?php echo e($user['nama_lengkap']); ?></h2>
+                    <p class="hub-profile-username">@<?php echo e($user['username']); ?></p>
+                    <p class="hub-profile-email"><?php echo e($user['email']); ?></p>
+
+                    <!-- Profile Completion Progress -->
+                    <?php
+                    $filledFields = 0;
+                    if (!empty($user['nama_lengkap']) && $user['nama_lengkap'] !== 'User') $filledFields++;
+                    if (!empty($user['email']) && $user['email'] !== '-') $filledFields++;
+                    if (!empty($user['no_hp']) && $user['no_hp'] !== '-') $filledFields++;
+                    if (!empty($user['foto_profil']) && $user['foto_profil'] !== 'default.jpg') $filledFields++;
+                    $completionPercent = (int)(($filledFields / 4) * 100);
+                    if ($completionPercent === 0) $completionPercent = 25; // Minimum progress
+                    ?>
+                    <div class="profile-completion">
+                        <div class="completion-text">
+                            <span>Kelengkapan Profil</span>
+                            <strong><?php echo e($completionPercent); ?>%</strong>
+                        </div>
+                        <div class="completion-bar-outer">
+                            <div class="completion-bar-inner" style="width: <?php echo e($completionPercent); ?>%;"></div>
+                        </div>
+                    </div>
+
+                    <a href="#" class="btn-lengkapi-profil" data-page="profil"><i class="fa-solid fa-user-pen"></i> Lengkapi Profil</a>
                 </div>
 
-                <div class="panel invoice-highlight">
-                    <p class="eyebrow">Invoice Terbaru</p>
-                    <?php if ($latestInvoice !== null): ?>
-                        <h2><?php echo e($latestInvoice['invoice_no'] ?? 'Invoice'); ?></h2>
-                        <p><?php echo e($latestInvoice['nama_kost']); ?> - Kamar <?php echo e($latestInvoice['nomor_kamar']); ?></p>
-                        <div class="invoice-row">
-                            <span>Total</span>
-                            <strong><?php echo e($formatRupiah((float) ($latestInvoice['total_bayar'] ?? $latestInvoice['nominal'] ?? 0))); ?></strong>
-                        </div>
-                        <div class="invoice-actions">
-                            <a href="<?php echo e(url('/rooms/invoice?id=' . $latestInvoice['id_pembayaran'])); ?>" class="btn-primary soft"><i class="fa-solid fa-eye"></i> Lihat Invoice</a>
-                            <a href="https://wa.me/6287748703029?text=<?php echo rawurlencode('Halo Admin, saya ingin konfirmasi invoice ' . ($latestInvoice['invoice_no'] ?? '')); ?>" target="_blank" class="btn-whatsapp"><i class="fa-brands fa-whatsapp"></i> Konfirmasi</a>
-                        </div>
-                    <?php else: ?>
-                        <h2>Belum ada invoice</h2>
-                        <p>Invoice akan muncul setelah kamu membuat booking kamar.</p>
-                    <?php endif; ?>
+                <!-- Right Column: Menu Options List -->
+                <div class="hub-menu-list">
+                    <!-- 1. Kos Saya -->
+                    <button type="button" class="hub-menu-item" data-page="kos-saya">
+                        <span class="hub-menu-icon icon-blue">
+                            <i class="fa-solid fa-house-chimney"></i>
+                        </span>
+                        <span class="hub-menu-text">
+                            <strong>Kos Saya</strong>
+                            <span>Lihat kos yang sedang kamu tempati.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
+                    </button>
+
+                    <!-- 2. Pengajuan Sewa -->
+                    <button type="button" class="hub-menu-item" data-page="pesananku">
+                        <span class="hub-menu-icon icon-green">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </span>
+                        <span class="hub-menu-text">
+                            <strong>Pengajuan Sewa</strong>
+                            <span>Cek status pengajuan sewa kamu.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
+                    </button>
+
+                    <!-- 3. Riwayat Kos -->
+                    <button type="button" class="hub-menu-item" data-page="riwayat-kos">
+                        <span class="hub-menu-icon icon-purple">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </span>
+                        <span class="hub-menu-text">
+                            <strong>Riwayat Kos</strong>
+                            <span>Lihat riwayat kos yang kamu tempati.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
+                    </button>
+
+                    <!-- 4. Invoice & Pembayaran -->
+                    <button type="button" class="hub-menu-item" data-page="pembayaran">
+                        <span class="hub-menu-icon icon-yellow">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </span>
+                        <span class="hub-menu-text">
+                            <strong>Invoice & Pembayaran</strong>
+                            <span>Lihat tagihan, invoice, dan riwayat pembayaran.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
+                    </button>
+
+                    <!-- 5. Verifikasi Akun -->
+                    <button type="button" class="hub-menu-item" data-page="verifikasi-akun">
+                        <span class="hub-menu-icon icon-indigo">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </span>
+                        <span class="hub-menu-text">
+                            <strong>Verifikasi Akun</strong>
+                            <span>Lengkapi data untuk verifikasi akun kamu.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
+                    </button>
+
+                    <!-- 6. Pengaturan -->
+                    <button type="button" class="hub-menu-item" data-page="profil">
+                        <span class="hub-menu-icon icon-pink">
+                            <i class="fa-solid fa-gears"></i>
+                        </span>
+                        <span class="hub-menu-text">
+                            <strong>Pengaturan</strong>
+                            <span>Atur profil, keamanan, dan preferensi akun.</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
+                    </button>
+
+                    <!-- 7. Logout -->
+                    <form method="POST" action="<?php echo e(url('/logout')); ?>" class="hub-logout-form">
+                        <?php echo csrf_field(); ?>
+                        <button type="submit" class="hub-menu-item w-100 border-0 text-start bg-transparent">
+                            <span class="hub-menu-icon icon-red">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </span>
+                            <span class="hub-menu-text">
+                                <strong>Logout</strong>
+                                <span>Keluar dari akun kamu.</span>
+                            </span>
+                            <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
         </section>
 
+        <!-- Tab: Kos Saya -->
+        <section class="page <?php echo $activeTab === 'kos-saya' ? 'active' : ''; ?>" id="kos-saya">
+            <div class="hub-back-nav">
+                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
+            </div>
+            <div class="topbar">
+                <div>
+                    <p class="eyebrow">Informasi Hunian</p>
+                    <h1>Kos Saya</h1>
+                    <p class="page-subtitle">Detail kos yang sedang kamu tempati saat ini.</p>
+                </div>
+            </div>
+
+            <?php if ($rental !== null): ?>
+                <div class="my-kost-detail-card">
+                    <div class="my-kost-header">
+                        <div class="my-kost-title">
+                            <h2><?php echo e($rental['nama_kost']); ?></h2>
+                            <p><i class="fa-solid fa-location-dot"></i> <?php echo e($rental['alamat']); ?></p>
+                        </div>
+                        <span class="badge <?php echo e($statusClass((string) $rental['status_sewa'])); ?>"><?php echo e($rental['status_sewa']); ?></span>
+                    </div>
+
+                    <div class="my-kost-grid">
+                        <div class="my-kost-info-item">
+                            <small>Nomor Kamar</small>
+                            <strong>Kamar <?php echo e($rental['nomor_kamar']); ?></strong>
+                        </div>
+                        <div class="my-kost-info-item">
+                            <small>Lantai</small>
+                            <strong>Lantai <?php echo e($rental['lantai']); ?></strong>
+                        </div>
+                        <div class="my-kost-info-item">
+                            <small>Harga Sewa</small>
+                            <strong><?php echo e($formatRupiah((float)$rental['harga'])); ?> <span class="muted-text">/ bulan</span></strong>
+                        </div>
+                        <div class="my-kost-info-item">
+                            <small>Tanggal Masuk</small>
+                            <strong><?php echo e($formatDate((string) $rental['tanggal_masuk'])); ?></strong>
+                        </div>
+                        <div class="my-kost-info-item">
+                            <small>Jatuh Tempo Berikutnya</small>
+                            <strong class="text-danger"><?php echo e($formatDate((string) $summary['jatuh_tempo'])); ?></strong>
+                        </div>
+                        <div class="my-kost-info-item">
+                            <small>Fasilitas Kamar</small>
+                            <strong><?php echo e($rental['fasilitas'] ?? 'Fasilitas Standard'); ?></strong>
+                        </div>
+                    </div>
+
+                    <div class="my-kost-actions">
+                        <a href="#" class="btn-primary soft" data-page="pembayaran"><i class="fa-solid fa-file-invoice-dollar"></i> Bayar Tagihan</a>
+                        <a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>" class="btn-primary" data-page="chat"><i class="fa-regular fa-comments"></i> Hubungi Admin</a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">
+                    <i class="fa-solid fa-house-circle-exclamation"></i>
+                    <h3>Kamu belum menyewa kos</h3>
+                    <p>Mulai cari kos yang nyaman dan strategis untuk tempat tinggalmu.</p>
+                    <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Cari Kamar Kos</a>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <!-- Tab: Riwayat Kos -->
+        <section class="page <?php echo $activeTab === 'riwayat-kos' ? 'active' : ''; ?>" id="riwayat-kos">
+            <div class="hub-back-nav">
+                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
+            </div>
+            <div class="topbar">
+                <div>
+                    <p class="eyebrow">Riwayat Hunian</p>
+                    <h1>Riwayat Kos</h1>
+                    <p class="page-subtitle">Daftar kos yang pernah kamu tempati sebelumnya.</p>
+                </div>
+            </div>
+
+            <div class="order-list">
+                <?php
+                $historyRentals = array_filter($rentals, fn($item) => $item['status_sewa'] === 'Berhenti');
+                ?>
+                <?php if ($historyRentals !== []): ?>
+                    <?php foreach ($historyRentals as $item): ?>
+                        <?php
+                        $imageSource = !empty($item['foto_kost']) ? upload_asset((string) $item['foto_kost']) : site_image('images.jpg');
+                        ?>
+                        <article class="order-card">
+                            <img src="<?php echo e($imageSource); ?>" alt="Foto kos" loading="lazy" decoding="async">
+                            <div class="order-body">
+                                <div class="order-title">
+                                    <div>
+                                        <h3><?php echo e($item['nama_kost']); ?></h3>
+                                        <p>Kamar <?php echo e($item['nomor_kamar']); ?>, Lantai <?php echo e($item['lantai']); ?></p>
+                                    </div>
+                                    <span class="badge <?php echo e($statusClass((string) $item['status_sewa'])); ?>"><?php echo e($item['status_sewa']); ?></span>
+                                </div>
+                                <div class="mini-grid">
+                                    <span><b>Tanggal masuk</b><?php echo e($formatDate((string) $item['tanggal_masuk'])); ?></span>
+                                    <span><b>Tanggal keluar</b><?php echo e($formatDate((string) $item['tanggal_keluar'])); ?></span>
+                                    <span><b>Harga</b><?php echo e($formatRupiah((float) ($item['total_bayar'] ?? $item['harga']))); ?></span>
+                                </div>
+                                <p class="muted"><i class="fa-solid fa-location-dot"></i> <?php echo e($item['alamat']); ?></p>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <h3>Belum ada riwayat kos</h3>
+                        <p>Kamu belum memiliki riwayat sewa kos yang sudah selesai.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Tab: Verifikasi Akun -->
+        <section class="page <?php echo $activeTab === 'verifikasi-akun' ? 'active' : ''; ?>" id="verifikasi-akun">
+            <div class="hub-back-nav">
+                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
+            </div>
+            <div class="topbar">
+                <div>
+                    <p class="eyebrow">Keamanan Akun</p>
+                    <h1>Verifikasi Akun</h1>
+                    <p class="page-subtitle">Status verifikasi identitas dan data diri kamu.</p>
+                </div>
+            </div>
+
+            <div class="verification-layout">
+                <div class="verification-status-card">
+                    <div class="status-header">
+                        <span class="status-icon success"><i class="fa-solid fa-shield-halved"></i></span>
+                        <div>
+                            <h2>Identitas Terverifikasi</h2>
+                            <p>Akun kamu sudah terverifikasi dan aktif untuk melakukan transaksi sewa.</p>
+                        </div>
+                    </div>
+                    <ul class="verification-check-list">
+                        <li>
+                            <i class="fa-solid fa-circle-check text-success"></i>
+                            <div>
+                                <strong>Profil Lengkap</strong>
+                                <p>Nama, email, dan no HP sudah diisi lengkap.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fa-solid fa-circle-check text-success"></i>
+                            <div>
+                                <strong>No. Handphone Aktif</strong>
+                                <p><?php echo e($user['no_hp']); ?></p>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fa-solid fa-circle-check text-success"></i>
+                            <div>
+                                <strong>Email Terhubung</strong>
+                                <p><?php echo e($user['email']); ?></p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Pesananku -->
         <section class="page <?php echo $activeTab === 'pesananku' ? 'active' : ''; ?>" id="pesananku">
+            <div class="hub-back-nav">
+                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
+            </div>
             <div class="topbar">
                 <div>
                     <p class="eyebrow">Pesananku</p>
@@ -201,7 +425,7 @@ ob_start();
                         $imageSource = !empty($item['foto_kost']) ? upload_asset((string) $item['foto_kost']) : site_image('images.jpg');
                         ?>
                         <article class="order-card">
-                            <img src="<?php echo e($imageSource); ?>" alt="Foto kos">
+                            <img src="<?php echo e($imageSource); ?>" alt="Foto kos" loading="lazy" decoding="async">
                             <div class="order-body">
                                 <div class="order-title">
                                     <div>
@@ -230,7 +454,11 @@ ob_start();
             </div>
         </section>
 
+        <!-- Tab 3: Invoice / Pembayaran -->
         <section class="page <?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>" id="pembayaran">
+            <div class="hub-back-nav">
+                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
+            </div>
             <div class="topbar">
                 <div>
                     <p class="eyebrow">Invoice</p>
@@ -269,6 +497,7 @@ ob_start();
             </div>
         </section>
 
+        <!-- Tab 4: Chat -->
         <section class="page <?php echo $activeTab === 'chat' ? 'active' : ''; ?>" id="chat">
             <div class="chat-dashboard"
                  data-chat-realtime
@@ -282,6 +511,9 @@ ob_start();
                  data-ws-url="ws://<?php echo e($wsHost); ?>:8098">
                 <aside class="chat-thread-list">
                     <div class="chat-sidebar-head">
+                        <a href="#" class="btn-back-chat mb-3" data-page="dashboard" title="Kembali ke Akun Saya">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </a>
                         <div>
                             <p>Chat KosOnline</p>
                             <h2>Ruang Bantuan</h2>
@@ -298,9 +530,9 @@ ob_start();
                             <a href="<?php echo e(url('/member/dashboard?tab=chat&thread=' . $thread['id_thread'])); ?>" class="<?php echo $currentThread !== null && (int) $currentThread['id_thread'] === (int) $thread['id_thread'] ? 'active' : ''; ?>">
                                 <i class="fa-regular fa-comments"></i>
                                 <span class="thread-copy">
-                                    <strong><?php echo e($chatSubject($thread)); ?></strong>
-                                    <em><?php echo e($context); ?></em>
-                                    <small><?php echo e((string) ($thread['pesan_terakhir'] ?? 'Belum ada pesan')); ?></small>
+                                     <strong><?php echo e($chatSubject($thread)); ?></strong>
+                                     <em><?php echo e($context); ?></em>
+                                     <small><?php echo e((string) ($thread['pesan_terakhir'] ?? 'Belum ada pesan')); ?></small>
                                 </span>
                             </a>
                         <?php endforeach; ?>
@@ -338,7 +570,7 @@ ob_start();
                                     <?php if ($card !== null): ?>
                                         <div class="chat-sent-room-card mine<?php echo !$isRoomCardOnly ? ' grouped' : ''; ?>" data-initials="<?php echo e($chatInitials($user['nama_lengkap'] ?? 'Kamu')); ?>">
                                             <a href="<?php echo e($card['url']); ?>" class="chat-room-card chat-room-card-message">
-                                                <img src="<?php echo e($card['image']); ?>" alt="Foto kamar">
+                                                <img src="<?php echo e($card['image']); ?>" alt="Foto kamar" loading="lazy" decoding="async">
                                                 <div>
                                                     <strong><?php echo e($card['title']); ?></strong>
                                                     <span><?php echo e($card['subtitle']); ?></span>
@@ -369,7 +601,7 @@ ob_start();
                     <div class="chat-room-card-wrap" data-chat-context <?php echo $pendingRoomCard === null ? 'hidden' : 'data-pending-context="1"'; ?>>
                         <?php if ($pendingRoomCard !== null): ?>
                             <a href="<?php echo e($pendingRoomCard['detail_url'] ?? '#'); ?>" class="chat-room-card">
-                                <img src="<?php echo e($pendingRoomCard['image_url'] ?? ''); ?>" alt="Foto kamar">
+                                <img src="<?php echo e($pendingRoomCard['image_url'] ?? ''); ?>" alt="Foto kamar" loading="lazy" decoding="async">
                                 <div>
                                     <strong><?php echo e($pendingRoomCard['title'] ?? 'Kamar Kos'); ?></strong>
                                     <span><?php echo e($pendingRoomCard['subtitle'] ?? ''); ?></span>
@@ -392,7 +624,11 @@ ob_start();
             </div>
         </section>
 
+        <!-- Tab 5: Profil / Settings -->
         <section class="page <?php echo $activeTab === 'profil' ? 'active' : ''; ?>" id="profil">
+            <div class="hub-back-nav">
+                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
+            </div>
             <div class="topbar">
                 <div>
                     <p class="eyebrow">Profil</p>
@@ -403,7 +639,7 @@ ob_start();
 
             <div class="profile-layout">
                 <div class="profile-card">
-                    <img src="<?php echo e($avatarSource); ?>" alt="Foto profil">
+                    <img src="<?php echo e($avatarSource); ?>" alt="Foto profil" loading="lazy" decoding="async">
                     <h2><?php echo e($user['nama_lengkap']); ?></h2>
                     <p>@<?php echo e($user['username']); ?></p>
                     <span><?php echo e($user['email']); ?></span>
@@ -430,15 +666,16 @@ ob_start();
                 </form>
             </div>
         </section>
+
         </section>
     </div>
 </main>
 <?php
 $content = ob_get_clean();
-$title = 'Dashboard User - KosOnline';
-$showFooter = false;
+$title = 'Akun Saya - KosOnline';
+$showFooter = true;
 $showChatbot = false;
-$extraHead = '<link rel="stylesheet" href="' . e(asset('css/member.css')) . '">';
+$extraHead = '<link rel="stylesheet" href="' . e(asset('css/member.css')) . '?v=' . time() . '">';
 $extraScripts = '<script src="' . e(asset('js/chat-realtime.js')) . '"></script>' . <<<HTML
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -447,10 +684,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const links = dashboard.querySelectorAll('[data-page]');
   const pages = dashboard.querySelectorAll('.page');
-  const sidebar = dashboard.querySelector('.sidebar');
-  const sidebarToggle = dashboard.querySelector('#sidebar-toggle');
+
+  function scrollChatToBottom() {
+    const chatScroll = dashboard.querySelector('#chat [data-chat-scroll]');
+    if (!chatScroll) return;
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  }
+
+  const footer = document.querySelector('.footer-premium');
 
   function showPage(pageId, pushState) {
+    dashboard.classList.toggle('is-chat-open', pageId === 'chat');
+    if (footer) {
+      footer.style.display = pageId === 'chat' ? 'none' : 'block';
+    }
+
     pages.forEach(function (page) {
       page.classList.toggle('active', page.id === pageId);
     });
@@ -464,6 +712,11 @@ document.addEventListener('DOMContentLoaded', function () {
       url.searchParams.set('tab', pageId);
       window.history.replaceState({}, '', url);
     }
+
+    if (pageId === 'chat') {
+      window.requestAnimationFrame(scrollChatToBottom);
+      window.setTimeout(scrollChatToBottom, 180);
+    }
   }
 
   links.forEach(function (link) {
@@ -472,14 +725,12 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!pageId) return;
       event.preventDefault();
       showPage(pageId, true);
-      if (sidebar) sidebar.classList.remove('active');
     });
   });
 
-  if (sidebarToggle && sidebar) {
-    sidebarToggle.addEventListener('click', function () {
-      sidebar.classList.toggle('active');
-    });
+  if (dashboard.querySelector('#chat.page.active')) {
+    window.requestAnimationFrame(scrollChatToBottom);
+    window.setTimeout(scrollChatToBottom, 220);
   }
 });
 </script>

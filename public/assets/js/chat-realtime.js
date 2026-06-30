@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderRoomCard(card, className) {
     return `
       <a href="${escapeHtml(card.detail_url || '#')}" class="${className}">
-        <img src="${escapeHtml(card.image_url || '')}" alt="Foto kamar">
+        <img src="${escapeHtml(card.image_url || '')}" alt="Foto kamar" loading="lazy" decoding="async">
         <div>
           <strong>${escapeHtml(card.title || 'Kamar Kos')}</strong>
           <span>${escapeHtml(card.subtitle || '')}</span>
@@ -359,6 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   connectSocket();
   if (!socketConnected) startPolling();
+  window.requestAnimationFrame(scrollToBottom);
+  window.setTimeout(scrollToBottom, 220);
 
   window.addEventListener('beforeunload', () => {
     stopPolling();
