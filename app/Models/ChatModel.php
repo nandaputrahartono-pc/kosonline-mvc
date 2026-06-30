@@ -140,16 +140,23 @@ final class ChatModel extends Model
         );
     }
 
-    public function getMessages(int $threadId): array
+    public function getMessages(int $threadId, int $limit = 120): array
     {
+        $limit = max(1, min(200, $limit));
+
         return $this->db->selectAll(
-            "SELECT chat_messages.*, kamar.nomor_kamar, kamar.harga, kamar.status AS status_kamar,
-                    kost.nama_kost, kost.foto_kost, kost.alamat
-             FROM chat_messages
-             LEFT JOIN kamar ON chat_messages.id_kamar = kamar.id_kamar
-             LEFT JOIN kost ON kamar.id_kost = kost.id_kost
-             WHERE chat_messages.id_thread = ?
-             ORDER BY chat_messages.dibuat_pada ASC, chat_messages.id_message ASC",
+            "SELECT recent_messages.*
+             FROM (
+                 SELECT chat_messages.*, kamar.nomor_kamar, kamar.harga, kamar.status AS status_kamar,
+                        kost.nama_kost, kost.foto_kost, kost.alamat
+                 FROM chat_messages
+                 LEFT JOIN kamar ON chat_messages.id_kamar = kamar.id_kamar
+                 LEFT JOIN kost ON kamar.id_kost = kost.id_kost
+                 WHERE chat_messages.id_thread = ?
+                 ORDER BY chat_messages.dibuat_pada DESC, chat_messages.id_message DESC
+                 LIMIT {$limit}
+             ) AS recent_messages
+             ORDER BY recent_messages.dibuat_pada ASC, recent_messages.id_message ASC",
             [$threadId]
         );
     }
