@@ -40,14 +40,24 @@ final class KostModel extends Model
         $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
         $hasKostDiskon = $this->hasColumn('kost', 'diskon_persen');
 
-        $kamarDiskonSelect = $hasKamarDiskon ? "kamar.diskon_persen AS kamar_diskon" : "0 AS kamar_diskon";
-        $kostDiskonSelect = $hasKostDiskon ? "kost.diskon_persen AS kost_diskon" : "0 AS kost_diskon";
+        $kamarDiskonExpr = $hasKamarDiskon ? "COALESCE(kamar.diskon_persen, 0)" : "0";
+        $kostDiskonExpr = $hasKostDiskon ? "COALESCE(kost.diskon_persen, 0)" : "0";
 
-        $sql = "SELECT kamar.*, kost.nama_kost, kost.alamat, kost.foto_kost, $kamarDiskonSelect, $kostDiskonSelect
+        $sql = "SELECT kamar.*, kost.nama_kost, kost.alamat, kost.foto_kost,
+                       {$kamarDiskonExpr} AS kamar_diskon,
+                       {$kostDiskonExpr} AS kost_diskon,
+                       COALESCE(review_summary.rating_avg, 0) AS rating_avg,
+                       COALESCE(review_summary.total_review, 0) AS total_review
                 FROM kamar
                 JOIN kost ON kamar.id_kost = kost.id_kost
+                LEFT JOIN (
+                    SELECT id_kamar, AVG(rating) AS rating_avg, COUNT(*) AS total_review
+                    FROM room_reviews
+                    GROUP BY id_kamar
+                ) AS review_summary ON review_summary.id_kamar = kamar.id_kamar
                 WHERE kamar.status = 'Tersedia'
-                LIMIT $limit";
+                ORDER BY rating_avg DESC, total_review DESC, kost.nama_kost ASC, kamar.nomor_kamar ASC
+                LIMIT {$limit}";
         
         $results = $this->db->selectAll($sql);
         
@@ -59,6 +69,8 @@ final class KostModel extends Model
                 $row['diskon_persen'] = (int)$row['kost_diskon'];
             }
         }
+        unset($row);
+
         return $results;
     }
 
@@ -68,31 +80,60 @@ final class KostModel extends Model
         $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
         $hasKostDiskon = $this->hasColumn('kost', 'diskon_persen');
 
-        $kamarDiskonSelect = $hasKamarDiskon ? "kamar.diskon_persen AS kamar_diskon" : "0 AS kamar_diskon";
-        $kostDiskonSelect = $hasKostDiskon ? "kost.diskon_persen AS kost_diskon" : "0 AS kost_diskon";
+        $kamarDiskonExpr = $hasKamarDiskon ? "COALESCE(kamar.diskon_persen, 0)" : "0";
+        $kostDiskonExpr = $hasKostDiskon ? "COALESCE(kost.diskon_persen, 0)" : "0";
+        $effectiveDiscountExpr = "CASE WHEN {$kamarDiskonExpr} > 0 THEN {$kamarDiskonExpr} WHEN {$kostDiskonExpr} > 0 THEN {$kostDiskonExpr} ELSE 0 END";
 
-        $sql = "SELECT kamar.*, kost.nama_kost, kost.alamat, kost.foto_kost, $kamarDiskonSelect, $kostDiskonSelect
+        $sql = "SELECT kamar.*, kost.nama_kost, kost.alamat, kost.foto_kost,
+                       {$kamarDiskonExpr} AS kamar_diskon,
+                       {$kostDiskonExpr} AS kost_diskon,
+                       COALESCE(review_summary.rating_avg, 0) AS rating_avg,
+                       COALESCE(review_summary.total_review, 0) AS total_review
                 FROM kamar
                 JOIN kost ON kamar.id_kost = kost.id_kost
-                WHERE kamar.status = 'Tersedia'";
+                LEFT JOIN (
+                    SELECT id_kamar, AVG(rating) AS rating_avg, COUNT(*) AS total_review
+                    FROM room_reviews
+                    GROUP BY id_kamar
+                ) AS review_summary ON review_summary.id_kamar = kamar.id_kamar
+                WHERE kamar.status = 'Tersedia'
+                AND ({$effectiveDiscountExpr}) > 0
+                ORDER BY ({$effectiveDiscountExpr}) DESC, COALESCE(kamar.harga, 0) ASC, kost.nama_kost ASC, kamar.nomor_kamar ASC
+                LIMIT {$limit}";
         
         $results = $this->db->selectAll($sql);
-        $promos = [];
 
-        foreach ($results as $row) {
+        foreach ($results as &$row) {
             $row['diskon_persen'] = 0;
             if ($hasKamarDiskon && $row['kamar_diskon'] > 0) {
                 $row['diskon_persen'] = (int)$row['kamar_diskon'];
             } elseif ($hasKostDiskon && $row['kost_diskon'] > 0) {
                 $row['diskon_persen'] = (int)$row['kost_diskon'];
             }
-
-            if ($row['diskon_persen'] > 0) {
-                $promos[] = $row;
-            }
         }
+        unset($row);
 
-        return array_slice($promos, 0, $limit);
+        return $results;
+    }
+
+    public function countAvailablePromos(): int
+    {
+        $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
+        $hasKostDiskon = $this->hasColumn('kost', 'diskon_persen');
+
+        $kamarDiskonExpr = $hasKamarDiskon ? "COALESCE(kamar.diskon_persen, 0)" : "0";
+        $kostDiskonExpr = $hasKostDiskon ? "COALESCE(kost.diskon_persen, 0)" : "0";
+        $effectiveDiscountExpr = "CASE WHEN {$kamarDiskonExpr} > 0 THEN {$kamarDiskonExpr} WHEN {$kostDiskonExpr} > 0 THEN {$kostDiskonExpr} ELSE 0 END";
+
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM kamar
+             JOIN kost ON kamar.id_kost = kost.id_kost
+             WHERE kamar.status = 'Tersedia'
+             AND ({$effectiveDiscountExpr}) > 0"
+        );
+
+        return (int) ($row['total'] ?? 0);
     }
 
     public function getAllWithAvailableCount(): array

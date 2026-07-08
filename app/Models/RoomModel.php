@@ -80,6 +80,90 @@ final class RoomModel extends Model
         return $results;
     }
 
+    public function searchAvailableFilteredPaginated(
+        ?string $keyword = null,
+        ?int $idKost = null,
+        bool $promoOnly = false,
+        string $sort = 'recommended',
+        int $limit = 9,
+        int $offset = 0
+    ): array {
+        $limit = max(1, min(48, $limit));
+        $offset = max(0, $offset);
+        $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
+        $hasKostDiskon = $this->hasColumn('kost', 'diskon_persen');
+
+        $kamarDiskonExpr = $hasKamarDiskon ? 'COALESCE(kamar.diskon_persen, 0)' : '0';
+        $kostDiskonExpr = $hasKostDiskon ? 'COALESCE(kost.diskon_persen, 0)' : '0';
+        $effectiveDiscountExpr = "CASE WHEN {$kamarDiskonExpr} > 0 THEN {$kamarDiskonExpr} WHEN {$kostDiskonExpr} > 0 THEN {$kostDiskonExpr} ELSE 0 END";
+        [$whereClause, $params] = $this->availableWhereClause($keyword, $idKost, $promoOnly, $effectiveDiscountExpr);
+
+        $orderBy = match ($sort) {
+            'termurah' => "ORDER BY (COALESCE(kamar.harga, 0) * (1 - (($effectiveDiscountExpr) / 100))) ASC, kost.nama_kost ASC, kamar.nomor_kamar ASC",
+            'termahal' => "ORDER BY (COALESCE(kamar.harga, 0) * (1 - (($effectiveDiscountExpr) / 100))) DESC, kost.nama_kost ASC, kamar.nomor_kamar ASC",
+            'promo' => "ORDER BY ($effectiveDiscountExpr) DESC, kost.nama_kost ASC, kamar.nomor_kamar ASC",
+            default => "ORDER BY kost.nama_kost ASC, kamar.nomor_kamar ASC",
+        };
+
+        $sql = "SELECT kamar.*, kost.nama_kost, kost.alamat, kost.foto_kost,
+                       {$kamarDiskonExpr} AS kamar_diskon,
+                       {$kostDiskonExpr} AS kost_diskon
+                FROM kamar
+                JOIN kost ON kamar.id_kost = kost.id_kost
+                WHERE {$whereClause}
+                {$orderBy}
+                LIMIT {$limit} OFFSET {$offset}";
+
+        $results = $this->db->selectAll($sql, $params);
+        $this->applyEffectiveDiscount($results, $hasKamarDiskon, $hasKostDiskon);
+
+        return $results;
+    }
+
+    public function countAvailableFiltered(?string $keyword = null, ?int $idKost = null, bool $promoOnly = false): int
+    {
+        $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
+        $hasKostDiskon = $this->hasColumn('kost', 'diskon_persen');
+        $kamarDiskonExpr = $hasKamarDiskon ? 'COALESCE(kamar.diskon_persen, 0)' : '0';
+        $kostDiskonExpr = $hasKostDiskon ? 'COALESCE(kost.diskon_persen, 0)' : '0';
+        $effectiveDiscountExpr = "CASE WHEN {$kamarDiskonExpr} > 0 THEN {$kamarDiskonExpr} WHEN {$kostDiskonExpr} > 0 THEN {$kostDiskonExpr} ELSE 0 END";
+        [$whereClause, $params] = $this->availableWhereClause($keyword, $idKost, $promoOnly, $effectiveDiscountExpr);
+
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM kamar
+             JOIN kost ON kamar.id_kost = kost.id_kost
+             WHERE {$whereClause}",
+            $params
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    public function availableSummary(): array
+    {
+        $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
+        $hasKostDiskon = $this->hasColumn('kost', 'diskon_persen');
+        $kamarDiskonExpr = $hasKamarDiskon ? 'COALESCE(kamar.diskon_persen, 0)' : '0';
+        $kostDiskonExpr = $hasKostDiskon ? 'COALESCE(kost.diskon_persen, 0)' : '0';
+        $effectiveDiscountExpr = "CASE WHEN {$kamarDiskonExpr} > 0 THEN {$kamarDiskonExpr} WHEN {$kostDiskonExpr} > 0 THEN {$kostDiskonExpr} ELSE 0 END";
+
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total_available,
+                    SUM(CASE WHEN {$effectiveDiscountExpr} > 0 THEN 1 ELSE 0 END) AS promo_count,
+                    MIN(COALESCE(kamar.harga, 0) * (1 - (({$effectiveDiscountExpr}) / 100))) AS lowest_price
+             FROM kamar
+             JOIN kost ON kamar.id_kost = kost.id_kost
+             WHERE kamar.status = 'Tersedia'"
+        );
+
+        return [
+            'total_available' => (int) ($row['total_available'] ?? 0),
+            'promo_count' => (int) ($row['promo_count'] ?? 0),
+            'lowest_price' => (float) ($row['lowest_price'] ?? 0),
+        ];
+    }
+
     public function findByIdWithKost(int $id): ?array
     {
         $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
@@ -120,6 +204,27 @@ final class RoomModel extends Model
              JOIN kost ON kamar.id_kost = kost.id_kost
              ORDER BY kost.nama_kost ASC, kamar.nomor_kamar ASC"
         );
+    }
+
+    public function getAllForAdminPaginated(int $limit = 10, int $offset = 0): array
+    {
+        $limit = max(1, min(100, $limit));
+        $offset = max(0, $offset);
+
+        return $this->db->selectAll(
+            "SELECT kamar.*, kost.nama_kost
+             FROM kamar
+             JOIN kost ON kamar.id_kost = kost.id_kost
+             ORDER BY kost.nama_kost ASC, kamar.nomor_kamar ASC
+             LIMIT {$limit} OFFSET {$offset}"
+        );
+    }
+
+    public function countAllForAdmin(): int
+    {
+        $row = $this->db->selectOne("SELECT COUNT(*) AS total FROM kamar");
+
+        return (int) ($row['total'] ?? 0);
     }
 
     public function getCounts(): array
@@ -197,5 +302,50 @@ final class RoomModel extends Model
     public function delete(int $id): bool
     {
         return $this->db->execute("DELETE FROM kamar WHERE id_kamar = ?", [$id]);
+    }
+
+    /**
+     * @return array{0: string, 1: array<int, mixed>}
+     */
+    private function availableWhereClause(
+        ?string $keyword,
+        ?int $idKost,
+        bool $promoOnly,
+        string $effectiveDiscountExpr
+    ): array {
+        $conditions = ["kamar.status = 'Tersedia'"];
+        $params = [];
+
+        if ($keyword !== null && $keyword !== '') {
+            $conditions[] = "(kost.nama_kost LIKE ? OR kost.alamat LIKE ? OR kamar.fasilitas LIKE ?)";
+            $likeKeyword = '%' . $keyword . '%';
+            $params[] = $likeKeyword;
+            $params[] = $likeKeyword;
+            $params[] = $likeKeyword;
+        }
+
+        if ($idKost !== null && $idKost > 0) {
+            $conditions[] = "kost.id_kost = ?";
+            $params[] = $idKost;
+        }
+
+        if ($promoOnly) {
+            $conditions[] = "({$effectiveDiscountExpr}) > 0";
+        }
+
+        return [implode(' AND ', $conditions), $params];
+    }
+
+    private function applyEffectiveDiscount(array &$rows, bool $hasKamarDiskon, bool $hasKostDiskon): void
+    {
+        foreach ($rows as &$row) {
+            $row['diskon_persen'] = 0;
+            if ($hasKamarDiskon && (int) ($row['kamar_diskon'] ?? 0) > 0) {
+                $row['diskon_persen'] = (int) $row['kamar_diskon'];
+            } elseif ($hasKostDiskon && (int) ($row['kost_diskon'] ?? 0) > 0) {
+                $row['diskon_persen'] = (int) $row['kost_diskon'];
+            }
+        }
+        unset($row);
     }
 }

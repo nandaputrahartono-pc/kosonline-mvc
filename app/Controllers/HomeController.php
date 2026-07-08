@@ -18,8 +18,8 @@ final class HomeController extends Controller
 
     public function index(): void
     {
-        $recommendations = $this->kostModel->getRecommendations(6);
-        $promos = $this->kostModel->getPromos(6);
+        $recommendations = $this->kostModel->getRecommendations(10);
+        $promos = $this->kostModel->getPromos(10);
         $branches = $this->kostModel->getAllWithAvailableCount();
         $availableRooms = array_sum(array_map(static fn (array $branch): int => (int) ($branch['kamar_tersedia'] ?? 0), $branches));
         $prices = array_map(static fn (array $room): float => (float) ($room['harga'] ?? 0), $recommendations);
@@ -32,7 +32,7 @@ final class HomeController extends Controller
             'homeStats' => [
                 'total_branches' => count($branches),
                 'available_rooms' => $availableRooms,
-                'active_promos' => count($promos),
+                'active_promos' => $this->kostModel->countAvailablePromos(),
                 'starting_price' => $prices === [] ? 0 : min($prices),
             ],
         ]);

@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const button = form.querySelector('button[type="submit"], button:not([type])');
       const icon = button ? button.querySelector('i') : null;
+      const label = button ? button.querySelector('span') : null;
 
       if (button) {
         button.classList.toggle('saved', saved);
@@ -166,6 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (icon) {
         icon.classList.toggle('fa-solid', saved);
         icon.classList.toggle('fa-regular', !saved);
+      }
+
+      if (label && button && button.closest('.detail-wishlist-inline')) {
+        label.textContent = saved ? 'Tersimpan' : 'Simpan';
       }
 
       if (button && button.classList.contains('wishlist-detail-btn')) {

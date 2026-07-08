@@ -114,104 +114,142 @@ ob_start();
     </div>
 </section>
 
-<?php if (!empty($promos)): ?>
-<section class="home-section">
+<?php if (!empty($recommendations)): ?>
+<section class="home-section home-section-soft">
     <div class="container">
         <div class="home-section-heading">
             <div>
-                <span class="home-eyebrow danger"><i class="fa-solid fa-fire"></i> Penawaran terbatas</span>
-                <h2>Promo kamar yang sedang aktif</h2>
-                <p>Ambil kesempatan harga terbaik sebelum kamar terisi.</p>
+                <span class="home-eyebrow"><i class="fa-solid fa-star"></i> Berdasarkan ulasan</span>
+                <h2>Rekomendasi kamar</h2>
+                <p>Kamar tersedia yang diurutkan dari rating dan jumlah ulasan terbaik.</p>
             </div>
-            <a href="<?php echo e(url('/rooms')); ?>">Lihat semua <i class="fa-solid fa-arrow-right"></i></a>
+            <div class="home-heading-actions">
+                <a href="<?php echo e(url('/rooms')); ?>">Lihat semua <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
         </div>
 
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            <?php foreach ($promos as $room): ?>
-                <?php $priceAfterDiscount = $finalPrice($room); ?>
-                <div class="col">
-                    <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
-                        <div class="home-room-image">
-                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
-                            <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
-                            <span class="home-status-badge">Tersedia</span>
-                        </div>
-                        <div class="home-room-body">
-                            <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
-                            <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
-                            <p><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
-                            <div class="home-facility-list">
-                                <?php foreach ($facilityBadges($room['fasilitas'] ?? '') as $facility): ?>
-                                    <span><i class="fa-solid fa-check"></i> <?php echo e($facility); ?></span>
-                                <?php endforeach; ?>
+        <div class="home-carousel-shell">
+            <button type="button" class="home-carousel-btn home-carousel-btn-prev" data-carousel-scroll="recommendation-rail" data-scroll-direction="-1" aria-label="Geser rekomendasi ke kiri">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="home-room-rail" id="recommendation-rail" tabindex="0" aria-label="Rekomendasi kamar">
+                <?php foreach ($recommendations as $room): ?>
+                    <?php
+                    $hasPromo = (int) ($room['diskon_persen'] ?? 0) > 0;
+                    $roomFinalPrice = $finalPrice($room);
+                    $ratingAvg = (float) ($room['rating_avg'] ?? 0);
+                    $totalReview = (int) ($room['total_review'] ?? 0);
+                    ?>
+                    <article class="home-carousel-item">
+                        <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
+                            <div class="home-room-image">
+                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
+                                <?php if ($hasPromo): ?>
+                                    <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
+                                <?php endif; ?>
+                                <span class="home-status-badge">Tersedia</span>
                             </div>
-                            <div class="home-room-footer">
-                                <div>
-                                    <small>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></small>
-                                    <strong>Rp <?php echo number_format($priceAfterDiscount, 0, ',', '.'); ?></strong>
+                            <div class="home-room-body">
+                                <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
+                                <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
+                                <div class="home-rating-mini">
+                                    <i class="fa-solid fa-star"></i>
+                                    <strong><?php echo e(number_format($ratingAvg, 1)); ?></strong>
+                                    <span><?php echo e((string) $totalReview); ?> ulasan</span>
                                 </div>
-                                <span>Lihat Detail</span>
+                                <p><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
+                                <div class="home-facility-list">
+                                    <?php foreach ($facilityBadges($room['fasilitas'] ?? '') as $facility): ?>
+                                        <span><i class="fa-solid fa-check"></i> <?php echo e($facility); ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="home-room-footer">
+                                    <div>
+                                        <?php if ($hasPromo): ?>
+                                            <small>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></small>
+                                        <?php endif; ?>
+                                        <strong>Rp <?php echo number_format($roomFinalPrice, 0, ',', '.'); ?></strong>
+                                    </div>
+                                    <span>Lihat Detail</span>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </div>
-            <?php endforeach; ?>
+                        </a>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" class="home-carousel-btn home-carousel-btn-next" data-carousel-scroll="recommendation-rail" data-scroll-direction="1" aria-label="Geser rekomendasi ke kanan">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
         </div>
     </div>
 </section>
 <?php endif; ?>
 
-<section class="home-section home-section-soft">
+<?php if (!empty($promos)): ?>
+<section class="home-section">
     <div class="container">
         <div class="home-section-heading">
             <div>
-                <span class="home-eyebrow"><i class="fa-solid fa-thumbs-up"></i> Rekomendasi</span>
-                <h2>Kamar yang paling cocok untuk mulai dicari</h2>
-                <p>Pilihan kamar tersedia dengan harga dan lokasi yang mudah dibandingkan.</p>
+                <span class="home-eyebrow danger"><i class="fa-solid fa-fire"></i> Diskon terbesar</span>
+                <h2>Promo kamar</h2>
+                <p>Promo kamar tersedia diurutkan dari potongan terbesar ke paling kecil.</p>
             </div>
-            <a href="<?php echo e(url('/rooms')); ?>">Lihat semua <i class="fa-solid fa-arrow-right"></i></a>
+            <div class="home-heading-actions">
+                <a href="<?php echo e(url('/rooms?promo=1&sort=promo')); ?>">Lihat semua promo <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
         </div>
 
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            <?php foreach ($recommendations as $room): ?>
-                <?php
-                $hasPromo = (int) ($room['diskon_persen'] ?? 0) > 0;
-                $roomFinalPrice = $finalPrice($room);
-                ?>
-                <div class="col">
-                    <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
-                        <div class="home-room-image">
-                            <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
-                            <?php if ($hasPromo): ?>
+        <div class="home-carousel-shell">
+            <button type="button" class="home-carousel-btn home-carousel-btn-prev" data-carousel-scroll="promo-rail" data-scroll-direction="-1" aria-label="Geser promo ke kiri">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="home-room-rail" id="promo-rail" tabindex="0" aria-label="Promo kamar">
+                <?php foreach ($promos as $room): ?>
+                    <?php
+                    $priceAfterDiscount = $finalPrice($room);
+                    $ratingAvg = (float) ($room['rating_avg'] ?? 0);
+                    $totalReview = (int) ($room['total_review'] ?? 0);
+                    ?>
+                    <article class="home-carousel-item">
+                        <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
+                            <div class="home-room-image">
+                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
                                 <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
-                            <?php endif; ?>
-                            <span class="home-status-badge">Tersedia</span>
-                        </div>
-                        <div class="home-room-body">
-                            <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
-                            <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
-                            <p><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
-                            <div class="home-facility-list">
-                                <?php foreach ($facilityBadges($room['fasilitas'] ?? '') as $facility): ?>
-                                    <span><i class="fa-solid fa-check"></i> <?php echo e($facility); ?></span>
-                                <?php endforeach; ?>
+                                <span class="home-status-badge">Tersedia</span>
                             </div>
-                            <div class="home-room-footer">
-                                <div>
-                                    <?php if ($hasPromo): ?>
-                                        <small>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></small>
-                                    <?php endif; ?>
-                                    <strong>Rp <?php echo number_format($roomFinalPrice, 0, ',', '.'); ?></strong>
+                            <div class="home-room-body">
+                                <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
+                                <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
+                                <div class="home-rating-mini">
+                                    <i class="fa-solid fa-star"></i>
+                                    <strong><?php echo e(number_format($ratingAvg, 1)); ?></strong>
+                                    <span><?php echo e((string) $totalReview); ?> ulasan</span>
                                 </div>
-                                <span>Lihat Detail</span>
+                                <p><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
+                                <div class="home-facility-list">
+                                    <?php foreach ($facilityBadges($room['fasilitas'] ?? '') as $facility): ?>
+                                        <span><i class="fa-solid fa-check"></i> <?php echo e($facility); ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="home-room-footer">
+                                    <div>
+                                        <small>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></small>
+                                        <strong>Rp <?php echo number_format($priceAfterDiscount, 0, ',', '.'); ?></strong>
+                                    </div>
+                                    <span>Lihat Detail</span>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </div>
-            <?php endforeach; ?>
+                        </a>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" class="home-carousel-btn home-carousel-btn-next" data-carousel-scroll="promo-rail" data-scroll-direction="1" aria-label="Geser promo ke kanan">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
         </div>
     </div>
 </section>
+<?php endif; ?>
 
 <section class="home-section">
     <div class="container">

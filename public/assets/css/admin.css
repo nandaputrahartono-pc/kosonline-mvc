@@ -247,6 +247,20 @@ body {
   overflow-x: auto;
 }
 
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.table-result-note {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -302,6 +316,10 @@ tbody tr {
 }
 
 .page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border-soft);
@@ -309,6 +327,7 @@ tbody tr {
   cursor: pointer;
   font-size: 14px;
   color: var(--text-main);
+  text-decoration: none;
 }
 
 .page-btn:hover {
@@ -319,6 +338,19 @@ tbody tr {
   background: var(--accent-blue);
   color: white;
   border-color: var(--accent-blue);
+}
+
+.page-btn.disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.page-dots {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  color: #64748b;
+  font-weight: 800;
 }
 
 .table-search {
@@ -1792,6 +1824,7 @@ body {
   }
 
   .admin-topbar,
+  .table-header,
   .dashboard-hero {
     align-items: flex-start;
     flex-direction: column;

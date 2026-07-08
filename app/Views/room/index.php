@@ -13,6 +13,51 @@ $summary = $roomsSummary ?? [
     'promo_count' => 0,
     'lowest_price' => 0,
 ];
+$pagination = array_merge([
+    'current_page' => 1,
+    'per_page' => 9,
+    'total_pages' => 1,
+    'total_items' => count($rooms),
+    'from' => count($rooms) > 0 ? 1 : 0,
+    'to' => count($rooms),
+], (array) ($pagination ?? []));
+$roomPageUrl = static function (int $page) use ($keyword, $idKost, $promoOnly, $sort): string {
+    $query = [];
+    if ($keyword !== '') {
+        $query['cari'] = $keyword;
+    }
+    if ($idKost !== null) {
+        $query['cabang'] = (int) $idKost;
+    }
+    if ($sort !== 'recommended') {
+        $query['sort'] = $sort;
+    }
+    if ($promoOnly) {
+        $query['promo'] = '1';
+    }
+    if ($page > 1) {
+        $query['page'] = $page;
+    }
+
+    return url('/rooms' . ($query !== [] ? '?' . http_build_query($query) : ''));
+};
+$currentRoomQuery = [];
+if ($keyword !== '') {
+    $currentRoomQuery['cari'] = $keyword;
+}
+if ($idKost !== null) {
+    $currentRoomQuery['cabang'] = (int) $idKost;
+}
+if ($sort !== 'recommended') {
+    $currentRoomQuery['sort'] = $sort;
+}
+if ($promoOnly) {
+    $currentRoomQuery['promo'] = '1';
+}
+if ((int) $pagination['current_page'] > 1) {
+    $currentRoomQuery['page'] = (int) $pagination['current_page'];
+}
+$currentRoomsUrl = '/rooms' . ($currentRoomQuery !== [] ? '?' . http_build_query($currentRoomQuery) : '');
 
 $finalPrice = static function (array $room): float {
     $price = (float) ($room['harga'] ?? 0);
@@ -159,7 +204,7 @@ ob_start();
                             <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="room-wishlist-form">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="id_kamar" value="<?php echo e($roomId); ?>">
-                                <input type="hidden" name="redirect" value="<?php echo e('/rooms'); ?>">
+                                <input type="hidden" name="redirect" value="<?php echo e($currentRoomsUrl); ?>">
                                 <button type="submit" class="room-wishlist-btn <?php echo $isSaved ? 'saved' : ''; ?>" aria-label="Simpan kamar">
                                     <i class="<?php echo $isSaved ? 'fa-solid' : 'fa-regular'; ?> fa-heart"></i>
                                 </button>
@@ -207,6 +252,55 @@ ob_start();
                         </article>
                     <?php endforeach; ?>
                 </div>
+                <?php if ((int) $pagination['total_pages'] > 1): ?>
+                    <?php
+                    $currentPage = (int) $pagination['current_page'];
+                    $totalPages = (int) $pagination['total_pages'];
+                    $startPage = max(1, $currentPage - 2);
+                    $endPage = min($totalPages, $currentPage + 2);
+                    ?>
+                    <nav class="rooms-pagination" aria-label="Navigasi halaman kamar">
+                        <div class="rooms-pagination-summary">
+                            Menampilkan <?php echo e((string) $pagination['from']); ?>-<?php echo e((string) $pagination['to']); ?>
+                            dari <?php echo e((string) $pagination['total_items']); ?> kamar
+                        </div>
+                        <div class="rooms-pagination-links">
+                            <?php if ($currentPage > 1): ?>
+                                <a href="<?php echo e($roomPageUrl($currentPage - 1)); ?>" class="rooms-page-link">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="rooms-page-link disabled"><i class="fa-solid fa-chevron-left"></i></span>
+                            <?php endif; ?>
+
+                            <?php if ($startPage > 1): ?>
+                                <a href="<?php echo e($roomPageUrl(1)); ?>" class="rooms-page-link">1</a>
+                                <?php if ($startPage > 2): ?><span class="rooms-page-dots">...</span><?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
+                                <?php if ($pageNumber === $currentPage): ?>
+                                    <span class="rooms-page-link active"><?php echo e((string) $pageNumber); ?></span>
+                                <?php else: ?>
+                                    <a href="<?php echo e($roomPageUrl($pageNumber)); ?>" class="rooms-page-link"><?php echo e((string) $pageNumber); ?></a>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+
+                            <?php if ($endPage < $totalPages): ?>
+                                <?php if ($endPage < $totalPages - 1): ?><span class="rooms-page-dots">...</span><?php endif; ?>
+                                <a href="<?php echo e($roomPageUrl($totalPages)); ?>" class="rooms-page-link"><?php echo e((string) $totalPages); ?></a>
+                            <?php endif; ?>
+
+                            <?php if ($currentPage < $totalPages): ?>
+                                <a href="<?php echo e($roomPageUrl($currentPage + 1)); ?>" class="rooms-page-link">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="rooms-page-link disabled"><i class="fa-solid fa-chevron-right"></i></span>
+                            <?php endif; ?>
+                        </div>
+                    </nav>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="public-empty-state">
                     <div class="empty-icon"><i class="fa-solid fa-bed"></i></div>

@@ -251,6 +251,21 @@ a {
   color: var(--text-main);
   box-shadow: var(--shadow-soft);
   font-weight: 700;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.public-user-trigger:hover,
+.public-user-menu.is-open .public-user-trigger {
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
+}
+
+.public-user-trigger i {
+  transition: transform 0.2s ease;
+}
+
+.public-user-menu.is-open .public-user-trigger i {
+  transform: rotate(180deg);
 }
 
 .public-user-trigger img {
@@ -264,22 +279,25 @@ a {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
+  z-index: 1100;
   width: 250px;
   padding: 10px;
   border-radius: 22px;
   background: var(--card-bg);
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-medium);
+  visibility: hidden;
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px) scale(0.98);
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform-origin: top right;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
 }
 
-.public-user-menu:hover .public-user-dropdown,
-.public-user-menu:focus-within .public-user-dropdown {
+.public-user-menu.is-open .public-user-dropdown {
+  visibility: visible;
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
   pointer-events: auto;
 }
 
@@ -879,6 +897,93 @@ a {
   color: var(--accent-blue);
 }
 
+.home-heading-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.home-heading-actions > a {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--accent-blue-soft);
+  color: var(--accent-blue);
+  font-weight: 800;
+}
+
+.home-carousel-btn {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  width: 58px;
+  height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--accent-blue);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.2);
+  transform: translateY(-50%);
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.home-carousel-btn i {
+  font-size: 1.45rem;
+}
+
+.home-carousel-btn:hover {
+  transform: translateY(-50%) scale(1.06);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background: #ffffff;
+}
+
+.home-carousel-btn-prev {
+  left: -58px;
+}
+
+.home-carousel-btn-next {
+  right: -58px;
+}
+
+.home-carousel-shell {
+  position: relative;
+}
+
+.home-room-rail {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 58px 22px;
+  margin: 0 -58px;
+  scroll-behavior: smooth;
+  scroll-padding-inline: 58px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.home-room-rail::-webkit-scrollbar {
+  height: 8px;
+}
+
+.home-room-rail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-room-rail::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.24);
+}
+
+.home-carousel-item {
+  flex: 0 0 min(360px, calc(100vw - 48px));
+  scroll-snap-align: start;
+}
+
 .home-room-card {
   display: block;
   height: 100%;
@@ -955,6 +1060,28 @@ a {
   color: var(--text-main);
   font-size: 1.2rem;
   font-weight: 900;
+}
+
+.home-rating-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.home-rating-mini i {
+  color: #f59e0b;
+}
+
+.home-rating-mini span {
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
 .home-room-body p {
@@ -1316,6 +1443,11 @@ a {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .home-heading-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 @media (max-width: 576px) {
@@ -1344,6 +1476,38 @@ a {
 
   .home-search-panel button {
     min-height: 50px;
+  }
+
+  .home-heading-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-room-rail {
+    padding-inline: 46px;
+    margin-inline: -46px;
+    scroll-padding-inline: 46px;
+  }
+
+  .home-carousel-btn {
+    width: 46px;
+    height: 46px;
+  }
+
+  .home-carousel-btn i {
+    font-size: 1.15rem;
+  }
+
+  .home-carousel-btn-prev {
+    left: -8px;
+  }
+
+  .home-carousel-btn-next {
+    right: -8px;
+  }
+
+  .home-carousel-item {
+    flex-basis: calc(100vw - 42px);
   }
 
   .home-benefit-list {
@@ -2058,6 +2222,73 @@ a {
   align-items: center;
   justify-content: center;
   font-weight: 800;
+}
+
+.rooms-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 34px;
+  padding: 18px 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--card-bg);
+  box-shadow: var(--shadow-soft);
+}
+
+.rooms-pagination-summary {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.rooms-pagination-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rooms-page-link,
+.rooms-page-dots {
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.rooms-page-link {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-main);
+  color: var(--text-main);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.rooms-page-link:hover {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  transform: translateY(-1px);
+}
+
+.rooms-page-link.active {
+  color: #fff;
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.rooms-page-link.disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.rooms-page-dots {
+  color: var(--text-muted);
 }
 
 .public-empty-state {
@@ -3072,6 +3303,19 @@ a {
 
   .public-section {
     padding: 64px 0;
+  }
+
+  .rooms-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rooms-pagination-summary {
+    text-align: center;
+  }
+
+  .rooms-pagination-links {
+    justify-content: center;
   }
 
   .contact-hero,

@@ -65,6 +65,13 @@ final class AdminDashboardController extends Controller
         $totalRooms = (int) ($roomCounts['total'] ?? 0);
         $occupiedRooms = (int) ($roomCounts['terisi'] ?? 0);
         $billingCount = count($billings);
+        $roomsPerPage = 10;
+        $roomsPage = max(1, (int) ($_GET['rooms_page'] ?? 1));
+        $roomsTotalPages = max(1, (int) ceil($totalRooms / $roomsPerPage));
+        if ($roomsPage > $roomsTotalPages) {
+            $roomsPage = $roomsTotalPages;
+        }
+
         $occupancyRate = $totalRooms > 0 ? (int) round(($occupiedRooms / $totalRooms) * 100) : 0;
         $paymentRate = $billingCount > 0 ? (int) round(($paidBillings / $billingCount) * 100) : 0;
         $revenueTrend = $this->paymentModel->monthlyRevenueTrend(6);
@@ -95,7 +102,15 @@ final class AdminDashboardController extends Controller
             'revenueTrend' => $revenueTrend,
             'priorityBillings' => array_slice($unpaidBillings, 0, 5),
             'kosts' => $this->kostModel->getAll(),
-            'rooms' => $this->roomModel->getAllForAdmin(),
+            'rooms' => $this->roomModel->getAllForAdminPaginated($roomsPerPage, ($roomsPage - 1) * $roomsPerPage),
+            'roomPagination' => [
+                'current_page' => $roomsPage,
+                'per_page' => $roomsPerPage,
+                'total_pages' => $roomsTotalPages,
+                'total_items' => $totalRooms,
+                'from' => $totalRooms === 0 ? 0 : (($roomsPage - 1) * $roomsPerPage) + 1,
+                'to' => min($totalRooms, $roomsPage * $roomsPerPage),
+            ],
             'users' => $this->userModel->getAll(),
             'billings' => $billings,
             'messages' => $this->messageModel->getAll(),

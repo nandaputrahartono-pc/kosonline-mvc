@@ -52,40 +52,34 @@ final class RoomController extends Controller
             $sort = 'recommended';
         }
 
-        $rooms = $this->roomModel->searchAvailableFiltered($keyword, $idKost);
+        $perPage = 9;
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $totalFilteredRooms = $this->roomModel->countAvailableFiltered($keyword, $idKost, $promoOnly);
+        $totalPages = max(1, (int) ceil($totalFilteredRooms / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        $rooms = $this->roomModel->searchAvailableFilteredPaginated(
+            $keyword,
+            $idKost,
+            $promoOnly,
+            $sort,
+            $perPage,
+            ($page - 1) * $perPage
+        );
         $branches = $this->kostModel->getAll();
-        $allAvailableRooms = $this->roomModel->searchAvailableFiltered();
         $roomIds = array_map(static fn(array $room): int => (int) $room['id_kamar'], $rooms);
         $reviewSummaries = $this->reviewModel->getSummariesForRooms($roomIds);
         $savedRoomIds = (($_SESSION['status'] ?? null) === 'login_user' && isset($_SESSION['id_user']))
             ? $this->wishlistModel->getSavedRoomIds((int) $_SESSION['id_user'])
             : [];
-
-        if ($promoOnly) {
-            $rooms = array_values(array_filter($rooms, static fn(array $room): bool => (int) ($room['diskon_persen'] ?? 0) > 0));
-        }
-
-        $finalPrice = static function (array $room): float {
-            $price = (float) ($room['harga'] ?? 0);
-            $discount = max(0, min(100, (int) ($room['diskon_persen'] ?? 0)));
-
-            return $discount > 0 ? $price * (1 - ($discount / 100)) : $price;
-        };
-
-        if ($sort === 'termurah') {
-            usort($rooms, static fn(array $a, array $b): int => $finalPrice($a) <=> $finalPrice($b));
-        } elseif ($sort === 'termahal') {
-            usort($rooms, static fn(array $a, array $b): int => $finalPrice($b) <=> $finalPrice($a));
-        } elseif ($sort === 'promo') {
-            usort($rooms, static fn(array $a, array $b): int => (int) ($b['diskon_persen'] ?? 0) <=> (int) ($a['diskon_persen'] ?? 0));
-        }
-
-        $availablePrices = array_map($finalPrice, $allAvailableRooms);
+        $availableSummary = $this->roomModel->availableSummary();
         $roomsSummary = [
-            'total_available' => count($allAvailableRooms),
-            'result_count' => count($rooms),
-            'promo_count' => count(array_filter($allAvailableRooms, static fn(array $room): bool => (int) ($room['diskon_persen'] ?? 0) > 0)),
-            'lowest_price' => !empty($availablePrices) ? min($availablePrices) : 0,
+            'total_available' => $availableSummary['total_available'],
+            'result_count' => $totalFilteredRooms,
+            'promo_count' => $availableSummary['promo_count'],
+            'lowest_price' => $availableSummary['lowest_price'],
         ];
 
         $this->render('room/index', [
@@ -98,6 +92,14 @@ final class RoomController extends Controller
             'roomsSummary' => $roomsSummary,
             'reviewSummaries' => $reviewSummaries,
             'savedRoomIds' => $savedRoomIds,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total_pages' => $totalPages,
+                'total_items' => $totalFilteredRooms,
+                'from' => $totalFilteredRooms === 0 ? 0 : (($page - 1) * $perPage) + 1,
+                'to' => min($totalFilteredRooms, $page * $perPage),
+            ],
         ]);
     }
 

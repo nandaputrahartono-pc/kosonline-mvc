@@ -65,13 +65,13 @@ $navClass = static function (array $paths) use ($currentPath): string {
             <i class="fa-solid fa-moon"></i>
         </button>
         <?php if ($isLoggedInUser): ?>
-            <div class="public-user-menu d-none d-lg-block">
-                <button type="button" class="public-user-trigger" aria-label="Menu akun">
+            <div class="public-user-menu d-none d-lg-block" data-user-menu>
+                <button type="button" class="public-user-trigger" aria-label="Menu akun" aria-expanded="false" aria-controls="public-user-dropdown">
                     <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil <?php echo e($currentUserName); ?>" decoding="async">
                     <span><?php echo e(strtok($currentUserName, ' ') ?: 'User'); ?></span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
-                <div class="public-user-dropdown">
+                <div class="public-user-dropdown" id="public-user-dropdown">
                     <div class="public-user-card">
                         <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil" loading="lazy" decoding="async">
                         <div>

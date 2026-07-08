@@ -30,7 +30,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 3. THEME TOGGLE (LIGHT / DARK) ---
+    // --- 3. USER DROPDOWN CLICK TOGGLE ---
+    const userMenus = document.querySelectorAll('[data-user-menu]');
+
+    function closeUserMenu(menu) {
+        if (!menu) return;
+        menu.classList.remove('is-open');
+        const trigger = menu.querySelector('.public-user-trigger');
+        if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    userMenus.forEach((menu) => {
+        const trigger = menu.querySelector('.public-user-trigger');
+        if (!trigger) return;
+
+        trigger.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const shouldOpen = !menu.classList.contains('is-open');
+            userMenus.forEach(closeUserMenu);
+            menu.classList.toggle('is-open', shouldOpen);
+            trigger.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        userMenus.forEach((menu) => {
+            if (!menu.contains(event.target)) {
+                closeUserMenu(menu);
+            }
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        userMenus.forEach(closeUserMenu);
+    });
+
+    // --- 4. HOME CAROUSEL CONTROLS ---
+    document.querySelectorAll('[data-carousel-scroll]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-carousel-scroll');
+            const direction = Number(button.getAttribute('data-scroll-direction') || 1);
+            const rail = targetId ? document.getElementById(targetId) : null;
+            if (!rail) return;
+
+            const firstCard = rail.querySelector('.home-carousel-item');
+            const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : 340;
+            rail.scrollBy({
+                left: direction * (cardWidth + 20),
+                behavior: 'smooth',
+            });
+        });
+    });
+
+    // --- 5. THEME TOGGLE (LIGHT / DARK) ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const currentTheme = localStorage.getItem('theme');
 
@@ -65,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 4. CHATBOT WINDOW TOGGLE & FLOW ---
+    // --- 6. CHATBOT WINDOW TOGGLE & FLOW ---
     const chatbotBtn = document.getElementById('chatbot-btn');
     const chatbotWindow = document.getElementById('chatbot-window');
     const chatbotClose = document.getElementById('chatbot-close');
@@ -89,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 4.1. CHATBOT INTERACTION LOGIC ---
+    // --- 6.1. CHATBOT INTERACTION LOGIC ---
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send');
     const chatBody = document.getElementById('chatbot-body');
@@ -127,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 5. PAYMENT METHOD INTERACTION ---
+    // --- 7. PAYMENT METHOD INTERACTION ---
     const paymentMethods = document.querySelectorAll('.payment-method-item');
     const selectedMethodInput = document.getElementById('selected-payment-method');
 

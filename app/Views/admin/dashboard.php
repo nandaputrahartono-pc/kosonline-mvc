@@ -23,6 +23,20 @@ $stats = array_merge([
 $priorityBillings = $priorityBillings ?? [];
 $kosts = $kosts ?? [];
 $rooms = $rooms ?? [];
+$roomPagination = array_merge([
+    'current_page' => 1,
+    'per_page' => 10,
+    'total_pages' => 1,
+    'total_items' => count($rooms),
+    'from' => count($rooms) > 0 ? 1 : 0,
+    'to' => count($rooms),
+], (array) ($roomPagination ?? []));
+$adminRoomsPageUrl = static function (int $page): string {
+    return url('/admin/dashboard?' . http_build_query([
+        'tab' => 'data-kamar',
+        'rooms_page' => $page,
+    ]));
+};
 $users = $users ?? [];
 $billings = $billings ?? [];
 $messages = $messages ?? [];
@@ -117,7 +131,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             <li><a href="#" data-page="dashboard" class="<?php echo $activeTab === 'dashboard' ? 'active' : ''; ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
             <li class="menu-label">Manajemen Kost</li>
             <li><a href="#" data-page="data-kost"><i class="fa-solid fa-building"></i> Data Kost</a></li>
-            <li><a href="#" data-page="data-kamar"><i class="fa-solid fa-bed"></i> Data Kamar</a></li>
+            <li><a href="#" data-page="data-kamar" class="<?php echo $activeTab === 'data-kamar' ? 'active' : ''; ?>"><i class="fa-solid fa-bed"></i> Data Kamar</a></li>
             <li><a href="#" data-page="data-user"><i class="fa-solid fa-users"></i> Data User</a></li>
             <li><a href="#" data-page="pembayaran"><i class="fa-solid fa-money-bill-wave"></i> Pembayaran</a></li>
             <li class="menu-label">Support</li>
@@ -330,10 +344,14 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             </div>
         </section>
 
-        <section class="page" id="data-kamar">
+        <section class="page <?php echo $activeTab === 'data-kamar' ? 'active' : ''; ?>" id="data-kamar">
             <h2 class="page-title">Data Kamar</h2>
             <div class="table-header">
                 <a href="<?php echo e(url('/admin/rooms/create')); ?>" class="btn-primary"><i class="fa-solid fa-plus"></i> Tambah Kamar</a>
+                <span class="table-result-note">
+                    Menampilkan <?php echo e((string) $roomPagination['from']); ?>-<?php echo e((string) $roomPagination['to']); ?>
+                    dari <?php echo e((string) $roomPagination['total_items']); ?> kamar
+                </span>
             </div>
             <div class="table-wrapper">
                 <table>
@@ -348,6 +366,11 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                         </tr>
                     </thead>
                     <tbody>
+                        <?php if ($rooms === []): ?>
+                            <tr>
+                                <td colspan="6">Belum ada data kamar.</td>
+                            </tr>
+                        <?php endif; ?>
                         <?php foreach ($rooms as $room): ?>
                             <?php
                             $badgeClass = $room['status'] === 'Terisi' ? 'warning' : 'success';
@@ -381,6 +404,45 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                     </tbody>
                 </table>
             </div>
+            <?php if ((int) $roomPagination['total_pages'] > 1): ?>
+                <?php
+                $currentRoomPage = (int) $roomPagination['current_page'];
+                $totalRoomPages = (int) $roomPagination['total_pages'];
+                $startRoomPage = max(1, $currentRoomPage - 2);
+                $endRoomPage = min($totalRoomPages, $currentRoomPage + 2);
+                ?>
+                <div class="pagination admin-room-pagination" aria-label="Navigasi data kamar">
+                    <?php if ($currentRoomPage > 1): ?>
+                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($currentRoomPage - 1)); ?>"><i class="fa-solid fa-chevron-left"></i></a>
+                    <?php else: ?>
+                        <span class="page-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+                    <?php endif; ?>
+
+                    <?php if ($startRoomPage > 1): ?>
+                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl(1)); ?>">1</a>
+                        <?php if ($startRoomPage > 2): ?><span class="page-dots">...</span><?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php for ($pageNumber = $startRoomPage; $pageNumber <= $endRoomPage; $pageNumber++): ?>
+                        <?php if ($pageNumber === $currentRoomPage): ?>
+                            <span class="page-btn active"><?php echo e((string) $pageNumber); ?></span>
+                        <?php else: ?>
+                            <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($pageNumber)); ?>"><?php echo e((string) $pageNumber); ?></a>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+
+                    <?php if ($endRoomPage < $totalRoomPages): ?>
+                        <?php if ($endRoomPage < $totalRoomPages - 1): ?><span class="page-dots">...</span><?php endif; ?>
+                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($totalRoomPages)); ?>"><?php echo e((string) $totalRoomPages); ?></a>
+                    <?php endif; ?>
+
+                    <?php if ($currentRoomPage < $totalRoomPages): ?>
+                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($currentRoomPage + 1)); ?>"><i class="fa-solid fa-chevron-right"></i></a>
+                    <?php else: ?>
+                        <span class="page-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </section>
 
         <section class="page" id="data-user">

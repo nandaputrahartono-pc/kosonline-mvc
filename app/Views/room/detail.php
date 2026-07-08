@@ -138,7 +138,18 @@
                 <!-- Info and Call to Action Column (Right) -->
                 <div class="col-lg-5">
                     <div class="detail-info-card p-4 position-sticky" style="top: 100px; background: var(--card-bg); border-color: var(--border-soft);">
-                        <span class="badge mb-3 px-3 py-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue); font-weight: 600; border-radius: 8px;"><?php echo e($room['nama_kost']); ?></span>
+                        <div class="detail-card-top">
+                            <span class="badge px-3 py-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue); font-weight: 600; border-radius: 8px;"><?php echo e($room['nama_kost']); ?></span>
+                            <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="detail-wishlist-inline">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
+                                <input type="hidden" name="redirect" value="<?php echo e('/rooms/detail?id=' . $room['id_kamar']); ?>">
+                                <button type="submit" class="<?php echo $isWishlisted ? 'saved' : ''; ?>" aria-label="<?php echo $isWishlisted ? 'Hapus dari wishlist' : 'Simpan ke wishlist'; ?>">
+                                    <i class="<?php echo $isWishlisted ? 'fa-solid' : 'fa-regular'; ?> fa-heart"></i>
+                                    <span><?php echo $isWishlisted ? 'Tersimpan' : 'Simpan'; ?></span>
+                                </button>
+                            </form>
+                        </div>
                         <h2 class="fw-bold mb-2" style="color: var(--text-main); letter-spacing: -0.5px; font-size: 1.65rem;">Kamar No. <?php echo e($room['nomor_kamar']); ?></h2>
 
                         <div class="d-flex align-items-center gap-2 mb-3">
@@ -173,41 +184,29 @@
                         <hr class="my-4" style="border-color: var(--border-soft);">
 
                         <!-- Action Buttons -->
-                        <div class="d-flex flex-column gap-3">
-                            <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
-                                <input type="hidden" name="redirect" value="<?php echo e('/rooms/detail?id=' . $room['id_kamar']); ?>">
-                                <button type="submit" class="btn btn-lg w-100 py-3 fw-bold wishlist-detail-btn <?php echo $isWishlisted ? 'saved' : ''; ?>">
-                                    <i class="<?php echo $isWishlisted ? 'fa-solid' : 'fa-regular'; ?> fa-heart me-2"></i>
-                                    <?php echo $isWishlisted ? 'Tersimpan di Wishlist' : 'Simpan ke Wishlist'; ?>
-                                </button>
-                            </form>
+                        <div class="detail-action-stack">
                             <a href="<?php echo e(url('/rooms/payment?id=' . $room['id_kamar'])); ?>" class="btn btn-primary btn-lg w-100 py-3 fw-bold btn-pesan-sekarang">
                                 <i class="fa-solid fa-credit-card me-2"></i> Pesan & Bayar Sekarang
                             </a>
-                            <a href="https://wa.me/6287748703029?text=<?php echo urlencode('Halo Admin, saya tertarik dengan ' . $room['nama_kost'] . ' - ' . $roomLabel($room['nomor_kamar'])); ?>" target="_blank" class="btn btn-outline-success btn-lg w-100 py-3 fw-bold btn-tanya-whatsapp">
-                                <i class="fa-brands fa-whatsapp me-2"></i> Tanya via WhatsApp
-                            </a>
-                        </div>
-
-                        <div class="detail-chat-card mt-4 p-4 rounded-4" style="background: var(--bg-main); border: 1px solid var(--border-soft);">
-                            <h5 class="fw-bold mb-3" style="font-size: 1rem;"><i class="fa-solid fa-comments text-primary me-2"></i>Chat Admin Soal Kamar Ini</h5>
                             <?php if ($isLoggedInUser): ?>
-                                <form method="POST" action="<?php echo e(url('/rooms/chat')); ?>">
+                                <form method="POST" action="<?php echo e(url('/rooms/chat')); ?>" class="m-0">
                                     <?php echo csrf_field(); ?>
                                     <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
-                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold btn-chat-admin-room">
+                                    <button type="submit" class="btn btn-lg w-100 py-3 fw-bold btn-chat-admin-room">
                                         <i class="fa-regular fa-comments me-2"></i> Chat Admin
                                     </button>
-                                    <p class="text-muted small mb-0 mt-2 text-center">Kartu kamar ini akan otomatis ikut masuk ke ruang chat.</p>
                                 </form>
                             <?php else: ?>
-                                <a href="<?php echo e(url('/login')); ?>" class="btn btn-primary btn-lg w-100 py-3 fw-bold btn-chat-admin-room">
+                                <a href="<?php echo e(url('/login')); ?>" class="btn btn-lg w-100 py-3 fw-bold btn-chat-admin-room">
                                     <i class="fa-solid fa-right-to-bracket me-2"></i> Login untuk Chat Admin
                                 </a>
-                                <p class="text-muted small mb-0 mt-2 text-center">Setelah login, kamu bisa chat sambil membawa detail kamar ini.</p>
                             <?php endif; ?>
+                            <div class="detail-tertiary-actions">
+                                <a href="https://wa.me/6287748703029?text=<?php echo urlencode('Halo Admin, saya tertarik dengan ' . $room['nama_kost'] . ' - ' . $roomLabel($room['nomor_kamar'])); ?>" target="_blank" rel="noopener" class="btn-tanya-whatsapp">
+                                    <i class="fa-brands fa-whatsapp"></i> Tanya via WhatsApp
+                                </a>
+                                <span>Chat admin akan membawa detail kamar ini otomatis.</span>
+                            </div>
                         </div>
 
                         <!-- Safety Info Badge -->
@@ -455,27 +454,48 @@ $extraHead = <<<HTML
         .review-score i,
         .review-stars i,
         .room-rating-mini i { color: #f59e0b; }
-        .wishlist-detail-btn {
-            border-radius: 12px;
-            border: 2px solid #fecdd3;
-            color: #e11d48;
+        .detail-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .detail-wishlist-inline {
+            flex: 0 0 auto;
+            margin: 0;
+        }
+        .detail-wishlist-inline button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 38px;
+            padding: 8px 12px;
+            border: 1px solid #fecdd3;
+            border-radius: 999px;
             background: #fff1f2;
-            transition: all 0.25s ease;
+            color: #e11d48;
+            font-weight: 800;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
-        .wishlist-detail-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(225, 29, 72, 0.15);
+        .detail-wishlist-inline button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(225, 29, 72, 0.12);
         }
-        .wishlist-detail-btn.saved {
+        .detail-wishlist-inline button.saved {
             background: #e11d48;
             color: #fff;
             border-color: #e11d48;
         }
+        .detail-action-stack {
+            display: grid;
+            gap: 12px;
+        }
         .btn-pesan-sekarang {
             background-color: var(--accent-blue) !important;
             border: none !important;
-            border-radius: 12px !important;
-            box-shadow: 0 4px 14px rgba(37,99,235,0.25) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 10px 24px rgba(37,99,235,0.28) !important;
             transition: all 0.25s ease !important;
             color: #fff !important;
         }
@@ -484,16 +504,44 @@ $extraHead = <<<HTML
             box-shadow: 0 8px 22px rgba(37,99,235,0.4) !important;
             filter: brightness(1.05);
         }
-        .btn-tanya-whatsapp {
-            border-radius: 12px !important;
-            border-width: 2px !important;
+        .btn-chat-admin-room {
+            border: 1px solid var(--border-soft) !important;
+            border-radius: 14px !important;
+            background: var(--bg-main) !important;
+            color: var(--text-main) !important;
+            box-shadow: none !important;
             transition: all 0.25s ease !important;
         }
+        .btn-chat-admin-room:hover {
+            transform: translateY(-1px);
+            border-color: var(--accent-blue) !important;
+            color: var(--accent-blue) !important;
+            background: var(--accent-blue-soft) !important;
+        }
+        .detail-tertiary-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 4px;
+        }
+        .btn-tanya-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #15803d;
+            font-weight: 800;
+            text-decoration: none;
+            white-space: nowrap;
+        }
         .btn-tanya-whatsapp:hover {
-            transform: translateY(-2px) !important;
-            background-color: var(--bs-success) !important;
-            color: #fff !important;
-            box-shadow: 0 6px 15px rgba(25,135,84,0.2) !important;
+            color: #166534;
+        }
+        .detail-tertiary-actions span {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.4;
+            text-align: right;
         }
         .btn-animate-hover {
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -584,6 +632,11 @@ $extraHead = <<<HTML
             #main-gallery-img { height: 300px !important; }
             .gallery-caption { display: block; }
             .gallery-caption span { display: block; margin-top: 3px; }
+            .detail-card-top { align-items: flex-start; flex-direction: column; }
+            .detail-wishlist-inline,
+            .detail-wishlist-inline button { width: 100%; justify-content: center; }
+            .detail-tertiary-actions { align-items: flex-start; flex-direction: column; }
+            .detail-tertiary-actions span { text-align: left; }
             .chat-input-wrapper { padding: 6px 6px 6px 14px; }
             .chat-send-btn { width: 38px; height: 38px; min-width: 38px; font-size: 0.9rem; }
         }
