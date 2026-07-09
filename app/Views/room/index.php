@@ -72,66 +72,34 @@ $facilityList = static function (?string $facilities): array {
     return array_slice($items, 0, 4);
 };
 
-$selectedBranchName = 'Semua Cabang';
-foreach ($branches as $branch) {
-    if ($idKost === (int) $branch['id_kost']) {
-        $selectedBranchName = (string) $branch['nama_kost'];
-        break;
-    }
-}
+$sortLabels = [
+    'recommended' => 'Rekomendasi',
+    'termurah' => 'Termurah',
+    'termahal' => 'Termahal',
+    'promo' => 'Promo terbesar',
+];
 
 ob_start();
 ?>
 
 <main class="public-page rooms-page">
-    <section class="public-page-hero rooms-hero">
+    <section class="rooms-compact-hero">
         <div class="container">
-            <div class="row align-items-center g-4">
-                <div class="col-lg-7">
-                    <span class="section-eyebrow">Kamar Kos Tersedia</span>
-                    <h1>Temukan kamar yang paling pas, tanpa tebak-tebakan.</h1>
-                    <p>
-                        Ada Banyak Kamar kos yang pas untuk kamu, mulai dari yang terdekat, termurah hingga yang premium.
-                        Fasilitas terjangkau, Banyak promo, dan sudah banyak testimoni dengan baik.
-                    </p>
-                    <div class="hero-actions">
-                        <a href="#room-filter" class="btn btn-light btn-lg fw-bold">
-                            <i class="fa-solid fa-sliders me-2"></i> Cari Kamar
-                        </a>
-                        <a href="<?php echo e(url('/map')); ?>" class="btn btn-outline-light btn-lg fw-bold">
-                            <i class="fa-solid fa-map-location-dot me-2"></i> Lihat Peta
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-5">
-                    <div class="public-hero-panel">
-                        <div>
-                            <span>Kamar tersedia</span>
-                            <strong><?php echo e((string) $summary['total_available']); ?></strong>
-                        </div>
-                        <div>
-                            <span>Promo aktif</span>
-                            <strong><?php echo e((string) $summary['promo_count']); ?></strong>
-                        </div>
-                        <div>
-                            <span>Harga mulai</span>
-                            <strong>Rp <?php echo number_format((float) $summary['lowest_price'], 0, ',', '.'); ?></strong>
-                        </div>
-                        <div>
-                            <span>Filter saat ini</span>
-                            <strong><?php echo e($selectedBranchName); ?></strong>
-                        </div>
-                    </div>
+            <div class="rooms-hero-banner">
+                <img src="<?php echo e(site_image('kossan.jpg')); ?>" alt="Area kamar kos KosOnline">
+                <div class="rooms-hero-content">
+                    <h1>Cari kamar kos sesuai kebutuhanmu</h1>
+                    <p>Pilih cabang, fasilitas, harga, dan promo dari satu tempat</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="public-section pt-0">
+    <section class="public-section rooms-results-section pt-0">
         <div class="container">
-            <div id="room-filter" class="public-filter-card">
-                <form action="<?php echo e(url('/rooms')); ?>" method="GET" class="row g-3 align-items-end">
-                    <div class="col-lg-3 col-md-6">
+            <div id="room-filter" class="public-filter-card rooms-filter-card">
+                <form action="<?php echo e(url('/rooms')); ?>" method="GET" class="rooms-search-form">
+                    <div class="rooms-search-field">
                         <label for="cabang" class="form-label">Cabang Kos</label>
                         <select name="cabang" id="cabang" class="form-select">
                             <option value="">Semua Cabang</option>
@@ -142,40 +110,34 @@ ob_start();
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-4 col-md-6">
+                    <div class="rooms-search-field rooms-search-field-wide">
                         <label for="searchInput" class="form-label">Cari fasilitas / alamat</label>
-                        <div class="input-icon-group">
-                            <i class="fa-solid fa-magnifying-glass"></i>
+                        <div class="input-group input-icon-group">
+                            <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
                             <input type="text" id="searchInput" name="cari" class="form-control" placeholder="Contoh: AC, WiFi, dekat kampus" value="<?php echo e($keyword); ?>">
                         </div>
                     </div>
-                    <div class="col-lg-2 col-md-6">
+                    <div class="rooms-search-field">
                         <label for="sort" class="form-label">Urutkan</label>
                         <select name="sort" id="sort" class="form-select">
-                            <option value="recommended" <?php echo ($sort ?? 'recommended') === 'recommended' ? 'selected' : ''; ?>>Rekomendasi</option>
-                            <option value="termurah" <?php echo ($sort ?? '') === 'termurah' ? 'selected' : ''; ?>>Termurah</option>
-                            <option value="termahal" <?php echo ($sort ?? '') === 'termahal' ? 'selected' : ''; ?>>Termahal</option>
-                            <option value="promo" <?php echo ($sort ?? '') === 'promo' ? 'selected' : ''; ?>>Promo terbesar</option>
+                            <?php foreach ($sortLabels as $sortValue => $sortLabel): ?>
+                                <option value="<?php echo e($sortValue); ?>" <?php echo $sort === $sortValue ? 'selected' : ''; ?>>
+                                    <?php echo e($sortLabel); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="room-filter-actions">
-                            <label class="promo-toggle">
-                                <input type="checkbox" name="promo" value="1" <?php echo !empty($promoOnly) ? 'checked' : ''; ?>>
-                                <span><i class="fa-solid fa-tags"></i> Promo saja</span>
-                            </label>
-                            <button type="submit" class="btn btn-primary fw-bold">Terapkan</button>
-                        </div>
+                    <div class="room-filter-actions">
+                        <label class="promo-toggle">
+                            <input type="checkbox" name="promo" value="1" <?php echo !empty($promoOnly) ? 'checked' : ''; ?>>
+                            <span><i class="fa-solid fa-tags"></i> Promo saja</span>
+                        </label>
+                        <button type="submit" class="btn btn-primary fw-bold">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            Cari
+                        </button>
                     </div>
                 </form>
-            </div>
-
-            <div class="section-heading split-heading">
-                <div>
-                    <span class="section-eyebrow">Pilihan Kamar</span>
-                    <h2><?php echo e((string) $summary['result_count']); ?> kamar cocok ditemukan</h2>
-                </div>
-                <a href="<?php echo e(url('/rooms')); ?>" class="soft-link">Reset filter</a>
             </div>
 
             <?php if (!empty($rooms)): ?>
@@ -187,35 +149,29 @@ ob_start();
                         $roomId = (int) $room['id_kamar'];
                         $ratingSummary = $reviewSummaries[$roomId] ?? ['rating_avg' => 0, 'total_review' => 0];
                         $isSaved = in_array($roomId, $savedRoomIds, true);
-                        $waText = sprintf(
-                            'Halo Admin KosOnline, saya tertarik dengan Kamar No. %s di %s. Boleh dibantu info ketersediaannya?',
-                            (string) ($room['nomor_kamar'] ?? ''),
-                            (string) ($room['nama_kost'] ?? '')
-                        );
                         ?>
-                        <article class="room-modern-card">
+                        <article class="card h-100 room-modern-card">
                             <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="room-card-image">
-                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto kamar <?php echo e($room['nomor_kamar']); ?>" loading="lazy" decoding="async">
+                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" class="card-img-top" alt="Foto kamar <?php echo e($room['nomor_kamar']); ?>" loading="lazy" decoding="async">
                                 <span class="room-card-badge"><?php echo e($room['nama_kost']); ?></span>
                                 <?php if ($hasPromo): ?>
                                     <span class="room-card-promo">Diskon <?php echo e((string) $room['diskon_persen']); ?>%</span>
                                 <?php endif; ?>
                             </a>
-                            <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="room-wishlist-form">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="id_kamar" value="<?php echo e($roomId); ?>">
-                                <input type="hidden" name="redirect" value="<?php echo e($currentRoomsUrl); ?>">
-                                <button type="submit" class="room-wishlist-btn <?php echo $isSaved ? 'saved' : ''; ?>" aria-label="Simpan kamar">
-                                    <i class="<?php echo $isSaved ? 'fa-solid' : 'fa-regular'; ?> fa-heart"></i>
-                                </button>
-                            </form>
-                            <div class="room-card-body">
+                            <div class="card-body room-card-body">
                                 <div class="room-card-title">
                                     <div>
                                         <span>Lantai <?php echo e($room['lantai']); ?></span>
                                         <h3><?php echo e($room['nomor_kamar']); ?></h3>
                                     </div>
-                                    <i class="fa-solid fa-door-open"></i>
+                                    <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="room-wishlist-form room-title-save-form">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id_kamar" value="<?php echo e($roomId); ?>">
+                                        <input type="hidden" name="redirect" value="<?php echo e($currentRoomsUrl); ?>">
+                                        <button type="submit" class="room-title-save-btn <?php echo $isSaved ? 'saved' : ''; ?>" aria-label="<?php echo $isSaved ? 'Hapus dari simpanan' : 'Simpan kamar'; ?>">
+                                            <i class="<?php echo $isSaved ? 'fa-solid' : 'fa-regular'; ?> fa-bookmark"></i>
+                                        </button>
+                                    </form>
                                 </div>
                                 <div class="room-rating-mini">
                                     <i class="fa-solid fa-star"></i>
@@ -244,9 +200,6 @@ ob_start();
                                     <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="btn btn-primary">
                                         Lihat Detail
                                     </a>
-                                    <a href="https://wa.me/6287748703029?text=<?php echo e(rawurlencode($waText)); ?>" class="btn btn-outline-success" target="_blank" rel="noopener">
-                                        <i class="fa-brands fa-whatsapp"></i>
-                                    </a>
                                 </div>
                             </div>
                         </article>
@@ -260,45 +213,49 @@ ob_start();
                     $endPage = min($totalPages, $currentPage + 2);
                     ?>
                     <nav class="rooms-pagination" aria-label="Navigasi halaman kamar">
-                        <div class="rooms-pagination-summary">
-                            Menampilkan <?php echo e((string) $pagination['from']); ?>-<?php echo e((string) $pagination['to']); ?>
-                            dari <?php echo e((string) $pagination['total_items']); ?> kamar
-                        </div>
-                        <div class="rooms-pagination-links">
+                        <ul class="pagination justify-content-center flex-wrap mb-0">
                             <?php if ($currentPage > 1): ?>
-                                <a href="<?php echo e($roomPageUrl($currentPage - 1)); ?>" class="rooms-page-link">
-                                    <i class="fa-solid fa-chevron-left"></i>
-                                </a>
+                                <li class="page-item">
+                                    <a href="<?php echo e($roomPageUrl($currentPage - 1)); ?>" class="page-link rooms-page-link">
+                                        <i class="fa-solid fa-chevron-left"></i>
+                                    </a>
+                                </li>
                             <?php else: ?>
-                                <span class="rooms-page-link disabled"><i class="fa-solid fa-chevron-left"></i></span>
+                                <li class="page-item disabled">
+                                    <span class="page-link rooms-page-link"><i class="fa-solid fa-chevron-left"></i></span>
+                                </li>
                             <?php endif; ?>
 
                             <?php if ($startPage > 1): ?>
-                                <a href="<?php echo e($roomPageUrl(1)); ?>" class="rooms-page-link">1</a>
-                                <?php if ($startPage > 2): ?><span class="rooms-page-dots">...</span><?php endif; ?>
+                                <li class="page-item"><a href="<?php echo e($roomPageUrl(1)); ?>" class="page-link rooms-page-link">1</a></li>
+                                <?php if ($startPage > 2): ?><li class="page-item disabled"><span class="page-link rooms-page-dots">...</span></li><?php endif; ?>
                             <?php endif; ?>
 
                             <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
                                 <?php if ($pageNumber === $currentPage): ?>
-                                    <span class="rooms-page-link active"><?php echo e((string) $pageNumber); ?></span>
+                                    <li class="page-item active" aria-current="page"><span class="page-link rooms-page-link"><?php echo e((string) $pageNumber); ?></span></li>
                                 <?php else: ?>
-                                    <a href="<?php echo e($roomPageUrl($pageNumber)); ?>" class="rooms-page-link"><?php echo e((string) $pageNumber); ?></a>
+                                    <li class="page-item"><a href="<?php echo e($roomPageUrl($pageNumber)); ?>" class="page-link rooms-page-link"><?php echo e((string) $pageNumber); ?></a></li>
                                 <?php endif; ?>
                             <?php endfor; ?>
 
                             <?php if ($endPage < $totalPages): ?>
-                                <?php if ($endPage < $totalPages - 1): ?><span class="rooms-page-dots">...</span><?php endif; ?>
-                                <a href="<?php echo e($roomPageUrl($totalPages)); ?>" class="rooms-page-link"><?php echo e((string) $totalPages); ?></a>
+                                <?php if ($endPage < $totalPages - 1): ?><li class="page-item disabled"><span class="page-link rooms-page-dots">...</span></li><?php endif; ?>
+                                <li class="page-item"><a href="<?php echo e($roomPageUrl($totalPages)); ?>" class="page-link rooms-page-link"><?php echo e((string) $totalPages); ?></a></li>
                             <?php endif; ?>
 
                             <?php if ($currentPage < $totalPages): ?>
-                                <a href="<?php echo e($roomPageUrl($currentPage + 1)); ?>" class="rooms-page-link">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </a>
+                                <li class="page-item">
+                                    <a href="<?php echo e($roomPageUrl($currentPage + 1)); ?>" class="page-link rooms-page-link">
+                                        <i class="fa-solid fa-chevron-right"></i>
+                                    </a>
+                                </li>
                             <?php else: ?>
-                                <span class="rooms-page-link disabled"><i class="fa-solid fa-chevron-right"></i></span>
+                                <li class="page-item disabled">
+                                    <span class="page-link rooms-page-link"><i class="fa-solid fa-chevron-right"></i></span>
+                                </li>
                             <?php endif; ?>
-                        </div>
+                        </ul>
                     </nav>
                 <?php endif; ?>
             <?php else: ?>

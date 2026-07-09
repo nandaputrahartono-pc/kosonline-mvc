@@ -161,20 +161,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (button) {
         button.classList.toggle('saved', saved);
-        button.setAttribute('aria-label', saved ? 'Hapus dari wishlist' : 'Simpan kamar');
+        button.setAttribute('aria-label', saved ? 'Hapus dari simpanan' : 'Simpan kamar');
       }
 
       if (icon) {
         icon.classList.toggle('fa-solid', saved);
         icon.classList.toggle('fa-regular', !saved);
+        icon.classList.remove('fa-heart');
+        icon.classList.add('fa-bookmark');
       }
 
-      if (label && button && button.closest('.detail-wishlist-inline')) {
+      if (label) {
         label.textContent = saved ? 'Tersimpan' : 'Simpan';
       }
 
       if (button && button.classList.contains('wishlist-detail-btn')) {
-        button.innerHTML = `<i class="${saved ? 'fa-solid' : 'fa-regular'} fa-heart me-2"></i>${saved ? 'Tersimpan di Wishlist' : 'Simpan ke Wishlist'}`;
+        button.innerHTML = `<i class="${saved ? 'fa-solid' : 'fa-regular'} fa-bookmark me-2"></i>${saved ? 'Tersimpan' : 'Simpan'}`;
       }
     });
   }
@@ -193,8 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const empty = document.createElement('div');
         empty.className = 'empty-state';
         empty.innerHTML = `
-          <i class="fa-regular fa-heart"></i>
-          <h3>Wishlist masih kosong</h3>
+          <i class="fa-regular fa-bookmark"></i>
+          <h3>Belum ada kamar tersimpan</h3>
           <p>Simpan kamar dari halaman detail atau daftar kamar biar gampang dibandingkan nanti.</p>
         `;
         list.appendChild(empty);
@@ -230,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await response.json();
         if (!response.ok || !data.ok) {
-          window.showAppNotification(data.message || 'Wishlist gagal diperbarui.', 'error');
+          window.showAppNotification(data.message || 'Simpanan gagal diperbarui.', 'error');
           return;
         }
 
@@ -238,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!data.saved && form.querySelector('.wishlist-remove')) {
           removeWishlistCard(form);
         }
-        window.showAppNotification(data.message || 'Wishlist diperbarui.', 'success');
+        window.showAppNotification(data.message || 'Simpanan diperbarui.', 'success');
       } catch (error) {
         form.submit();
       } finally {

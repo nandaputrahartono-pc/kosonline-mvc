@@ -189,31 +189,31 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                     <p>Ringkasan bulan <?php echo e($billingMonth); ?> dengan grafik pendapatan dari pembayaran yang sudah lunas.</p>
                 </div>
                 <div class="hero-actions">
-                    <button type="button" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
-                    <a href="#" data-page="pembayaran" class="hero-primary"><i class="fa-solid fa-wallet"></i> Cek Pembayaran</a>
+                    <button type="button" class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+                    <a href="#" data-page="pembayaran" class="btn hero-primary"><i class="fa-solid fa-wallet"></i> Cek Pembayaran</a>
                 </div>
             </div>
 
             <div class="metric-grid">
-                <article class="metric-card primary">
+                <article class="card metric-card primary">
                     <div class="metric-icon"><i class="fa-solid fa-rupiah-sign"></i></div>
                     <p>Total Pendapatan</p>
                     <h3>Rp <?php echo number_format((float) $stats['pendapatan_total'], 0, ',', '.'); ?></h3>
                     <span class="metric-note positive">Akumulasi pembayaran lunas</span>
                 </article>
-                <article class="metric-card">
+                <article class="card metric-card">
                     <div class="metric-icon soft-blue"><i class="fa-solid fa-calendar-check"></i></div>
                     <p>Pendapatan Bulan Ini</p>
                     <h3>Rp <?php echo number_format((float) $stats['pendapatan_bulan_ini'], 0, ',', '.'); ?></h3>
                     <span class="metric-note"><?php echo e($billingMonth); ?></span>
                 </article>
-                <article class="metric-card">
+                <article class="card metric-card">
                     <div class="metric-icon soft-green"><i class="fa-solid fa-bed"></i></div>
                     <p>Okupansi Kamar</p>
                     <h3><?php echo e($stats['rasio_okupansi']); ?>%</h3>
                     <span class="metric-note"><?php echo e($stats['terisi']); ?> terisi dari <?php echo e($stats['total_kamar']); ?> kamar</span>
                 </article>
-                <article class="metric-card">
+                <article class="card metric-card">
                     <div class="metric-icon soft-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
                     <p>Belum Bayar</p>
                     <h3><?php echo e($stats['belum_bayar']); ?></h3>
@@ -222,7 +222,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             </div>
 
             <div class="dashboard-grid">
-                <article class="dashboard-card chart-card">
+                <article class="card dashboard-card chart-card">
                     <div class="card-heading">
                         <div>
                             <h3>Grafik Pendapatan</h3>
@@ -235,7 +235,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                     </div>
                 </article>
 
-                <aside class="dashboard-card status-summary">
+                <aside class="card dashboard-card status-summary">
                     <div class="status-blue">
                         <span>Status Pembayaran</span>
                         <strong><?php echo e($stats['rasio_pembayaran']); ?>%</strong>
@@ -254,7 +254,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                     </div>
                 </aside>
 
-                <article class="dashboard-card">
+                <article class="card dashboard-card">
                     <div class="card-heading">
                         <div>
                             <h3>Tagihan Prioritas</h3>
@@ -278,7 +278,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                     </div>
                 </article>
 
-                <article class="dashboard-card">
+                <article class="card dashboard-card">
                     <div class="card-heading">
                         <div>
                             <h3>Ringkasan Aset</h3>
@@ -311,10 +311,10 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
         <section class="page" id="data-kost">
             <h2 class="page-title">Data Kost</h2>
             <div class="table-header">
-                <a href="<?php echo e(url('/admin/kost/create')); ?>" class="btn-primary"><i class="fa-solid fa-plus"></i> Tambah Kost</a>
+                <a href="<?php echo e(url('/admin/kost/create')); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Tambah Kost</a>
             </div>
-            <div class="table-wrapper">
-                <table>
+            <div class="table-responsive table-wrapper">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Nama Kost</th>
@@ -330,11 +330,11 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td><?php echo e($kost['alamat']); ?></td>
                                 <td><?php echo (int) ($kost['diskon_persen'] ?? 0) > 0 ? e($kost['diskon_persen']) . '%' : '-'; ?></td>
                                 <td>
-                                    <a href="<?php echo e(url('/admin/kost/edit?id=' . $kost['id_kost'])); ?>" class="btn-edit"><i class="fa-solid fa-pen"></i></a>
+                                    <a href="<?php echo e(url('/admin/kost/edit?id=' . $kost['id_kost'])); ?>" class="btn btn-sm btn-edit"><i class="fa-solid fa-pen"></i></a>
                                     <form method="POST" action="<?php echo e(url('/admin/kost/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Yakin hapus?')">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($kost['id_kost']); ?>">
-                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -347,14 +347,14 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
         <section class="page <?php echo $activeTab === 'data-kamar' ? 'active' : ''; ?>" id="data-kamar">
             <h2 class="page-title">Data Kamar</h2>
             <div class="table-header">
-                <a href="<?php echo e(url('/admin/rooms/create')); ?>" class="btn-primary"><i class="fa-solid fa-plus"></i> Tambah Kamar</a>
+                <a href="<?php echo e(url('/admin/rooms/create')); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Tambah Kamar</a>
                 <span class="table-result-note">
                     Menampilkan <?php echo e((string) $roomPagination['from']); ?>-<?php echo e((string) $roomPagination['to']); ?>
                     dari <?php echo e((string) $roomPagination['total_items']); ?> kamar
                 </span>
             </div>
-            <div class="table-wrapper">
-                <table>
+            <div class="table-responsive table-wrapper">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>No. Kamar</th>
@@ -374,7 +374,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                         <?php foreach ($rooms as $room): ?>
                             <?php
                             $badgeClass = $room['status'] === 'Terisi' ? 'warning' : 'success';
-                            $buttonClass = $room['status'] === 'Terisi' ? 'btn-delete' : 'btn-edit';
+                            $buttonClass = $room['status'] === 'Terisi' ? 'btn btn-sm btn-delete' : 'btn btn-sm btn-edit';
                             $buttonIcon = $room['status'] === 'Terisi' ? 'fa-user-xmark' : 'fa-user-check';
                             $buttonLabel = $room['status'] === 'Terisi' ? 'Kosongkan' : 'Isi Kamar';
                             $confirmMessage = $room['status'] === 'Terisi' ? 'Yakin ingin mengosongkan kamar ini?' : 'Ubah status menjadi Terisi?';
@@ -392,11 +392,11 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                         <button type="submit" class="<?php echo e($buttonClass); ?>"><i class="fa-solid <?php echo e($buttonIcon); ?>"></i> <?php echo e($buttonLabel); ?></button>
                                     </form>
 
-                                    <a href="<?php echo e(url('/admin/rooms/edit?id=' . $room['id_kamar'])); ?>" class="btn-edit"><i class="fa-solid fa-pen"></i></a>
+                                    <a href="<?php echo e(url('/admin/rooms/edit?id=' . $room['id_kamar'])); ?>" class="btn btn-sm btn-edit"><i class="fa-solid fa-pen"></i></a>
                                     <form method="POST" action="<?php echo e(url('/admin/rooms/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus kamar?')">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($room['id_kamar']); ?>">
-                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -411,47 +411,49 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                 $startRoomPage = max(1, $currentRoomPage - 2);
                 $endRoomPage = min($totalRoomPages, $currentRoomPage + 2);
                 ?>
-                <div class="pagination admin-room-pagination" aria-label="Navigasi data kamar">
+                <nav aria-label="Navigasi data kamar">
+                    <ul class="pagination justify-content-center flex-wrap admin-room-pagination mb-0">
                     <?php if ($currentRoomPage > 1): ?>
-                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($currentRoomPage - 1)); ?>"><i class="fa-solid fa-chevron-left"></i></a>
+                        <li class="page-item"><a class="page-link" href="<?php echo e($adminRoomsPageUrl($currentRoomPage - 1)); ?>"><i class="fa-solid fa-chevron-left"></i></a></li>
                     <?php else: ?>
-                        <span class="page-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+                        <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-chevron-left"></i></span></li>
                     <?php endif; ?>
 
                     <?php if ($startRoomPage > 1): ?>
-                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl(1)); ?>">1</a>
-                        <?php if ($startRoomPage > 2): ?><span class="page-dots">...</span><?php endif; ?>
+                        <li class="page-item"><a class="page-link" href="<?php echo e($adminRoomsPageUrl(1)); ?>">1</a></li>
+                        <?php if ($startRoomPage > 2): ?><li class="page-item disabled"><span class="page-link page-dots">...</span></li><?php endif; ?>
                     <?php endif; ?>
 
                     <?php for ($pageNumber = $startRoomPage; $pageNumber <= $endRoomPage; $pageNumber++): ?>
                         <?php if ($pageNumber === $currentRoomPage): ?>
-                            <span class="page-btn active"><?php echo e((string) $pageNumber); ?></span>
+                            <li class="page-item active" aria-current="page"><span class="page-link"><?php echo e((string) $pageNumber); ?></span></li>
                         <?php else: ?>
-                            <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($pageNumber)); ?>"><?php echo e((string) $pageNumber); ?></a>
+                            <li class="page-item"><a class="page-link" href="<?php echo e($adminRoomsPageUrl($pageNumber)); ?>"><?php echo e((string) $pageNumber); ?></a></li>
                         <?php endif; ?>
                     <?php endfor; ?>
 
                     <?php if ($endRoomPage < $totalRoomPages): ?>
-                        <?php if ($endRoomPage < $totalRoomPages - 1): ?><span class="page-dots">...</span><?php endif; ?>
-                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($totalRoomPages)); ?>"><?php echo e((string) $totalRoomPages); ?></a>
+                        <?php if ($endRoomPage < $totalRoomPages - 1): ?><li class="page-item disabled"><span class="page-link page-dots">...</span></li><?php endif; ?>
+                        <li class="page-item"><a class="page-link" href="<?php echo e($adminRoomsPageUrl($totalRoomPages)); ?>"><?php echo e((string) $totalRoomPages); ?></a></li>
                     <?php endif; ?>
 
                     <?php if ($currentRoomPage < $totalRoomPages): ?>
-                        <a class="page-btn" href="<?php echo e($adminRoomsPageUrl($currentRoomPage + 1)); ?>"><i class="fa-solid fa-chevron-right"></i></a>
+                        <li class="page-item"><a class="page-link" href="<?php echo e($adminRoomsPageUrl($currentRoomPage + 1)); ?>"><i class="fa-solid fa-chevron-right"></i></a></li>
                     <?php else: ?>
-                        <span class="page-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+                        <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-chevron-right"></i></span></li>
                     <?php endif; ?>
-                </div>
+                    </ul>
+                </nav>
             <?php endif; ?>
         </section>
 
         <section class="page" id="data-user">
             <h2 class="page-title">Data User</h2>
             <div class="table-header">
-                <a href="<?php echo e(url('/admin/users/create')); ?>" class="btn-primary"><i class="fa-solid fa-plus"></i> Tambah User</a>
+                <a href="<?php echo e(url('/admin/users/create')); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Tambah User</a>
             </div>
-            <div class="table-wrapper">
-                <table>
+            <div class="table-responsive table-wrapper">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Nama</th>
@@ -467,11 +469,11 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td><?php echo e($user['email']); ?></td>
                                 <td><?php echo e($user['no_hp']); ?></td>
                                 <td>
-                                    <a href="<?php echo e(url('/admin/users/edit?id=' . $user['id_user'])); ?>" class="btn-edit"><i class="fa-solid fa-pen"></i></a>
+                                    <a href="<?php echo e(url('/admin/users/edit?id=' . $user['id_user'])); ?>" class="btn btn-sm btn-edit"><i class="fa-solid fa-pen"></i></a>
                                     <form method="POST" action="<?php echo e(url('/admin/users/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus user?')">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($user['id_user']); ?>">
-                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -484,8 +486,8 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
         <section class="page" id="pembayaran">
             <h2 class="page-title">Pembayaran (<?php echo e($billingMonth); ?>)</h2>
             <p class="page-subtitle">Kelola status pembayaran penyewa bulan ini</p>
-            <div class="table-wrapper">
-                <table>
+            <div class="table-responsive table-wrapper">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Nama Penghuni</th>
@@ -530,7 +532,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
                                         <input type="hidden" name="aksi" value="<?php echo $isPaid ? 'batal' : 'lunas'; ?>">
-                                        <button type="submit" class="<?php echo $isPaid ? 'btn-delete' : 'btn-edit'; ?>">
+                                        <button type="submit" class="btn btn-sm <?php echo $isPaid ? 'btn-delete' : 'btn-edit'; ?>">
                                             <i class="fa-solid <?php echo $isPaid ? 'fa-xmark' : 'fa-check'; ?>"></i> <?php echo $isPaid ? 'Batal' : 'Lunas'; ?>
                                         </button>
                                     </form>
@@ -539,11 +541,11 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
                                             <input type="hidden" name="aksi" value="batal">
-                                            <button type="submit" class="btn-delete"><i class="fa-solid fa-ban"></i> Batalkan</button>
+                                            <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-ban"></i> Batalkan</button>
                                         </form>
                                     <?php endif; ?>
                                     <?php if (!$isPaid): ?>
-                                        <a href="<?php echo e($waLink); ?>" target="_blank" rel="noopener noreferrer" class="btn-edit" style="background:#25D366; color:white;"><i class="fa-brands fa-whatsapp"></i> Tagih</a>
+                                        <a href="<?php echo e($waLink); ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-edit" style="background:#25D366; color:white;"><i class="fa-brands fa-whatsapp"></i> Tagih</a>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -667,8 +669,8 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
 
         <section class="page" id="pesan-masuk">
             <h2 class="page-title">Pesan Masuk</h2>
-            <div class="table-wrapper">
-                <table>
+            <div class="table-responsive table-wrapper">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Tanggal</th>
@@ -687,11 +689,11 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 </td>
                                 <td><?php echo e($message['isi_pesan']); ?></td>
                                 <td>
-                                    <a href="mailto:<?php echo e($message['email_pengirim']); ?>" class="btn-edit" style="background: #3b82f6; margin-bottom: 5px;"><i class="fa-solid fa-paper-plane"></i> Balas</a>
+                                    <a href="mailto:<?php echo e($message['email_pengirim']); ?>" class="btn btn-sm btn-edit" style="background: #3b82f6; margin-bottom: 5px;"><i class="fa-solid fa-paper-plane"></i> Balas</a>
                                     <form method="POST" action="<?php echo e(url('/admin/messages/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus pesan?')">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($message['id_pesan']); ?>">
-                                        <button type="submit" class="btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                        <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -703,8 +705,8 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
 
         <section class="page" id="atur-lokasi">
             <h2 class="page-title">Atur Lokasi Kost</h2>
-            <div class="table-wrapper">
-                <table>
+            <div class="table-responsive table-wrapper">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Nama Kost</th>
@@ -721,7 +723,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td><?php echo e($location['alamat']); ?></td>
                                 <td><?php echo $latLong; ?></td>
                                 <td>
-                                    <a href="<?php echo e(url('/admin/locations/edit?id=' . $location['id_kost'])); ?>" class="btn-edit" style="background:#3b82f6;">
+                                    <a href="<?php echo e(url('/admin/locations/edit?id=' . $location['id_kost'])); ?>" class="btn btn-sm btn-edit" style="background:#3b82f6;">
                                         <i class="fa-solid fa-map-pin"></i> Set Titik
                                     </a>
                                 </td>

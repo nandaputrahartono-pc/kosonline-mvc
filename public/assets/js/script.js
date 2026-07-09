@@ -30,44 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 3. USER DROPDOWN CLICK TOGGLE ---
-    const userMenus = document.querySelectorAll('[data-user-menu]');
-
-    function closeUserMenu(menu) {
-        if (!menu) return;
-        menu.classList.remove('is-open');
-        const trigger = menu.querySelector('.public-user-trigger');
-        if (trigger) {
-            trigger.setAttribute('aria-expanded', 'false');
-        }
-    }
-
-    userMenus.forEach((menu) => {
-        const trigger = menu.querySelector('.public-user-trigger');
-        if (!trigger) return;
-
-        trigger.addEventListener('click', (event) => {
-            event.stopPropagation();
-            const shouldOpen = !menu.classList.contains('is-open');
-            userMenus.forEach(closeUserMenu);
-            menu.classList.toggle('is-open', shouldOpen);
-            trigger.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-        });
-    });
-
-    document.addEventListener('click', (event) => {
-        userMenus.forEach((menu) => {
-            if (!menu.contains(event.target)) {
-                closeUserMenu(menu);
-            }
-        });
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key !== 'Escape') return;
-        userMenus.forEach(closeUserMenu);
-    });
-
     // --- 4. HOME CAROUSEL CONTROLS ---
     document.querySelectorAll('[data-carousel-scroll]').forEach((button) => {
         button.addEventListener('click', () => {

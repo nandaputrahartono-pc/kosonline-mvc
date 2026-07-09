@@ -107,7 +107,7 @@
                     </div>
 
                     <!-- Room Description / Facilities -->
-                    <div class="p-4 bg-white border border-soft rounded-4 mb-4" style="background: var(--card-bg) !important; border-color: var(--border-soft) !important;">
+                    <div class="card p-4 bg-white border border-soft rounded-4 mb-4" style="background: var(--card-bg) !important; border-color: var(--border-soft) !important;">
                         <h4 class="fw-bold mb-4" style="color: var(--text-main);">Fasilitas Kamar</h4>
                         <div class="row row-cols-2 row-cols-md-3 g-3">
                             <?php foreach ($facilitiesList as $facility): ?>
@@ -128,7 +128,7 @@
                     </div>
 
                     <!-- Location Mini Map -->
-                    <div class="p-4 bg-white border border-soft rounded-4" style="background: var(--card-bg) !important; border-color: var(--border-soft) !important;">
+                    <div class="card p-4 bg-white border border-soft rounded-4" style="background: var(--card-bg) !important; border-color: var(--border-soft) !important;">
                         <h4 class="fw-bold mb-3" style="color: var(--text-main);"><i class="fa-solid fa-map-location-dot me-2 text-primary"></i>Lokasi Kos</h4>
                         <p class="text-muted mb-4"><?php echo e($room['alamat']); ?></p>
                         <div id="mini-map" style="height: 300px; width: 100%; border-radius: 12px; z-index: 1;"></div>
@@ -137,15 +137,15 @@
 
                 <!-- Info and Call to Action Column (Right) -->
                 <div class="col-lg-5">
-                    <div class="detail-info-card p-4 position-sticky" style="top: 100px; background: var(--card-bg); border-color: var(--border-soft);">
+                    <div class="card detail-info-card p-4 position-sticky" style="top: 100px; background: var(--card-bg); border-color: var(--border-soft);">
                         <div class="detail-card-top">
                             <span class="badge px-3 py-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue); font-weight: 600; border-radius: 8px;"><?php echo e($room['nama_kost']); ?></span>
                             <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="detail-wishlist-inline">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="id_kamar" value="<?php echo e($room['id_kamar']); ?>">
                                 <input type="hidden" name="redirect" value="<?php echo e('/rooms/detail?id=' . $room['id_kamar']); ?>">
-                                <button type="submit" class="<?php echo $isWishlisted ? 'saved' : ''; ?>" aria-label="<?php echo $isWishlisted ? 'Hapus dari wishlist' : 'Simpan ke wishlist'; ?>">
-                                    <i class="<?php echo $isWishlisted ? 'fa-solid' : 'fa-regular'; ?> fa-heart"></i>
+                                <button type="submit" class="<?php echo $isWishlisted ? 'saved' : ''; ?>" aria-label="<?php echo $isWishlisted ? 'Hapus dari simpanan' : 'Simpan kamar'; ?>">
+                                    <i class="<?php echo $isWishlisted ? 'fa-solid' : 'fa-regular'; ?> fa-bookmark"></i>
                                     <span><?php echo $isWishlisted ? 'Tersimpan' : 'Simpan'; ?></span>
                                 </button>
                             </form>
@@ -471,21 +471,21 @@ $extraHead = <<<HTML
             gap: 8px;
             min-height: 38px;
             padding: 8px 12px;
-            border: 1px solid #fecdd3;
+            border: 1px solid rgba(37, 99, 235, 0.18);
             border-radius: 999px;
-            background: #fff1f2;
-            color: #e11d48;
+            background: var(--accent-blue-soft);
+            color: var(--accent-blue);
             font-weight: 800;
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
         .detail-wishlist-inline button:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(225, 29, 72, 0.12);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.14);
         }
         .detail-wishlist-inline button.saved {
-            background: #e11d48;
+            background: var(--accent-blue);
             color: #fff;
-            border-color: #e11d48;
+            border-color: var(--accent-blue);
         }
         .detail-action-stack {
             display: grid;

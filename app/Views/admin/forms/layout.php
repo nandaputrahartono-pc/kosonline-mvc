@@ -8,6 +8,7 @@ $errorMessage = flash('error');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo e($title ?? 'Form Admin - KosOnline'); ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         * { box-sizing: border-box; }
@@ -58,6 +59,27 @@ $errorMessage = flash('error');
             background: #fff;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+        .form-control,
+        .form-select {
+            min-height: 48px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group .form-control {
+            width: 1%;
+            margin-bottom: 0;
+        }
+        .input-group .input-group-text {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0;
+            border-radius: 8px 0 0 8px;
+            font-weight: 700;
+        }
+        .input-group > .form-control {
+            border-radius: 0 8px 8px 0;
+        }
         img {
             max-width: 100%;
             height: auto;
@@ -76,7 +98,7 @@ $errorMessage = flash('error');
             font-size: 15px;
             transition: 0.3s;
         }
-        button:hover {
+        button[type="submit"]:hover {
             background: #1e40af;
             transform: translateY(-2px);
         }

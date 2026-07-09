@@ -5,7 +5,7 @@
         <h3>Galeri Berkategori</h3>
         <p>Gunakan kategori bebas seperti Kamar Tidur, Kamar Mandi, Dapur, atau Area Parkir.</p>
     </div>
-    <button type="button" class="btn-add-gallery" id="add-gallery-row">
+    <button type="button" class="btn btn-outline-primary btn-add-gallery" id="add-gallery-row">
         <i class="fa-solid fa-plus"></i> Tambah Foto
     </button>
 </div>
@@ -22,17 +22,17 @@
 <?php if (!empty($gallery)): ?>
     <div class="existing-gallery-grid">
         <?php foreach ($gallery as $photo): ?>
-            <article class="gallery-editor-card">
-                <img src="<?php echo e(upload_asset($photo['nama_file'])); ?>" alt="<?php echo e($photo['judul'] ?: $photo['kategori']); ?>">
+            <article class="card gallery-editor-card">
+                <img src="<?php echo e(upload_asset($photo['nama_file'])); ?>" class="card-img-top" alt="<?php echo e($photo['judul'] ?: $photo['kategori']); ?>">
                 <div class="gallery-editor-fields">
                     <label>Kategori</label>
-                    <input type="text" name="existing_gallery[<?php echo e($photo['id_galeri']); ?>][kategori]" value="<?php echo e($photo['kategori']); ?>" list="gallery-category-suggestions" maxlength="60">
+                    <input type="text" name="existing_gallery[<?php echo e($photo['id_galeri']); ?>][kategori]" value="<?php echo e($photo['kategori']); ?>" class="form-control" list="gallery-category-suggestions" maxlength="60">
 
                     <label>Judul Foto</label>
-                    <input type="text" name="existing_gallery[<?php echo e($photo['id_galeri']); ?>][judul]" value="<?php echo e($photo['judul']); ?>" maxlength="120" placeholder="Contoh: Kamar mandi dalam">
+                    <input type="text" name="existing_gallery[<?php echo e($photo['id_galeri']); ?>][judul]" value="<?php echo e($photo['judul']); ?>" class="form-control" maxlength="120" placeholder="Contoh: Kamar mandi dalam">
 
                     <label>Urutan</label>
-                    <input type="number" name="existing_gallery[<?php echo e($photo['id_galeri']); ?>][urutan]" value="<?php echo e($photo['urutan']); ?>" min="0" max="65535">
+                    <input type="number" name="existing_gallery[<?php echo e($photo['id_galeri']); ?>][urutan]" value="<?php echo e($photo['urutan']); ?>" class="form-control" min="0" max="65535">
 
                     <label class="delete-photo-option">
                         <input type="checkbox" name="existing_gallery[<?php echo e($photo['id_galeri']); ?>][hapus]" value="1">
@@ -51,30 +51,33 @@
 <div id="new-gallery-rows"></div>
 
 <template id="gallery-row-template">
-    <article class="new-gallery-row">
+    <article class="card new-gallery-row">
         <div class="new-gallery-row-header">
             <strong>Foto Galeri Baru</strong>
-            <button type="button" class="btn-remove-gallery" aria-label="Hapus baris foto">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-gallery" aria-label="Hapus baris foto">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
         <label>File Foto</label>
-        <input type="file" name="gallery_photos[]" accept="image/jpeg,image/png,image/webp">
+        <div class="input-group">
+            <span class="input-group-text">Browse</span>
+            <input type="file" name="gallery_photos[]" class="form-control" accept="image/jpeg,image/png,image/webp">
+        </div>
 
         <div class="field-grid">
             <div>
                 <label>Kategori</label>
-                <input type="text" name="gallery_categories[]" list="gallery-category-suggestions" maxlength="60" placeholder="Contoh: Kamar Mandi">
+                <input type="text" name="gallery_categories[]" class="form-control" list="gallery-category-suggestions" maxlength="60" placeholder="Contoh: Kamar Mandi">
             </div>
             <div>
                 <label>Urutan</label>
-                <input type="number" name="gallery_orders[]" min="0" max="65535" value="0">
+                <input type="number" name="gallery_orders[]" class="form-control" min="0" max="65535" value="0">
             </div>
         </div>
 
         <label>Judul Foto (Opsional)</label>
-        <input type="text" name="gallery_titles[]" maxlength="120" placeholder="Contoh: Kamar mandi dalam dengan shower">
+        <input type="text" name="gallery_titles[]" class="form-control" maxlength="120" placeholder="Contoh: Kamar mandi dalam dengan shower">
     </article>
 </template>
 

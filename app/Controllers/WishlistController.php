@@ -53,7 +53,7 @@ final class WishlistController extends Controller
         }
 
         $saved = $this->wishlistModel->toggle((int) $_SESSION['id_user'], $roomId);
-        $message = $saved ? 'Kamar disimpan ke wishlist.' : 'Kamar dihapus dari wishlist.';
+        $message = $saved ? 'Kamar berhasil disimpan.' : 'Kamar dihapus dari simpanan.';
 
         if ($this->expectsJson()) {
             $this->json([

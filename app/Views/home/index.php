@@ -94,19 +94,19 @@ ob_start();
         </div>
 
         <div class="home-stats-strip">
-            <div>
+            <div class="card">
                 <strong><?php echo e($homeStats['total_branches'] ?? 0); ?>+</strong>
                 <span>Cabang kost</span>
             </div>
-            <div>
+            <div class="card">
                 <strong><?php echo e($homeStats['available_rooms'] ?? 0); ?></strong>
                 <span>Kamar tersedia</span>
             </div>
-            <div>
+            <div class="card">
                 <strong><?php echo e($homeStats['active_promos'] ?? 0); ?></strong>
                 <span>Promo aktif</span>
             </div>
-            <div>
+            <div class="card">
                 <strong>24 Jam</strong>
                 <span>Admin & CS online</span>
             </div>
@@ -141,15 +141,15 @@ ob_start();
                     $totalReview = (int) ($room['total_review'] ?? 0);
                     ?>
                     <article class="home-carousel-item">
-                        <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
+                        <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="card h-100 home-room-card">
                             <div class="home-room-image">
-                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
+                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" class="card-img-top" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
                                 <?php if ($hasPromo): ?>
                                     <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
                                 <?php endif; ?>
                                 <span class="home-status-badge">Tersedia</span>
                             </div>
-                            <div class="home-room-body">
+                            <div class="card-body home-room-body">
                                 <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
                                 <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
                                 <div class="home-rating-mini">
@@ -211,13 +211,13 @@ ob_start();
                     $totalReview = (int) ($room['total_review'] ?? 0);
                     ?>
                     <article class="home-carousel-item">
-                        <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="home-room-card">
+                        <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="card h-100 home-room-card">
                             <div class="home-room-image">
-                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
+                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" class="card-img-top" alt="Foto <?php echo e($room['nama_kost']); ?>" loading="lazy" decoding="async">
                                 <span class="home-promo-badge">Diskon <?php echo e($room['diskon_persen']); ?>%</span>
                                 <span class="home-status-badge">Tersedia</span>
                             </div>
-                            <div class="home-room-body">
+                            <div class="card-body home-room-body">
                                 <span class="home-branch-badge"><?php echo e($room['nama_kost']); ?></span>
                                 <h3>Kamar No. <?php echo e($room['nomor_kamar']); ?></h3>
                                 <div class="home-rating-mini">
@@ -260,19 +260,19 @@ ob_start();
         </div>
 
         <div class="home-steps">
-            <div class="home-step-card">
+            <div class="card home-step-card">
                 <span>01</span>
                 <i class="fa-solid fa-magnifying-glass-location"></i>
                 <h3>Cari kamar</h3>
                 <p>Pilih cabang, lihat foto, cek fasilitas, dan bandingkan harga yang paling cocok.</p>
             </div>
-            <div class="home-step-card">
+            <div class="card home-step-card">
                 <span>02</span>
                 <i class="fa-brands fa-whatsapp"></i>
                 <h3>Tanya admin</h3>
                 <p>Konfirmasi ketersediaan, aturan kos, dan jadwal survei kamar lewat WhatsApp.</p>
             </div>
-            <div class="home-step-card">
+            <div class="card home-step-card">
                 <span>03</span>
                 <i class="fa-solid fa-credit-card"></i>
                 <h3>Booking & bayar</h3>
@@ -292,9 +292,9 @@ ob_start();
 
         <div class="home-branch-grid">
             <?php foreach ($branches as $branch): ?>
-                <article class="home-branch-card">
-                    <img src="<?php echo e(upload_asset($branch['foto_kost'])); ?>" alt="<?php echo e($branch['nama_kost']); ?>" loading="lazy" decoding="async">
-                    <div>
+                <article class="card home-branch-card">
+                    <img src="<?php echo e(upload_asset($branch['foto_kost'])); ?>" class="card-img-top" alt="<?php echo e($branch['nama_kost']); ?>" loading="lazy" decoding="async">
+                    <div class="card-body">
                         <span><?php echo e($branch['kamar_tersedia']); ?> kamar tersedia</span>
                         <h3><?php echo e($branch['nama_kost']); ?></h3>
                         <p><i class="fa-solid fa-location-dot"></i> <?php echo e($branch['alamat']); ?></p>

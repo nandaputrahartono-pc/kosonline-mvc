@@ -40,7 +40,7 @@ $navClass = static function (array $paths) use ($currentPath): string {
             <li><a href="<?php echo e(url('/map')); ?>"<?php echo $navClass(['/map']); ?>>Peta Lokasi</a></li>
             <li class="d-lg-none mt-4 w-100">
                 <?php if ($isLoggedInUser): ?>
-                    <a href="<?php echo e(url('/wishlist')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: #fff1f2; color: #e11d48 !important; border-radius: 50px;">Wishlist</a>
+                    <a href="<?php echo e(url('/wishlist')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue) !important; border-radius: 50px;">Kamar Tersimpan</a>
                     <a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue) !important; border-radius: 50px;">Chat Admin</a>
                     <a href="<?php echo e(url('/member/dashboard')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue); color: white !important; border-radius: 50px; box-shadow: 0 4px 14px rgba(37,99,235,0.3);">Dashboard User</a>
                     <form method="POST" action="<?php echo e(url('/logout')); ?>">
@@ -55,8 +55,8 @@ $navClass = static function (array $paths) use ($currentPath): string {
     </nav>
 
     <div class="d-flex align-items-center gap-3">
-        <a href="<?php echo e($isLoggedInUser ? url('/wishlist') : url('/login')); ?>" class="public-icon-link d-none d-lg-inline-flex <?php echo $currentPath === '/wishlist' ? 'active' : ''; ?>" title="Wishlist">
-            <i class="fa-regular fa-heart"></i>
+        <a href="<?php echo e($isLoggedInUser ? url('/wishlist') : url('/login')); ?>" class="public-icon-link public-save-link d-none d-lg-inline-flex <?php echo $currentPath === '/wishlist' ? 'active' : ''; ?>" title="Kamar Tersimpan">
+            <i class="fa-regular fa-bookmark"></i>
         </a>
         <a href="<?php echo e($isLoggedInUser ? url('/member/dashboard?tab=chat') : url('/login')); ?>" class="public-icon-link d-none d-lg-inline-flex <?php echo $currentPath === '/member/dashboard' && (string) ($_GET['tab'] ?? '') === 'chat' ? 'active' : ''; ?>" title="Chat Admin">
             <i class="fa-regular fa-comments"></i>
@@ -65,13 +65,13 @@ $navClass = static function (array $paths) use ($currentPath): string {
             <i class="fa-solid fa-moon"></i>
         </button>
         <?php if ($isLoggedInUser): ?>
-            <div class="public-user-menu d-none d-lg-block" data-user-menu>
-                <button type="button" class="public-user-trigger" aria-label="Menu akun" aria-expanded="false" aria-controls="public-user-dropdown">
+            <div class="dropdown public-user-menu d-none d-lg-block">
+                <button type="button" class="public-user-trigger dropdown-toggle" id="public-user-dropdown-toggle" data-bs-toggle="dropdown" aria-label="Menu akun" aria-expanded="false">
                     <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil <?php echo e($currentUserName); ?>" decoding="async">
                     <span><?php echo e(strtok($currentUserName, ' ') ?: 'User'); ?></span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
-                <div class="public-user-dropdown" id="public-user-dropdown">
+                <div class="dropdown-menu dropdown-menu-end public-user-dropdown" aria-labelledby="public-user-dropdown-toggle">
                     <div class="public-user-card">
                         <img src="<?php echo e($currentUserAvatar); ?>" alt="Foto profil" loading="lazy" decoding="async">
                         <div>
@@ -79,10 +79,10 @@ $navClass = static function (array $paths) use ($currentPath): string {
                             <small>Sudah login</small>
                         </div>
                     </div>
-                    <a href="<?php echo e(url('/member/dashboard')); ?>"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                    <a href="<?php echo e(url('/member/dashboard')); ?>" class="dropdown-item"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
                     <form method="POST" action="<?php echo e(url('/logout')); ?>">
                         <?php echo csrf_field(); ?>
-                        <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                        <button type="submit" class="dropdown-item"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                     </form>
                 </div>
             </div>

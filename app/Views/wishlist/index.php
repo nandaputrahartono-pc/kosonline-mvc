@@ -24,7 +24,7 @@ ob_start();
         <div class="container">
             <div class="section-heading split-heading">
                 <div>
-                    <h1 class="wishlist-title">Wishlist Saya</h1>
+                    <h1 class="wishlist-title">Kamar Tersimpan</h1>
                 </div>
                 <div class="wishlist-actions">
                     <span><?php echo e((string) count($rooms)); ?> tersimpan</span>
@@ -43,35 +43,29 @@ ob_start();
                         $roomId = (int) $room['id_kamar'];
                         $ratingSummary = $reviewSummaries[$roomId] ?? ['rating_avg' => 0, 'total_review' => 0];
                         $isSaved = in_array($roomId, $savedRoomIds, true);
-                        $waText = sprintf(
-                            'Halo Admin KosOnline, saya tertarik dengan Kamar %s di %s. Boleh dibantu info ketersediaannya?',
-                            (string) ($room['nomor_kamar'] ?? ''),
-                            (string) ($room['nama_kost'] ?? '')
-                        );
                         ?>
-                        <article class="room-modern-card">
+                        <article class="card h-100 room-modern-card">
                             <a href="<?php echo e(url('/rooms/detail?id=' . $roomId)); ?>" class="room-card-image">
-                                <img src="<?php echo e(upload_asset($room['foto_kost'] ?? '')); ?>" alt="Foto kamar <?php echo e($room['nomor_kamar'] ?? ''); ?>" loading="lazy" decoding="async">
+                                <img src="<?php echo e(upload_asset($room['foto_kost'] ?? '')); ?>" class="card-img-top" alt="Foto kamar <?php echo e($room['nomor_kamar'] ?? ''); ?>" loading="lazy" decoding="async">
                                 <span class="room-card-badge"><?php echo e($room['nama_kost'] ?? 'KosOnline'); ?></span>
                                 <?php if ($hasPromo): ?>
                                     <span class="room-card-promo">Diskon <?php echo e((string) $room['diskon_persen']); ?>%</span>
                                 <?php endif; ?>
                             </a>
-                            <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="room-wishlist-form">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="id_kamar" value="<?php echo e($roomId); ?>">
-                                <input type="hidden" name="redirect" value="/wishlist">
-                                <button type="submit" class="room-wishlist-btn <?php echo $isSaved ? 'saved' : ''; ?>" aria-label="Hapus dari wishlist">
-                                    <i class="<?php echo $isSaved ? 'fa-solid' : 'fa-regular'; ?> fa-heart"></i>
-                                </button>
-                            </form>
-                            <div class="room-card-body">
+                            <div class="card-body room-card-body">
                                 <div class="room-card-title">
                                     <div>
                                         <span>Lantai <?php echo e((string) ($room['lantai'] ?? '-')); ?></span>
                                         <h3><?php echo e((string) ($room['nomor_kamar'] ?? 'Kamar')); ?></h3>
                                     </div>
-                                    <i class="fa-solid fa-door-open"></i>
+                                    <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="room-wishlist-form room-title-save-form">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="id_kamar" value="<?php echo e($roomId); ?>">
+                                        <input type="hidden" name="redirect" value="/wishlist">
+                                        <button type="submit" class="room-title-save-btn <?php echo $isSaved ? 'saved' : ''; ?>" aria-label="Hapus dari simpanan">
+                                            <i class="<?php echo $isSaved ? 'fa-solid' : 'fa-regular'; ?> fa-bookmark"></i>
+                                        </button>
+                                    </form>
                                 </div>
                                 <div class="room-rating-mini">
                                     <i class="fa-solid fa-star"></i>
@@ -100,9 +94,6 @@ ob_start();
                                     <a href="<?php echo e(url('/rooms/detail?id=' . $roomId)); ?>" class="btn btn-primary">
                                         Lihat Detail
                                     </a>
-                                    <a href="https://wa.me/6287748703029?text=<?php echo e(rawurlencode($waText)); ?>" class="btn btn-outline-success" target="_blank" rel="noopener">
-                                        <i class="fa-brands fa-whatsapp"></i>
-                                    </a>
                                 </div>
                             </div>
                         </article>
@@ -110,8 +101,8 @@ ob_start();
                 </div>
             <?php else: ?>
                 <div class="public-empty-state">
-                    <div class="empty-icon"><i class="fa-regular fa-heart"></i></div>
-                    <h3>Wishlist masih kosong</h3>
+                    <div class="empty-icon"><i class="fa-regular fa-bookmark"></i></div>
+                    <h3>Belum ada kamar tersimpan</h3>
                     <p>Simpan kamar dari halaman Kamar Kos atau Detail Kamar. Nanti semua pilihan yang kamu incar muncul rapi di sini.</p>
                     <div class="empty-actions">
                         <a href="<?php echo e(url('/rooms')); ?>" class="btn btn-primary">Cari Kamar</a>
@@ -125,6 +116,6 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-$title = 'Wishlist Kamar - KosOnline';
+$title = 'Kamar Tersimpan - KosOnline';
 require base_path('app/Views/layouts/public.php');
 ?>

@@ -10,12 +10,12 @@
 <form method="POST">
     <?php echo csrf_field(); ?>
     <label>Latitude (Garis Lintang)</label>
-    <input type="number" name="latitude" min="-90" max="90" step="any" value="<?php echo e($kost['latitude']); ?>" placeholder="Contoh: -6.70423" required>
+    <input type="number" name="latitude" min="-90" max="90" step="any" value="<?php echo e($kost['latitude']); ?>" class="form-control" placeholder="Contoh: -6.70423" required>
 
     <label>Longitude (Garis Bujur)</label>
-    <input type="number" name="longitude" min="-180" max="180" step="any" value="<?php echo e($kost['longitude']); ?>" placeholder="Contoh: 108.55612" required>
+    <input type="number" name="longitude" min="-180" max="180" step="any" value="<?php echo e($kost['longitude']); ?>" class="form-control" placeholder="Contoh: 108.55612" required>
 
-    <button type="submit" name="simpan">Simpan Lokasi</button>
-    <a href="<?php echo e(url('/admin/dashboard')); ?>" class="btn-batal">Batal</a>
+    <button type="submit" name="simpan" class="btn btn-primary">Simpan Lokasi</button>
+    <a href="<?php echo e(url('/admin/dashboard')); ?>" class="btn btn-outline-secondary btn-batal">Batal</a>
 </form>
 <?php $content = ob_get_clean(); $title = 'Set Titik Peta'; require base_path('app/Views/admin/forms/layout.php'); ?>
