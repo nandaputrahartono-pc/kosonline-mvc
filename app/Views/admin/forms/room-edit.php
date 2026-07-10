@@ -1,4 +1,13 @@
-<?php $formMaxWidth = '900px'; ob_start(); ?>
+<?php
+$formMaxWidth = '900px';
+/**
+ * @var array $room Data kamar yang sedang diedit (dari AdminRoomController::edit).
+ * @var array $kosts Daftar cabang kost untuk dropdown.
+ * @var array $users Daftar user yang bisa dijadikan penghuni.
+ * @var int $currentTenant id_user penghuni aktif kamar ini, 0 jika kosong.
+ */
+ob_start();
+?>
 <h2>Edit Data Kamar</h2>
 <form method="POST" enctype="multipart/form-data">
     <?php echo csrf_field(); ?>

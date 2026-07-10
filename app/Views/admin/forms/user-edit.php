@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php
+/** @var array $user Data user yang sedang diedit (dari AdminUserController::edit). */
+ob_start();
+?>
 <h2 style="text-align: center; margin-bottom: 20px;">Edit Data User</h2>
 <form method="POST">
     <?php echo csrf_field(); ?>

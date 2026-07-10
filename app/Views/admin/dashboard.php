@@ -717,7 +717,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                     </thead>
                     <tbody>
                         <?php foreach ($locations as $location): ?>
-                            <?php $latLong = !empty($location['latitude']) ? $location['latitude'] . ', ' . $location['longitude'] : "<span style='color:red'>Belum diset</span>"; ?>
+                            <?php $latLong = !empty($location['latitude']) ? e($location['latitude'] . ', ' . $location['longitude']) : "<span style='color:red'>Belum diset</span>"; ?>
                             <tr>
                                 <td><?php echo e($location['nama_kost']); ?></td>
                                 <td><?php echo e($location['alamat']); ?></td>

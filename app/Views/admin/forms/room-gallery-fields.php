@@ -1,3 +1,4 @@
+<?php /** @var array $gallery Daftar foto galeri kamar; kosong saat membuat kamar baru. */ ?>
 <hr class="section-divider">
 
 <div class="section-heading">

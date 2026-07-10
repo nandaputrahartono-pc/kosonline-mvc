@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php
+/** @var array $kost Data kost yang sedang diedit (dari AdminKostController::edit). */
+ob_start();
+?>
 <h2>Edit Data Kost</h2>
 <form method="POST" enctype="multipart/form-data">
     <?php echo csrf_field(); ?>

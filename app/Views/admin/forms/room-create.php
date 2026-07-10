@@ -1,4 +1,11 @@
-<?php $formMaxWidth = '900px'; ob_start(); ?>
+<?php
+$formMaxWidth = '900px';
+/**
+ * @var array $kosts Daftar cabang kost untuk dropdown (dari AdminRoomController::create).
+ * @var array $users Daftar user yang bisa dijadikan penghuni.
+ */
+ob_start();
+?>
 <h2>Tambah Data Kamar</h2>
 <form method="POST" enctype="multipart/form-data">
     <?php echo csrf_field(); ?>

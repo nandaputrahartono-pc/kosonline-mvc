@@ -278,9 +278,11 @@ final class RoomController extends Controller
 
     public function invoice(): void
     {
+        $this->requireUser();
+
         $paymentId = (int) ($_GET['id'] ?? 0);
         $invoice = $this->paymentModel->findInvoiceById($paymentId);
-        if ($invoice === null) {
+        if ($invoice === null || (int) ($invoice['id_user'] ?? 0) !== (int) $_SESSION['id_user']) {
             set_flash('error', 'Invoice tidak ditemukan.');
             redirect_to('/rooms');
         }

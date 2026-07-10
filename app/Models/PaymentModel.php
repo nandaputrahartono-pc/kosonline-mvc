@@ -148,7 +148,7 @@ final class PaymentModel extends Model
     public function findInvoiceById(int $paymentId): ?array
     {
         return $this->db->selectOne(
-            "SELECT pembayaran.*, sewa.kode_booking, sewa.tanggal_masuk, sewa.jatuh_tempo, sewa.status_sewa,
+            "SELECT pembayaran.*, sewa.id_user, sewa.kode_booking, sewa.tanggal_masuk, sewa.jatuh_tempo, sewa.status_sewa,
                     kamar.id_kamar, kamar.nomor_kamar, kamar.lantai, kamar.fasilitas,
                     kost.nama_kost, kost.alamat, kost.foto_kost
              FROM pembayaran

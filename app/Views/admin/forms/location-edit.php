@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php
+/** @var array $kost Data kost yang koordinatnya diatur (dari AdminLocationController::edit). */
+ob_start();
+?>
 <h2>Set Titik Peta: <?php echo e($kost['nama_kost']); ?></h2>
 <p><?php echo e($kost['alamat']); ?></p>
 
