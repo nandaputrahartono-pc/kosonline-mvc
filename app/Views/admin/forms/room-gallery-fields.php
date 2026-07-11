@@ -6,9 +6,6 @@
         <h3>Galeri Berkategori</h3>
         <p>Gunakan kategori bebas seperti Kamar Tidur, Kamar Mandi, Dapur, atau Area Parkir.</p>
     </div>
-    <button type="button" class="btn btn-outline-primary btn-add-gallery" id="add-gallery-row">
-        <i class="fa-solid fa-plus"></i> Tambah Foto
-    </button>
 </div>
 
 <datalist id="gallery-category-suggestions">
@@ -49,57 +46,149 @@
     </div>
 <?php endif; ?>
 
-<div id="new-gallery-rows"></div>
+<div class="gallery-upload">
+    <div class="gallery-upload-head">
+        <strong><i class="fa-regular fa-images"></i> Tambah Foto Baru</strong>
+        <span class="gallery-file-count" id="gallery-file-count" hidden></span>
+    </div>
 
-<template id="gallery-row-template">
-    <article class="card new-gallery-row">
-        <div class="new-gallery-row-header">
-            <strong>Foto Galeri Baru</strong>
-            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-gallery" aria-label="Hapus baris foto">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
+    <label class="gallery-batch-field">
+        <span>Kategori untuk semua foto yang diunggah</span>
+        <input type="text" name="gallery_batch_category" class="form-control" list="gallery-category-suggestions" maxlength="60" placeholder="Contoh: Kamar Tidur (kosongkan = Lainnya)">
+    </label>
 
-        <label>File Foto</label>
-        <div class="input-group">
-            <span class="input-group-text">Browse</span>
-            <input type="file" name="gallery_photos[]" class="form-control" accept="image/jpeg,image/png,image/webp">
-        </div>
+    <label class="gallery-dropzone" id="gallery-dropzone">
+        <input type="file" name="gallery_photos[]" id="gallery-input" multiple accept="image/jpeg,image/png,image/webp" hidden>
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span class="gallery-dropzone-title">Seret &amp; letakkan foto di sini, atau klik untuk memilih</span>
+        <span class="gallery-dropzone-hint">Bisa pilih banyak sekaligus &middot; JPG/PNG/WebP &middot; maks 5&nbsp;MB per foto &middot; maks 20 foto</span>
+    </label>
 
-        <div class="field-grid">
-            <div>
-                <label>Kategori</label>
-                <input type="text" name="gallery_categories[]" class="form-control" list="gallery-category-suggestions" maxlength="60" placeholder="Contoh: Kamar Mandi">
-            </div>
-            <div>
-                <label>Urutan</label>
-                <input type="number" name="gallery_orders[]" class="form-control" min="0" max="65535" value="0">
-            </div>
-        </div>
-
-        <label>Judul Foto (Opsional)</label>
-        <input type="text" name="gallery_titles[]" class="form-control" maxlength="120" placeholder="Contoh: Kamar mandi dalam dengan shower">
-    </article>
-</template>
+    <p class="gallery-upload-error" id="gallery-upload-error" hidden></p>
+    <div class="gallery-preview-grid" id="gallery-preview-grid"></div>
+</div>
 
 <script>
     (() => {
-        const rows = document.getElementById('new-gallery-rows');
-        const template = document.getElementById('gallery-row-template');
-        const addButton = document.getElementById('add-gallery-row');
+        const input = document.getElementById('gallery-input');
+        const dropzone = document.getElementById('gallery-dropzone');
+        const grid = document.getElementById('gallery-preview-grid');
+        const countEl = document.getElementById('gallery-file-count');
+        const errorEl = document.getElementById('gallery-upload-error');
 
-        function addGalleryRow() {
-            rows.appendChild(template.content.cloneNode(true));
+        const MAX_FILES = 20;
+        const MAX_SIZE = 5 * 1024 * 1024;
+        const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
+
+        const files = [];
+        const urls = new Map();
+
+        function syncInput() {
+            const data = new DataTransfer();
+            files.forEach((file) => data.items.add(file));
+            input.files = data.files;
         }
 
-        addButton.addEventListener('click', addGalleryRow);
-        rows.addEventListener('click', (event) => {
-            const removeButton = event.target.closest('.btn-remove-gallery');
-            if (removeButton) {
-                removeButton.closest('.new-gallery-row').remove();
+        function updateCount() {
+            countEl.hidden = files.length === 0;
+            countEl.textContent = files.length + ' foto dipilih';
+        }
+
+        function render() {
+            grid.innerHTML = '';
+            files.forEach((file, index) => {
+                let url = urls.get(file);
+                if (!url) {
+                    url = URL.createObjectURL(file);
+                    urls.set(file, url);
+                }
+
+                const item = document.createElement('div');
+                item.className = 'gallery-preview-item';
+
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = file.name;
+
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'gallery-preview-remove';
+                remove.setAttribute('aria-label', 'Hapus foto ' + file.name);
+                remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                remove.addEventListener('click', () => removeAt(index));
+
+                item.appendChild(img);
+                item.appendChild(remove);
+                grid.appendChild(item);
+            });
+
+            updateCount();
+            syncInput();
+        }
+
+        function removeAt(index) {
+            const file = files[index];
+            if (file && urls.has(file)) {
+                URL.revokeObjectURL(urls.get(file));
+                urls.delete(file);
             }
+            files.splice(index, 1);
+            errorEl.hidden = true;
+            render();
+        }
+
+        function addFiles(incoming) {
+            const rejected = [];
+
+            Array.from(incoming).forEach((file) => {
+                if (!ALLOWED.includes(file.type)) {
+                    rejected.push(file.name + ' (bukan JPG/PNG/WebP)');
+                    return;
+                }
+                if (file.size > MAX_SIZE) {
+                    rejected.push(file.name + ' (lebih dari 5 MB)');
+                    return;
+                }
+                if (files.some((existing) => existing.name === file.name && existing.size === file.size)) {
+                    return;
+                }
+                if (files.length >= MAX_FILES) {
+                    rejected.push(file.name + ' (melebihi batas 20 foto)');
+                    return;
+                }
+                files.push(file);
+            });
+
+            if (rejected.length) {
+                errorEl.textContent = 'Sebagian foto dilewati: ' + rejected.join(', ') + '.';
+                errorEl.hidden = false;
+            } else {
+                errorEl.hidden = true;
+            }
+
+            render();
+        }
+
+        input.addEventListener('change', () => addFiles(input.files));
+
+        ['dragenter', 'dragover'].forEach((evt) => {
+            dropzone.addEventListener(evt, (event) => {
+                event.preventDefault();
+                dropzone.classList.add('is-dragover');
+            });
         });
 
-        addGalleryRow();
+        ['dragleave', 'dragend', 'drop'].forEach((evt) => {
+            dropzone.addEventListener(evt, (event) => {
+                event.preventDefault();
+                dropzone.classList.remove('is-dragover');
+            });
+        });
+
+        dropzone.addEventListener('drop', (event) => {
+            if (event.dataTransfer && event.dataTransfer.files) {
+                addFiles(event.dataTransfer.files);
+            }
+        });
     })();
 </script>

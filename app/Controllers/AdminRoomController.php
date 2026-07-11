@@ -257,11 +257,11 @@ final class AdminRoomController extends Controller
             throw new RuntimeException('Maksimal 20 foto galeri dalam satu kali simpan.');
         }
 
-        $categories = is_array($_POST['gallery_categories'] ?? null) ? $_POST['gallery_categories'] : [];
-        $titles = is_array($_POST['gallery_titles'] ?? null) ? $_POST['gallery_titles'] : [];
-        $orders = is_array($_POST['gallery_orders'] ?? null) ? $_POST['gallery_orders'] : [];
+        // Satu kategori berlaku untuk semua foto dalam satu batch upload.
+        $batchCategory = $this->cleanCategory($_POST['gallery_batch_category'] ?? '');
+        $order = 0;
 
-        foreach ($files as $index => $file) {
+        foreach ($files as $file) {
             if ((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
                 continue;
             }
@@ -273,11 +273,12 @@ final class AdminRoomController extends Controller
 
             $uploadedFiles[] = $filename;
             $this->galleryModel->create($roomId, [
-                'kategori' => $this->cleanCategory($categories[$index] ?? ''),
-                'judul' => $this->cleanTitle($titles[$index] ?? ''),
+                'kategori' => $batchCategory,
+                'judul' => null,
                 'nama_file' => $filename,
-                'urutan' => $this->cleanOrder($orders[$index] ?? 0),
+                'urutan' => $order,
             ]);
+            $order++;
         }
     }
 
