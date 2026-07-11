@@ -65,7 +65,8 @@ body {
   background: var(--bg-main);
   color: var(--text-main);
   padding-top: 80px;
-  overflow-x: hidden;
+  /* clip (bukan hidden) supaya body tidak jadi scroll-container yang mematikan position: sticky */
+  overflow-x: clip;
 }
 
 /* Base Styles & Utils */

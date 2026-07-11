@@ -49,14 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // --- C. LOGIC LOGOUT ---
-  const logoutBtn = document.querySelector(".logout a");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", function (e) {
-      if (!confirm("Apakah Anda yakin ingin logout?")) {
-        e.preventDefault();
-      }
-    });
-  }
+  // Konfirmasi logout ditangani confirm-modal.js lewat atribut data-confirm pada form.
 
   // --- D. LIGHT / DARK MODE TOGGLE ---
   const themeToggleBtn = document.getElementById('theme-toggle');

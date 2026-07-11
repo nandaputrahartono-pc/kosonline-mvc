@@ -39,6 +39,7 @@ $adminRoomsPageUrl = static function (int $page): string {
 };
 $users = $users ?? [];
 $billings = $billings ?? [];
+$cancelledBookings = $cancelledBookings ?? [];
 $messages = $messages ?? [];
 $locations = $locations ?? [];
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT;
@@ -140,7 +141,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             <li><a href="#" data-page="atur-lokasi"><i class="fa-solid fa-map-location-dot"></i> Atur Lokasi</a></li>
         </ul>
         <div class="logout">
-            <form method="POST" action="<?php echo e(url('/admin/logout')); ?>">
+            <form method="POST" action="<?php echo e(url('/admin/logout')); ?>" data-confirm="Apakah Anda yakin ingin logout?" data-confirm-ok="Ya, Logout">
                 <?php echo csrf_field(); ?>
                 <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </form>
@@ -331,7 +332,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td><?php echo (int) ($kost['diskon_persen'] ?? 0) > 0 ? e($kost['diskon_persen']) . '%' : '-'; ?></td>
                                 <td>
                                     <a href="<?php echo e(url('/admin/kost/edit?id=' . $kost['id_kost'])); ?>" class="btn btn-sm btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                    <form method="POST" action="<?php echo e(url('/admin/kost/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Yakin hapus?')">
+                                    <form method="POST" action="<?php echo e(url('/admin/kost/delete')); ?>" class="inline-action-form" data-confirm="Yakin hapus kost ini?">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($kost['id_kost']); ?>">
                                         <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
@@ -386,14 +387,14 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td><?php echo (int) ($room['diskon_persen'] ?? 0) > 0 ? e($room['diskon_persen']) . '%' : '-'; ?></td>
                                 <td><span class="badge <?php echo e($badgeClass); ?>"><?php echo e($room['status']); ?></span></td>
                                 <td>
-                                    <form method="POST" action="<?php echo e(url('/admin/rooms/toggle-status')); ?>" class="inline-action-form" onsubmit="return confirm(<?php echo e(json_encode($confirmMessage)); ?>)">
+                                    <form method="POST" action="<?php echo e(url('/admin/rooms/toggle-status')); ?>" class="inline-action-form" data-confirm="<?php echo e($confirmMessage); ?>">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($room['id_kamar']); ?>">
                                         <button type="submit" class="<?php echo e($buttonClass); ?>"><i class="fa-solid <?php echo e($buttonIcon); ?>"></i> <?php echo e($buttonLabel); ?></button>
                                     </form>
 
                                     <a href="<?php echo e(url('/admin/rooms/edit?id=' . $room['id_kamar'])); ?>" class="btn btn-sm btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                    <form method="POST" action="<?php echo e(url('/admin/rooms/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus kamar?')">
+                                    <form method="POST" action="<?php echo e(url('/admin/rooms/delete')); ?>" class="inline-action-form" data-confirm="Hapus kamar ini beserta data sewanya?">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($room['id_kamar']); ?>">
                                         <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
@@ -470,7 +471,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td><?php echo e($user['no_hp']); ?></td>
                                 <td>
                                     <a href="<?php echo e(url('/admin/users/edit?id=' . $user['id_user'])); ?>" class="btn btn-sm btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                    <form method="POST" action="<?php echo e(url('/admin/users/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus user?')">
+                                    <form method="POST" action="<?php echo e(url('/admin/users/delete')); ?>" class="inline-action-form" data-confirm="Hapus user ini?">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($user['id_user']); ?>">
                                         <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
@@ -526,9 +527,14 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                     <small style="color:#64748b;"><?php echo e($periodLabel); ?></small>
                                 </td>
                                 <td>Rp <?php echo number_format($billAmount, 0, ',', '.'); ?></td>
-                                <td><span class="badge <?php echo $isPaid ? 'success' : 'warning'; ?>"><?php echo e($statusLabel); ?></span></td>
                                 <td>
-                                    <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" onsubmit="return confirm('<?php echo $isPaid ? 'Batalkan status bayar?' : 'Konfirmasi lunas?'; ?>')">
+                                    <span class="badge <?php echo $isPaid ? 'success' : 'warning'; ?>"><?php echo e($statusLabel); ?></span>
+                                    <?php if (!empty($billing['bukti_bayar'])): ?>
+                                        <br><a href="<?php echo e(upload_asset($billing['bukti_bayar'])); ?>" target="_blank" rel="noopener noreferrer" class="small fw-semibold"><i class="fa-solid fa-image"></i> Lihat Bukti</a>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" data-confirm="<?php echo $isPaid ? 'Batalkan status bayar?' : 'Konfirmasi pembayaran ini sebagai lunas?'; ?>"<?php echo $isPaid ? '' : ' data-confirm-variant="primary" data-confirm-ok="Ya, Lunas"'; ?>>
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
                                         <input type="hidden" name="aksi" value="<?php echo $isPaid ? 'batal' : 'lunas'; ?>">
@@ -537,7 +543,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                         </button>
                                     </form>
                                     <?php if ($isPendingBooking && !$isPaid): ?>
-                                        <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" onsubmit="return confirm('Batalkan booking pending ini?')">
+                                        <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" data-confirm="Batalkan booking pending ini?">
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
                                             <input type="hidden" name="aksi" value="batal">
@@ -550,6 +556,43 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 </td>
                             </tr>
                         <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="page-title" style="margin-top:32px;">Booking Dibatalkan</h2>
+            <p class="page-subtitle">Bersihkan data booking yang sudah dibatalkan user maupun admin.</p>
+            <div class="table-responsive table-wrapper">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nama Penyewa</th>
+                            <th>Kamar</th>
+                            <th>Invoice</th>
+                            <th>Tanggal Masuk</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($cancelledBookings === []): ?>
+                            <tr><td colspan="5" style="text-align:center; color:#64748b;">Tidak ada booking yang dibatalkan.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($cancelledBookings as $cb): ?>
+                                <tr>
+                                    <td><?php echo e($cb['nama_lengkap'] ?? '-'); ?></td>
+                                    <td><?php echo e(($cb['nama_kost'] ?? '-') . ' - ' . ($cb['nomor_kamar'] ?? '-')); ?></td>
+                                    <td><?php echo e($cb['invoice_no'] ?? '-'); ?></td>
+                                    <td><?php echo e(!empty($cb['tanggal_masuk']) ? date('d M Y', strtotime((string) $cb['tanggal_masuk'])) : '-'); ?></td>
+                                    <td>
+                                        <form method="POST" action="<?php echo e(url('/admin/bookings/delete')); ?>" class="inline-action-form" data-confirm="Hapus permanen booking dibatalkan ini?">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="id" value="<?php echo e($cb['id_sewa']); ?>">
+                                            <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i> Hapus</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -690,7 +733,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td><?php echo e($message['isi_pesan']); ?></td>
                                 <td>
                                     <a href="mailto:<?php echo e($message['email_pengirim']); ?>" class="btn btn-sm btn-edit" style="background: #3b82f6; margin-bottom: 5px;"><i class="fa-solid fa-paper-plane"></i> Balas</a>
-                                    <form method="POST" action="<?php echo e(url('/admin/messages/delete')); ?>" class="inline-action-form" onsubmit="return confirm('Hapus pesan?')">
+                                    <form method="POST" action="<?php echo e(url('/admin/messages/delete')); ?>" class="inline-action-form" data-confirm="Hapus pesan ini?">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($message['id_pesan']); ?>">
                                         <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
@@ -751,6 +794,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
         };
     </script>
     <script src="<?php echo e(asset('js/notifications.js')); ?>"></script>
+    <script src="<?php echo e(asset('js/confirm-modal.js')); ?>"></script>
     <script src="<?php echo e(asset('js/chat-realtime.js')); ?>"></script>
     <script src="<?php echo e(asset('js/admin.js')); ?>"></script>
 </body>

@@ -27,6 +27,9 @@ $router->get('/rooms/detail', [RoomController::class, 'detail']);
 $router->get('/rooms/payment', [RoomController::class, 'payment']);
 $router->post('/rooms/payment', [RoomController::class, 'payment']);
 $router->get('/rooms/invoice', [RoomController::class, 'invoice']);
+$router->post('/rooms/invoice/upload-proof', [RoomController::class, 'uploadProof']);
+$router->post('/rooms/invoice/cancel', [RoomController::class, 'cancelBooking']);
+$router->post('/rooms/invoice/confirm-chat', [RoomController::class, 'confirmToAdminChat']);
 $router->post('/rooms/review', [RoomController::class, 'review']);
 $router->post('/rooms/chat', [ChatController::class, 'sendFromRoom']);
 $router->get('/wishlist', [WishlistController::class, 'index']);
@@ -46,6 +49,7 @@ $router->post('/admin/logout', [AuthController::class, 'adminLogout']);
 
 $router->get('/member/dashboard', [MemberController::class, 'dashboard']);
 $router->post('/member/dashboard', [MemberController::class, 'dashboard']);
+$router->post('/member/orders/delete', [MemberController::class, 'deleteOrder']);
 $router->post('/member/chat/send', [ChatController::class, 'sendFromMember']);
 $router->get('/member/chat/messages', [ChatController::class, 'memberMessages']);
 $router->post('/member/chat/typing', [ChatController::class, 'memberTyping']);
@@ -78,6 +82,7 @@ $router->post('/admin/users/delete', [AdminUserController::class, 'delete']);
 $router->get('/admin/locations/edit', [AdminLocationController::class, 'edit']);
 $router->post('/admin/locations/edit', [AdminLocationController::class, 'edit']);
 $router->post('/admin/payments/update', [AdminPaymentController::class, 'update']);
+$router->post('/admin/bookings/delete', [AdminPaymentController::class, 'deleteBooking']);
 $router->post('/admin/messages/delete', [AdminMessageController::class, 'delete']);
 
 // Redirect old admin login to unified login

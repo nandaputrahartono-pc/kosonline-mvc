@@ -1,0 +1,255 @@
+diff --git a/app/Controllers/RoomController.php b/app/Controllers/RoomController.php
+index f130e72..5ccbbec 100644
+--- a/app/Controllers/RoomController.php
++++ b/app/Controllers/RoomController.php
+@@ -285,8 +285,52 @@ final class RoomController extends Controller
+             redirect_to('/rooms');
+         }
+ 
++        $userId = (($_SESSION['status'] ?? null) === 'login_user' && isset($_SESSION['id_user']))
++            ? (int) $_SESSION['id_user']
++            : null;
++
+         $this->render('room/invoice', [
+             'invoice' => $invoice,
++            'bankAccounts' => require base_path('config/payment.php'),
++            'isOwner' => $userId !== null && $userId === (int) ($invoice['id_user'] ?? 0),
+         ]);
+     }
++
++    public function uploadProof(): void
++    {
++        $this->requireUser();
++
++        $paymentId = (int) ($_POST['id_pembayaran'] ?? 0);
++        $userId = (int) ($_SESSION['id_user'] ?? 0);
++        $invoice = $this->paymentModel->findInvoiceForUser($paymentId, $userId);
++
++        if ($invoice === null) {
++            set_flash('error', 'Invoice tidak ditemukan atau bukan milik kamu.');
++            redirect_to('/rooms');
++        }
++
++        if ((string) ($invoice['status_verifikasi'] ?? '') === 'Lunas') {
++            set_flash('error', 'Invoice ini sudah lunas, tidak perlu upload bukti lagi.');
++            redirect_to('/rooms/invoice?id=' . $paymentId);
++        }
++
++        $uploader = new \App\Core\FileUploadService();
++
++        try {
++            $filename = $uploader->upload($_FILES['bukti_bayar'] ?? null, true);
++        } catch (\RuntimeException $e) {
++            set_flash('error', $e->getMessage());
++            redirect_to('/rooms/invoice?id=' . $paymentId);
++        }
++
++        $oldProof = (string) ($invoice['bukti_bayar'] ?? '');
++        $this->paymentModel->attachProof($paymentId, (string) $filename);
++
++        if ($oldProof !== '') {
++            $uploader->delete($oldProof);
++        }
++
++        set_flash('success', 'Bukti transfer berhasil diupload. Admin akan segera memverifikasi pembayaranmu.');
++        redirect_to('/rooms/invoice?id=' . $paymentId);
++    }
+ }
+diff --git a/app/Models/PaymentModel.php b/app/Models/PaymentModel.php
+index 6837d11..23bfe72 100644
+--- a/app/Models/PaymentModel.php
++++ b/app/Models/PaymentModel.php
+@@ -148,7 +148,7 @@ final class PaymentModel extends Model
+     public function findInvoiceById(int $paymentId): ?array
+     {
+         return $this->db->selectOne(
+-            "SELECT pembayaran.*, sewa.kode_booking, sewa.tanggal_masuk, sewa.jatuh_tempo, sewa.status_sewa,
++            "SELECT pembayaran.*, sewa.id_user, sewa.kode_booking, sewa.tanggal_masuk, sewa.jatuh_tempo, sewa.status_sewa,
+                     kamar.id_kamar, kamar.nomor_kamar, kamar.lantai, kamar.fasilitas,
+                     kost.nama_kost, kost.alamat, kost.foto_kost
+              FROM pembayaran
+@@ -160,6 +160,35 @@ final class PaymentModel extends Model
+         );
+     }
+ 
++    /**
++     * Ambil invoice hanya jika invoice tersebut benar milik user yang bersangkutan.
++     * Dipakai untuk validasi sebelum user mengupload bukti transfer.
++     */
++    public function findInvoiceForUser(int $paymentId, int $userId): ?array
++    {
++        $invoice = $this->findInvoiceById($paymentId);
++
++        if ($invoice === null || (int) ($invoice['id_user'] ?? 0) !== $userId) {
++            return null;
++        }
++
++        return $invoice;
++    }
++
++    /**
++     * Simpan nama file bukti transfer dan kembalikan status verifikasi ke "Menunggu"
++     * supaya admin tahu ada bukti baru yang perlu dicek (termasuk saat sebelumnya Ditolak).
++     */
++    public function attachProof(int $paymentId, string $filename): void
++    {
++        $this->db->execute(
++            "UPDATE pembayaran
++             SET bukti_bayar = ?, status_verifikasi = 'Menunggu'
++             WHERE id_pembayaran = ?",
++            [$filename, $paymentId]
++        );
++    }
++
+     public function markPaidByRental(int $rentalId, float $amount): void
+     {
+         $this->db->execute(
+diff --git a/app/Models/RentalModel.php b/app/Models/RentalModel.php
+index d1e13c4..470b8c1 100644
+--- a/app/Models/RentalModel.php
++++ b/app/Models/RentalModel.php
+@@ -167,7 +167,8 @@ final class RentalModel extends Model
+                 pembayaran.periode_selesai,
+                 pembayaran.nama_penyewa,
+                 pembayaran.email_penyewa,
+-                pembayaran.no_hp_penyewa
++                pembayaran.no_hp_penyewa,
++                pembayaran.bukti_bayar
+              FROM sewa
+              LEFT JOIN users ON sewa.id_user = users.id_user
+              JOIN kamar ON sewa.id_kamar = kamar.id_kamar
+diff --git a/app/Views/admin/dashboard.php b/app/Views/admin/dashboard.php
+index e8ba1d0..9632db2 100644
+--- a/app/Views/admin/dashboard.php
++++ b/app/Views/admin/dashboard.php
+@@ -526,7 +526,12 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
+                                     <small style="color:#64748b;"><?php echo e($periodLabel); ?></small>
+                                 </td>
+                                 <td>Rp <?php echo number_format($billAmount, 0, ',', '.'); ?></td>
+-                                <td><span class="badge <?php echo $isPaid ? 'success' : 'warning'; ?>"><?php echo e($statusLabel); ?></span></td>
++                                <td>
++                                    <span class="badge <?php echo $isPaid ? 'success' : 'warning'; ?>"><?php echo e($statusLabel); ?></span>
++                                    <?php if (!empty($billing['bukti_bayar'])): ?>
++                                        <br><a href="<?php echo e(upload_asset($billing['bukti_bayar'])); ?>" target="_blank" rel="noopener noreferrer" class="small fw-semibold"><i class="fa-solid fa-image"></i> Lihat Bukti</a>
++                                    <?php endif; ?>
++                                </td>
+                                 <td>
+                                     <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" onsubmit="return confirm('<?php echo $isPaid ? 'Batalkan status bayar?' : 'Konfirmasi lunas?'; ?>')">
+                                         <?php echo csrf_field(); ?>
+diff --git a/app/Views/room/invoice.php b/app/Views/room/invoice.php
+index e4ecb33..62c99a2 100644
+--- a/app/Views/room/invoice.php
++++ b/app/Views/room/invoice.php
+@@ -35,6 +35,14 @@ $statusClass = $invoice['status_verifikasi'] === 'Lunas' ? 'bg-success' : ($invo
+ $periodStart = !empty($invoice['periode_mulai']) ? date('d M Y', strtotime((string) $invoice['periode_mulai'])) : '-';
+ $periodEnd = !empty($invoice['periode_selesai']) ? date('d M Y', strtotime((string) $invoice['periode_selesai'])) : '-';
+ 
++$bankAccounts = $bankAccounts ?? [];
++$bankAccount = $bankAccounts[$invoice['metode_bayar']] ?? null;
++$isOwner = $isOwner ?? false;
++$isCashMethod = $invoice['metode_bayar'] === 'manual_cash';
++$isLunas = $invoice['status_verifikasi'] === 'Lunas';
++$isDitolak = $invoice['status_verifikasi'] === 'Ditolak';
++$hasProof = !empty($invoice['bukti_bayar']);
++
+ ob_start();
+ ?>
+ 
+@@ -82,17 +90,78 @@ ob_start();
+                     </div>
+                 </div>
+ 
++                <div class="card border-0 shadow-sm mb-4" style="border-radius: 24px; background: var(--card-bg);">
++                    <div class="card-body p-4">
++                        <h4 class="fw-bold mb-3" style="color: var(--text-main);">Instruksi Pembayaran</h4>
++
++                        <?php if ($isCashMethod): ?>
++                            <ol class="text-muted mb-0" style="line-height: 1.9;">
++                                <li>Simpan nomor invoice <strong><?php echo e($invoice['invoice_no']); ?></strong>.</li>
++                                <li>Datang ke lokasi kost sesuai jadwal survei untuk membayar tunai.</li>
++                                <li>Admin akan menandai invoice sebagai <strong>Lunas</strong> setelah pembayaran diterima.</li>
++                            </ol>
++                        <?php else: ?>
++                            <?php if ($bankAccount !== null && !empty($bankAccount['no_rekening'])): ?>
++                                <div class="p-3 rounded-4 mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: var(--bg-main); border: 1px dashed var(--accent-blue);">
++                                    <div>
++                                        <small class="text-muted fw-semibold text-uppercase">Transfer ke</small>
++                                        <h5 class="fw-bold mb-0"><?php echo e($bankAccount['bank']); ?></h5>
++                                        <div class="fs-4 fw-bold" style="color: var(--accent-blue); letter-spacing: 1px;"><?php echo e($bankAccount['no_rekening']); ?></div>
++                                        <p class="text-muted mb-0">a.n. <?php echo e($bankAccount['atas_nama']); ?></p>
++                                    </div>
++                                    <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="navigator.clipboard.writeText('<?php echo e($bankAccount['no_rekening']); ?>'); this.innerText='Tersalin!'; setTimeout(() => this.innerText='Salin Nomor', 1500);">
++                                        Salin Nomor
++                                    </button>
++                                </div>
++                            <?php endif; ?>
++                            <ol class="text-muted mb-0" style="line-height: 1.9;">
++                                <li>Transfer sesuai <strong>Total Dibayar</strong> di atas ke rekening <?php echo e($methodLabel); ?> tersebut.</li>
++                                <li>Screenshot/foto bukti transfer, lalu upload lewat form di bawah ini.</li>
++                                <li>Admin akan memverifikasi bukti transfer dan menandai invoice sebagai <strong>Lunas</strong>.</li>
++                            </ol>
++                        <?php endif; ?>
++                    </div>
++                </div>
++
++                <?php if (!$isCashMethod): ?>
+                 <div class="card border-0 shadow-sm" style="border-radius: 24px; background: var(--card-bg);">
+                     <div class="card-body p-4">
+-                        <h4 class="fw-bold mb-3" style="color: var(--text-main);">Instruksi Pembayaran Manual</h4>
+-                        <ol class="text-muted mb-0" style="line-height: 1.9;">
+-                            <li>Simpan nomor invoice <strong><?php echo e($invoice['invoice_no']); ?></strong>.</li>
+-                            <li>Hubungi admin WhatsApp dan kirim nomor invoice ini.</li>
+-                            <li>Admin akan mengirim instruksi <?php echo e($methodLabel); ?>.</li>
+-                            <li>Setelah pembayaran diterima, admin menandai invoice sebagai <strong>Lunas</strong>.</li>
+-                        </ol>
++                        <h4 class="fw-bold mb-3" style="color: var(--text-main);">Bukti Pembayaran</h4>
++
++                        <?php if ($isDitolak): ?>
++                            <div class="alert alert-danger">Bukti transfer sebelumnya <strong>ditolak</strong> admin. Silakan upload ulang bukti transfer yang benar.</div>
++                        <?php endif; ?>
++
++                        <?php if ($hasProof): ?>
++                            <p class="text-muted mb-2">Bukti yang sudah diupload:</p>
++                            <a href="<?php echo e(upload_asset($invoice['bukti_bayar'])); ?>" target="_blank" rel="noopener">
++                                <img src="<?php echo e(upload_asset($invoice['bukti_bayar'])); ?>" alt="Bukti transfer" class="img-fluid rounded-4 mb-3" style="max-height: 320px; border: 1px solid var(--border-soft);">
++                            </a>
++                        <?php endif; ?>
++
++                        <?php if ($isLunas): ?>
++                            <div class="alert alert-success mb-0">Pembayaran sudah <strong>diverifikasi lunas</strong>. Terima kasih!</div>
++                        <?php elseif ($isOwner): ?>
++                            <form method="POST" action="<?php echo e(url('/rooms/invoice/upload-proof')); ?>" enctype="multipart/form-data" class="mt-2">
++                                <?php echo csrf_field(); ?>
++                                <input type="hidden" name="id_pembayaran" value="<?php echo e($invoice['id_pembayaran'] ?? ''); ?>">
++                                <div class="mb-3">
++                                    <label for="bukti_bayar" class="form-label fw-semibold">
++                                        <?php echo $hasProof ? 'Upload ulang bukti transfer' : 'Upload bukti transfer'; ?>
++                                    </label>
++                                    <input type="file" name="bukti_bayar" id="bukti_bayar" class="form-control" accept="image/jpeg,image/png,image/webp" required>
++                                    <div class="form-text">Format JPG, PNG, atau WebP. Maksimal 5 MB.</div>
++                                </div>
++                                <button type="submit" class="btn btn-primary fw-bold py-2 px-4">
++                                    <i class="fa-solid fa-upload me-2"></i> <?php echo $hasProof ? 'Kirim Ulang Bukti' : 'Kirim Bukti Transfer'; ?>
++                                </button>
++                            </form>
++                        <?php else: ?>
++                            <p class="text-muted mb-0">Menunggu penyewa mengupload bukti transfer.</p>
++                        <?php endif; ?>
+                     </div>
+                 </div>
++                <?php endif; ?>
+             </div>
+ 
+             <div class="col-lg-4">
+diff --git a/routes/web.php b/routes/web.php
+index ce61240..27c8fad 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -27,6 +27,7 @@ $router->get('/rooms/detail', [RoomController::class, 'detail']);
+ $router->get('/rooms/payment', [RoomController::class, 'payment']);
+ $router->post('/rooms/payment', [RoomController::class, 'payment']);
+ $router->get('/rooms/invoice', [RoomController::class, 'invoice']);
++$router->post('/rooms/invoice/upload-proof', [RoomController::class, 'uploadProof']);
+ $router->post('/rooms/review', [RoomController::class, 'review']);
+ $router->post('/rooms/chat', [ChatController::class, 'sendFromRoom']);
+ $router->get('/wishlist', [WishlistController::class, 'index']);

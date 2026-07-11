@@ -113,6 +113,7 @@ final class AdminDashboardController extends Controller
             ],
             'users' => $this->userModel->getAll(),
             'billings' => $billings,
+            'cancelledBookings' => $this->rentalModel->getCancelledBookings(),
             'messages' => $this->messageModel->getAll(),
             'locations' => $this->kostModel->getAll(),
             'chatThreads' => $chatThreads,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Models\PaymentModel;
 use App\Models\RentalModel;
 use App\Models\RoomModel;
@@ -61,6 +62,34 @@ final class AdminPaymentController extends Controller
             }
         } else {
             set_flash('error', 'Aksi pembayaran tidak valid.');
+        }
+
+        redirect_to('/admin/dashboard');
+    }
+
+    public function deleteBooking(): void
+    {
+        $this->requireAdmin();
+
+        $rentalId = (int) ($_POST['id'] ?? 0);
+        $rental = $this->rentalModel->findByIdWithRoom($rentalId);
+
+        if ($rental === null || ($rental['status_sewa'] ?? '') !== 'Dibatalkan') {
+            set_flash('error', 'Hanya booking yang dibatalkan yang bisa dihapus.');
+            redirect_to('/admin/dashboard');
+        }
+
+        $db = Database::getInstance();
+        $db->beginTransaction();
+
+        try {
+            $this->paymentModel->deleteByRentalId($rentalId);
+            $this->rentalModel->deleteById($rentalId);
+            $db->commit();
+            set_flash('success', 'Booking dibatalkan berhasil dihapus.');
+        } catch (\Throwable $e) {
+            $db->rollback();
+            set_flash('error', 'Gagal menghapus booking.');
         }
 
         redirect_to('/admin/dashboard');

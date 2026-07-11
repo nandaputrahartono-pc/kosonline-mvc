@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Models\ChatModel;
 use App\Models\PaymentModel;
 use App\Models\RentalModel;
@@ -175,5 +176,35 @@ final class MemberController extends Controller
             'successMessage' => flash('success'),
             'errorMessage' => flash('error'),
         ]);
+    }
+
+    public function deleteOrder(): void
+    {
+        $this->requireUser();
+
+        $rentalId = (int) ($_POST['id_sewa'] ?? 0);
+        $userId = (int) $_SESSION['id_user'];
+        $rental = $this->rentalModel->findByIdForUser($rentalId, $userId);
+
+        if ($rental === null || ($rental['status_sewa'] ?? '') !== 'Dibatalkan') {
+            set_flash('error', 'Hanya pesanan yang dibatalkan yang bisa dihapus.');
+            redirect_to('/member/dashboard?tab=pesananku');
+        }
+
+        $db = Database::getInstance();
+        $db->beginTransaction();
+
+        try {
+            $this->paymentModel->deleteByRentalId($rentalId);
+            $this->rentalModel->deleteById($rentalId);
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollback();
+            set_flash('error', 'Gagal menghapus pesanan. Silakan coba lagi.');
+            redirect_to('/member/dashboard?tab=pesananku');
+        }
+
+        set_flash('success', 'Pesanan yang dibatalkan berhasil dihapus.');
+        redirect_to('/member/dashboard?tab=pesananku');
     }
 }

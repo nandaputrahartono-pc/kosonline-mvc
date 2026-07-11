@@ -160,6 +160,35 @@ final class PaymentModel extends Model
         );
     }
 
+    /**
+     * Ambil invoice hanya jika benar milik user yang bersangkutan.
+     * Dipakai untuk validasi sebelum user mengupload bukti transfer.
+     */
+    public function findInvoiceForUser(int $paymentId, int $userId): ?array
+    {
+        $invoice = $this->findInvoiceById($paymentId);
+
+        if ($invoice === null || (int) ($invoice['id_user'] ?? 0) !== $userId) {
+            return null;
+        }
+
+        return $invoice;
+    }
+
+    /**
+     * Simpan nama file bukti transfer dan kembalikan status verifikasi ke "Menunggu"
+     * supaya admin tahu ada bukti baru untuk dicek (termasuk saat sebelumnya Ditolak).
+     */
+    public function attachProof(int $paymentId, string $filename): void
+    {
+        $this->db->execute(
+            "UPDATE pembayaran
+             SET bukti_bayar = ?, status_verifikasi = 'Menunggu'
+             WHERE id_pembayaran = ?",
+            [$filename, $paymentId]
+        );
+    }
+
     public function markPaidByRental(int $rentalId, float $amount): void
     {
         $this->db->execute(
@@ -222,5 +251,10 @@ final class PaymentModel extends Model
             "DELETE FROM pembayaran WHERE id_sewa IN (SELECT id_sewa FROM sewa WHERE id_kamar = ?)",
             [$roomId]
         );
+    }
+
+    public function deleteByRentalId(int $rentalId): void
+    {
+        $this->db->execute("DELETE FROM pembayaran WHERE id_sewa = ?", [$rentalId]);
     }
 }

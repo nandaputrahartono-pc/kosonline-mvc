@@ -6,6 +6,8 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Core\Controller;
+use App\Core\FileUploadService;
+use App\Models\ChatModel;
 use App\Models\RoomModel;
 use App\Models\KostModel;
 use App\Models\PaymentModel;
@@ -15,6 +17,7 @@ use App\Models\RoomReviewModel;
 use App\Models\RoomGalleryModel;
 use App\Models\UserModel;
 use App\Models\WishlistModel;
+use RuntimeException;
 
 final class RoomController extends Controller
 {
@@ -27,6 +30,7 @@ final class RoomController extends Controller
     private PromoCodeModel $promoCodeModel;
     private RoomReviewModel $reviewModel;
     private WishlistModel $wishlistModel;
+    private ChatModel $chatModel;
 
     public function __construct()
     {
@@ -39,6 +43,7 @@ final class RoomController extends Controller
         $this->promoCodeModel = new PromoCodeModel();
         $this->reviewModel = new RoomReviewModel();
         $this->wishlistModel = new WishlistModel();
+        $this->chatModel = new ChatModel();
     }
 
     public function index(): void
@@ -289,6 +294,125 @@ final class RoomController extends Controller
 
         $this->render('room/invoice', [
             'invoice' => $invoice,
+            'bankAccounts' => require base_path('config/payment.php'),
         ]);
+    }
+
+    public function uploadProof(): void
+    {
+        $this->requireUser();
+
+        $paymentId = (int) ($_POST['id_pembayaran'] ?? 0);
+        $userId = (int) ($_SESSION['id_user'] ?? 0);
+        $invoice = $this->paymentModel->findInvoiceForUser($paymentId, $userId);
+
+        if ($invoice === null) {
+            set_flash('error', 'Invoice tidak ditemukan atau bukan milik kamu.');
+            redirect_to('/rooms');
+        }
+
+        if ((string) ($invoice['status_verifikasi'] ?? '') === 'Lunas') {
+            set_flash('error', 'Invoice ini sudah lunas, tidak perlu upload bukti lagi.');
+            redirect_to('/rooms/invoice?id=' . $paymentId);
+        }
+
+        if (in_array((string) ($invoice['status_sewa'] ?? ''), ['Dibatalkan', 'Berhenti'], true)) {
+            set_flash('error', 'Booking ini sudah tidak aktif, bukti transfer tidak bisa diupload.');
+            redirect_to('/rooms/invoice?id=' . $paymentId);
+        }
+
+        $uploader = new FileUploadService();
+
+        try {
+            $filename = $uploader->upload($_FILES['bukti_bayar'] ?? null, true);
+        } catch (RuntimeException $e) {
+            set_flash('error', $e->getMessage());
+            redirect_to('/rooms/invoice?id=' . $paymentId);
+        }
+
+        $oldProof = (string) ($invoice['bukti_bayar'] ?? '');
+        $this->paymentModel->attachProof($paymentId, (string) $filename);
+
+        if ($oldProof !== '') {
+            $uploader->delete($oldProof);
+        }
+
+        set_flash('success', 'Bukti transfer berhasil diupload. Admin akan segera memverifikasi pembayaranmu.');
+        redirect_to('/rooms/invoice?id=' . $paymentId);
+    }
+
+    public function cancelBooking(): void
+    {
+        $this->requireUser();
+
+        $paymentId = (int) ($_POST['id_pembayaran'] ?? 0);
+        $userId = (int) ($_SESSION['id_user'] ?? 0);
+        $invoice = $this->paymentModel->findInvoiceForUser($paymentId, $userId);
+
+        if ($invoice === null) {
+            set_flash('error', 'Invoice tidak ditemukan atau bukan milik kamu.');
+            redirect_to('/rooms');
+        }
+
+        if (
+            (string) ($invoice['status_sewa'] ?? '') !== 'Menunggu Pembayaran'
+            || (string) ($invoice['status_verifikasi'] ?? '') === 'Lunas'
+        ) {
+            set_flash('error', 'Booking ini sudah diproses admin, jadi tidak bisa dibatalkan sendiri. Hubungi admin bila perlu.');
+            redirect_to('/rooms/invoice?id=' . $paymentId);
+        }
+
+        $rentalId = (int) ($invoice['id_sewa'] ?? 0);
+        $roomId = (int) ($invoice['id_kamar'] ?? 0);
+
+        $db = Database::getInstance();
+        $db->beginTransaction();
+
+        try {
+            $this->rentalModel->cancelPending($rentalId);
+            $this->paymentModel->rejectLatestByRental($rentalId);
+            $this->roomModel->setStatus($roomId, 'Tersedia');
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollback();
+            set_flash('error', 'Pembatalan gagal. Silakan coba lagi.');
+            redirect_to('/rooms/invoice?id=' . $paymentId);
+        }
+
+        set_flash('success', 'Booking dibatalkan. Kamar sudah dilepas kembali dan tersedia untuk orang lain.');
+        redirect_to('/member/dashboard?tab=pesananku');
+    }
+
+    public function confirmToAdminChat(): void
+    {
+        $this->requireUser();
+
+        $paymentId = (int) ($_POST['id_pembayaran'] ?? 0);
+        $userId = (int) ($_SESSION['id_user'] ?? 0);
+        $invoice = $this->paymentModel->findInvoiceForUser($paymentId, $userId);
+
+        if ($invoice === null) {
+            set_flash('error', 'Invoice tidak ditemukan atau bukan milik kamu.');
+            redirect_to('/rooms');
+        }
+
+        $bankAccounts = require base_path('config/payment.php');
+        $method = (string) ($invoice['metode_bayar'] ?? '');
+        $methodLabel = $bankAccounts[$method]['bank'] ?? $method;
+        $total = number_format((float) ($invoice['total_bayar'] ?? 0), 0, ',', '.');
+
+        $message = "Halo admin, saya mau konfirmasi booking kamar ini.\n"
+            . 'Invoice: ' . (string) ($invoice['invoice_no'] ?? '-') . "\n"
+            . 'Kamar: ' . (string) ($invoice['nama_kost'] ?? '-') . ' - Kamar ' . (string) ($invoice['nomor_kamar'] ?? '-') . "\n"
+            . 'Total: Rp ' . $total . "\n"
+            . 'Metode: ' . (string) $methodLabel . "\n"
+            . 'Mohon dicek ya, terima kasih.';
+
+        $threadId = $this->chatModel->getOrCreateThread($userId);
+        $this->chatModel->addMessage($threadId, 'user', $message, (int) ($invoice['id_kamar'] ?? 0));
+        $this->chatModel->setTyping($threadId, 'user', false);
+
+        set_flash('success', 'Konfirmasi terkirim ke admin lewat chat. Silakan lanjut ngobrol di sini.');
+        redirect_to('/member/dashboard?tab=chat&thread=' . $threadId);
     }
 }

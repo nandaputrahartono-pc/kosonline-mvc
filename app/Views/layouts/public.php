@@ -85,6 +85,7 @@ $currentUserAvatar = $currentUserPhoto !== '' && $currentUserPhoto !== 'default.
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo e(asset('js/notifications.js')); ?>"></script>
+    <script src="<?php echo e(asset('js/confirm-modal.js')); ?>"></script>
     <script src="<?php echo e(asset('js/script.js')); ?>"></script>
     <script>
         const yearSpan = document.getElementById('year');

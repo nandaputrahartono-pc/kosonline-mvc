@@ -147,6 +147,40 @@ final class RentalModel extends Model
         $this->db->execute("DELETE FROM sewa WHERE id_kamar = ?", [$roomId]);
     }
 
+    public function findByIdForUser(int $rentalId, int $userId): ?array
+    {
+        return $this->db->selectOne(
+            "SELECT * FROM sewa WHERE id_sewa = ? AND id_user = ?",
+            [$rentalId, $userId]
+        );
+    }
+
+    public function deleteById(int $rentalId): void
+    {
+        $this->db->execute("DELETE FROM sewa WHERE id_sewa = ?", [$rentalId]);
+    }
+
+    public function getCancelledBookings(): array
+    {
+        return $this->db->selectAll(
+            "SELECT sewa.id_sewa, sewa.kode_booking, sewa.tanggal_masuk, sewa.tanggal_keluar,
+                    users.nama_lengkap, users.no_hp,
+                    kost.nama_kost, kamar.nomor_kamar,
+                    pembayaran.invoice_no, pembayaran.total_bayar
+             FROM sewa
+             LEFT JOIN users ON sewa.id_user = users.id_user
+             JOIN kamar ON sewa.id_kamar = kamar.id_kamar
+             JOIN kost ON kamar.id_kost = kost.id_kost
+             LEFT JOIN pembayaran ON pembayaran.id_pembayaran = (
+                SELECT p.id_pembayaran FROM pembayaran p
+                WHERE p.id_sewa = sewa.id_sewa
+                ORDER BY p.id_pembayaran DESC LIMIT 1
+             )
+             WHERE sewa.status_sewa = 'Dibatalkan'
+             ORDER BY sewa.id_sewa DESC"
+        );
+    }
+
     public function getAdminBillingRows(string $billingMonth): array
     {
         return $this->db->selectAll(
@@ -167,7 +201,8 @@ final class RentalModel extends Model
                 pembayaran.periode_selesai,
                 pembayaran.nama_penyewa,
                 pembayaran.email_penyewa,
-                pembayaran.no_hp_penyewa
+                pembayaran.no_hp_penyewa,
+                pembayaran.bukti_bayar
              FROM sewa
              LEFT JOIN users ON sewa.id_user = users.id_user
              JOIN kamar ON sewa.id_kamar = kamar.id_kamar

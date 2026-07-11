@@ -15,7 +15,7 @@ $currentThread = $currentThread ?? null;
 $chatMessages = $chatMessages ?? [];
 $pendingRoomId = (int) ($pendingRoomId ?? 0);
 $pendingRoomCard = is_array($pendingRoomCard ?? null) ? $pendingRoomCard : null;
-$activeTab = in_array((string) ($activeTab ?? 'dashboard'), ['dashboard', 'pesananku', 'pembayaran', 'chat', 'profil', 'kos-saya', 'riwayat-kos', 'verifikasi-akun'], true)
+$activeTab = in_array((string) ($activeTab ?? 'dashboard'), ['dashboard', 'pesananku', 'chat', 'profil', 'kos-saya', 'riwayat-kos'], true)
     ? (string) $activeTab
     : 'dashboard';
 $summary = array_merge([
@@ -168,8 +168,8 @@ ob_start();
                             <i class="fa-solid fa-file-invoice"></i>
                         </span>
                         <span class="hub-menu-text">
-                            <strong>Pengajuan Sewa</strong>
-                            <span>Cek status pengajuan sewa kamu.</span>
+                            <strong>Pesanan & Invoice</strong>
+                            <span>Cek status booking sekaligus detail invoice-nya.</span>
                         </span>
                         <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
                     </button>
@@ -186,31 +186,7 @@ ob_start();
                         <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
                     </button>
 
-                    <!-- 4. Invoice & Pembayaran -->
-                    <button type="button" class="hub-menu-item" data-page="pembayaran">
-                        <span class="hub-menu-icon icon-yellow">
-                            <i class="fa-solid fa-file-invoice-dollar"></i>
-                        </span>
-                        <span class="hub-menu-text">
-                            <strong>Invoice & Pembayaran</strong>
-                            <span>Lihat tagihan, invoice, dan riwayat pembayaran.</span>
-                        </span>
-                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
-                    </button>
-
-                    <!-- 5. Verifikasi Akun -->
-                    <button type="button" class="hub-menu-item" data-page="verifikasi-akun">
-                        <span class="hub-menu-icon icon-indigo">
-                            <i class="fa-solid fa-shield-halved"></i>
-                        </span>
-                        <span class="hub-menu-text">
-                            <strong>Verifikasi Akun</strong>
-                            <span>Lengkapi data untuk verifikasi akun kamu.</span>
-                        </span>
-                        <i class="fa-solid fa-chevron-right hub-menu-chevron"></i>
-                    </button>
-
-                    <!-- 6. Pengaturan -->
+                    <!-- 4. Pengaturan -->
                     <button type="button" class="hub-menu-item" data-page="profil">
                         <span class="hub-menu-icon icon-pink">
                             <i class="fa-solid fa-gears"></i>
@@ -356,55 +332,6 @@ ob_start();
             </div>
         </section>
 
-        <!-- Tab: Verifikasi Akun -->
-        <section class="page <?php echo $activeTab === 'verifikasi-akun' ? 'active' : ''; ?>" id="verifikasi-akun">
-            <div class="hub-back-nav">
-                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
-            </div>
-            <div class="topbar">
-                <div>
-                    <p class="eyebrow">Keamanan Akun</p>
-                    <h1>Verifikasi Akun</h1>
-                    <p class="page-subtitle">Status verifikasi identitas dan data diri kamu.</p>
-                </div>
-            </div>
-
-            <div class="verification-layout">
-                <div class="verification-status-card">
-                    <div class="status-header">
-                        <span class="status-icon success"><i class="fa-solid fa-shield-halved"></i></span>
-                        <div>
-                            <h2>Identitas Terverifikasi</h2>
-                            <p>Akun kamu sudah terverifikasi dan aktif untuk melakukan transaksi sewa.</p>
-                        </div>
-                    </div>
-                    <ul class="verification-check-list">
-                        <li>
-                            <i class="fa-solid fa-circle-check text-success"></i>
-                            <div>
-                                <strong>Profil Lengkap</strong>
-                                <p>Nama, email, dan no HP sudah diisi lengkap.</p>
-                            </div>
-                        </li>
-                        <li>
-                            <i class="fa-solid fa-circle-check text-success"></i>
-                            <div>
-                                <strong>No. Handphone Aktif</strong>
-                                <p><?php echo e($user['no_hp']); ?></p>
-                            </div>
-                        </li>
-                        <li>
-                            <i class="fa-solid fa-circle-check text-success"></i>
-                            <div>
-                                <strong>Email Terhubung</strong>
-                                <p><?php echo e($user['email']); ?></p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
         <!-- Tab 2: Pesananku -->
         <section class="page <?php echo $activeTab === 'pesananku' ? 'active' : ''; ?>" id="pesananku">
             <div class="hub-back-nav">
@@ -440,6 +367,32 @@ ob_start();
                                     <span><b>Tagihan</b><?php echo e($formatRupiah((float) ($item['total_bayar'] ?? $item['harga']))); ?></span>
                                 </div>
                                 <p class="muted"><i class="fa-solid fa-location-dot"></i> <?php echo e($item['alamat']); ?></p>
+
+                                <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border-soft);">
+                                    <?php if (!empty($item['invoice_no'])): ?>
+                                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+                                            <strong style="font-size:.9rem;"><i class="fa-solid fa-file-invoice-dollar"></i> <?php echo e($item['invoice_no']); ?></strong>
+                                            <span class="badge <?php echo e($statusClass((string) ($item['status_verifikasi'] ?? 'Menunggu'))); ?>"><?php echo e($item['status_verifikasi'] ?? 'Menunggu'); ?></span>
+                                        </div>
+                                        <div class="mini-grid">
+                                            <span><b>Periode</b><?php echo e($formatDate((string) ($item['periode_mulai'] ?? ''))); ?> - <?php echo e($formatDate((string) ($item['periode_selesai'] ?? ''))); ?></span>
+                                            <span><b>Total invoice</b><?php echo e($formatRupiah((float) ($item['total_bayar'] ?? $item['harga']))); ?></span>
+                                            <span><b>Metode</b><?php echo e(ucwords(str_replace(['manual_', '_'], ['', ' '], (string) ($item['metode_bayar'] ?? '-')))); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+                                        <?php if (!empty($item['id_pembayaran'])): ?>
+                                            <a href="<?php echo e(url('/rooms/invoice?id=' . $item['id_pembayaran'])); ?>" class="btn-primary soft"><i class="fa-solid fa-file-lines"></i> Detail Invoice</a>
+                                        <?php endif; ?>
+                                        <?php if (($item['status_sewa'] ?? '') === 'Dibatalkan'): ?>
+                                            <form method="POST" action="<?php echo e(url('/member/orders/delete')); ?>" data-confirm="Hapus pesanan yang dibatalkan ini? Tidak bisa dikembalikan." data-confirm-ok="Ya, Hapus">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="id_sewa" value="<?php echo e($item['id_sewa']); ?>">
+                                                <button type="submit" style="background:#fee2e2; color:#b91c1c; border:0; border-radius:10px; padding:10px 16px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-trash"></i> Hapus</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
                             </div>
                         </article>
                     <?php endforeach; ?>
@@ -449,49 +402,6 @@ ob_start();
                         <h3>Belum ada pesanan</h3>
                         <p>Mulai cari kamar yang cocok, lalu buat invoice booking manual.</p>
                         <a href="<?php echo e(url('/rooms')); ?>" class="btn-primary">Lihat Kamar</a>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </section>
-
-        <!-- Tab 3: Invoice / Pembayaran -->
-        <section class="page <?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>" id="pembayaran">
-            <div class="hub-back-nav">
-                <a href="#" class="btn-back-hub" data-page="dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali ke Akun Saya</a>
-            </div>
-            <div class="topbar">
-                <div>
-                    <p class="eyebrow">Invoice</p>
-                    <h1>Pembayaran & Konfirmasi</h1>
-                    <p class="page-subtitle">Semua tagihan dibuat sebagai card invoice, siap nanti disambungkan ke payment gateway.</p>
-                </div>
-            </div>
-
-            <div class="invoice-list">
-                <?php if ($paymentHistory !== []): ?>
-                    <?php foreach ($paymentHistory as $payment): ?>
-                        <article class="invoice-card">
-                            <div>
-                                <span class="badge <?php echo e($statusClass((string) $payment['status_verifikasi'])); ?>"><?php echo e($payment['status_verifikasi']); ?></span>
-                                <h3><?php echo e($payment['invoice_no'] ?? 'Invoice'); ?></h3>
-                                <p><?php echo e($payment['nama_kost']); ?> - Kamar <?php echo e($payment['nomor_kamar']); ?></p>
-                            </div>
-                            <div class="invoice-meta">
-                                <span><b>Periode</b><?php echo e($formatDate((string) ($payment['periode_mulai'] ?? ''))); ?> - <?php echo e($formatDate((string) ($payment['periode_selesai'] ?? ''))); ?></span>
-                                <span><b>Total</b><?php echo e($formatRupiah((float) ($payment['total_bayar'] ?? $payment['nominal'] ?? 0))); ?></span>
-                                <span><b>Metode</b><?php echo e(str_replace('_', ' ', (string) ($payment['metode_bayar'] ?? '-'))); ?></span>
-                            </div>
-                            <div class="invoice-actions">
-                                <a href="<?php echo e(url('/rooms/invoice?id=' . $payment['id_pembayaran'])); ?>" class="btn-primary soft"><i class="fa-solid fa-file-lines"></i> Detail</a>
-                                <a href="https://wa.me/6287748703029?text=<?php echo rawurlencode('Halo Admin, saya ingin konfirmasi invoice ' . ($payment['invoice_no'] ?? '')); ?>" target="_blank" class="btn-whatsapp"><i class="fa-brands fa-whatsapp"></i> Konfirmasi</a>
-                            </div>
-                        </article>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="empty-state">
-                        <i class="fa-solid fa-file-invoice-dollar"></i>
-                        <h3>Belum ada invoice</h3>
-                        <p>Invoice otomatis muncul setelah kamu booking kamar.</p>
                     </div>
                 <?php endif; ?>
             </div>

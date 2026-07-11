@@ -1,0 +1,4 @@
+# Taruh logo bank di folder ini (opsional):
+#   bca.png, bri.png, mandiri.png
+# Nama file harus cocok dengan kolom 'logo' di config/payment.php.
+# Kalau file belum ada, halaman invoice tetap tampil normal (logo tidak dipaksa muncul).
