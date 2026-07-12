@@ -375,6 +375,19 @@ table td:last-child {
   color: #b91c1c;
 }
 
+/* Hitung mundur jatuh tempo di tabel pembayaran */
+.admin-countdown {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-countdown.is-overdue {
+  color: #dc2626;
+}
+
 .header-mobile {
   display: none;
 }

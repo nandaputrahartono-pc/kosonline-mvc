@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\FileUploadService;
 use App\Models\ChatModel;
 use App\Models\PaymentModel;
 use App\Models\RentalModel;
@@ -17,6 +18,7 @@ final class MemberController extends Controller
     private RentalModel $rentalModel;
     private PaymentModel $paymentModel;
     private ChatModel $chatModel;
+    private FileUploadService $uploader;
 
     public function __construct()
     {
@@ -24,6 +26,7 @@ final class MemberController extends Controller
         $this->rentalModel = new RentalModel();
         $this->paymentModel = new PaymentModel();
         $this->chatModel = new ChatModel();
+        $this->uploader = new FileUploadService();
     }
 
     public function dashboard(): void
@@ -44,7 +47,12 @@ final class MemberController extends Controller
 
             if ($name === '' || $username === '' || $phone === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
                 set_flash('error', 'Nama, username, email valid, dan nomor handphone wajib diisi.');
-                redirect_to('/member/dashboard');
+                redirect_to('/member/dashboard?tab=profil');
+            }
+
+            if (!preg_match('/^[0-9]{8,15}$/', $phone)) {
+                set_flash('error', 'Nomor handphone hanya boleh angka (8–15 digit).');
+                redirect_to('/member/dashboard?tab=profil');
             }
 
             if (!preg_match('/^[a-z0-9_]{3,30}$/', $username)) {
@@ -78,10 +86,29 @@ final class MemberController extends Controller
                 $payload['password'] = $password;
             }
 
+            // Foto profil opsional: hanya diproses kalau user memilih file baru.
+            $newPhoto = null;
+            try {
+                $newPhoto = $this->uploader->upload($_FILES['foto_profil'] ?? null, false);
+            } catch (\RuntimeException $exception) {
+                set_flash('error', $exception->getMessage());
+                redirect_to('/member/dashboard?tab=profil');
+            }
+
+            if ($newPhoto !== null) {
+                $existing = $this->userModel->findById($userId);
+                $previousPhoto = (string) ($existing['foto_profil'] ?? '');
+                $this->userModel->updatePhoto($userId, $newPhoto);
+                if ($previousPhoto !== '' && $previousPhoto !== 'default.jpg') {
+                    $this->uploader->delete($previousPhoto);
+                }
+                $_SESSION['foto_profil'] = $newPhoto;
+            }
+
             $this->userModel->update($userId, $payload);
             $_SESSION['nama'] = $payload['nama_lengkap'];
             set_flash('success', 'Profil berhasil diperbarui!');
-            redirect_to('/member/dashboard');
+            redirect_to('/member/dashboard?tab=profil');
         }
 
         $user = $this->userModel->findById($userId);

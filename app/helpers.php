@@ -68,6 +68,26 @@ function site_image(string $filename): string
     return asset('images/site/' . ltrim($filename, '/'));
 }
 
+/**
+ * Avatar bawaan (SVG) untuk user yang belum mengunggah foto profil.
+ */
+function default_avatar(): string
+{
+    return asset('images/site/default-avatar.svg');
+}
+
+/**
+ * URL foto profil user: foto unggahan bila ada, jika tidak pakai avatar bawaan.
+ */
+function profile_avatar(?string $filename): string
+{
+    $safeFilename = trim((string) $filename);
+
+    return $safeFilename !== '' && $safeFilename !== 'default.jpg'
+        ? upload_asset($safeFilename)
+        : default_avatar();
+}
+
 function redirect_to(string $url): never
 {
     header('Location: ' . url($url));

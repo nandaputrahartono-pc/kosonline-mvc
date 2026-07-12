@@ -336,8 +336,10 @@ $oldIdentifier = $oldIdentifier ?? '';
         /* Mobile View (Stack layout without sliding panel) */
         @media (max-width: 768px) {
             body { padding: 0; }
-            .auth-container { min-height: 100vh; width: 100vw; border-radius: 0; }
-            .sign-in-container, .sign-up-container { width: 100%; height: auto; position: relative; padding: 40px 0; }
+            .auth-container { min-height: 100vh; width: 100%; border-radius: 0; }
+            /* Reset posisi desktop: tanpa ini, .sign-up-container (left:50%) tergeser
+               ke kanan saat jadi position:relative → form register kepotong di HP. */
+            .sign-in-container, .sign-up-container { width: 100%; height: auto; position: relative; left: 0; right: auto; transform: none; padding: 40px 0; }
             .sign-in-container { top: 0; opacity: 1; z-index: 5; }
             .sign-up-container { top: 0; opacity: 0; z-index: 1; display: none; }
             .auth-container.right-panel-active .sign-in-container { display: none; opacity: 0; }
@@ -466,7 +468,7 @@ $oldIdentifier = $oldIdentifier ?? '';
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-phone"></i>
-                    <input type="text" name="no_hp" placeholder="No. Handphone" required />
+                    <input type="tel" name="no_hp" placeholder="No. Handphone" inputmode="numeric" pattern="[0-9]{8,15}" maxlength="15" title="Nomor handphone hanya angka, 8-15 digit" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required />
                 </div>
                 <div class="input-group mb-4">
                     <i class="fa-solid fa-lock"></i>

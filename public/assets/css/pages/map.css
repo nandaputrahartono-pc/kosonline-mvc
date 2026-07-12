@@ -348,7 +348,7 @@
 
 .map-insight-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
@@ -398,6 +398,15 @@
 }
 
 @media (max-width: 767px) {
+  /* Kartu insight & daftar lokasi menumpuk 1 kolom biar tak sempit di HP. */
+  .map-insight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .map-location-list {
+    grid-template-columns: 1fr;
+  }
+
   .map-route-line {
     grid-template-columns: 1fr 50px 1.2fr 50px 1fr;
     margin: 28px 0;

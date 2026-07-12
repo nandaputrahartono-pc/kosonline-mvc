@@ -551,6 +551,23 @@
   color: var(--text-main);
   font-weight: 900;
   text-align: left;
+  cursor: pointer;
+}
+
+.chat-sidebar-rule i {
+  transition: transform 0.25s ease;
+}
+
+/* "Riwayat Chat" jadi tombol collapse: sembunyikan daftar thread + footer.
+   Default tertutup di HP (di-set via JS) supaya tak menuh-menuhin percakapan. */
+.chat-thread-list.history-collapsed .chat-sidebar-rule i {
+  transform: rotate(-90deg);
+}
+
+.chat-thread-list.history-collapsed > a,
+.chat-thread-list.history-collapsed > .chat-empty-list,
+.chat-thread-list.history-collapsed > .chat-sidebar-foot {
+  display: none;
 }
 
 .chat-thread-list a {
@@ -642,6 +659,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+}
+
+/* Tombol back di header percakapan — hanya tampil di HP (dua-tampilan). */
+.chat-panel-back {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 1.15rem;
+  padding: 6px 12px 6px 0;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .chat-panel-identity {
@@ -1071,6 +1100,46 @@
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
+/* Field foto profil (unggah + pratinjau) */
+.profile-photo-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-photo-preview {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--border-soft);
+  flex: 0 0 auto;
+  background: #eef2ff;
+}
+
+.profile-photo-input {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-photo-input input[type="file"] {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.profile-photo-input small {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
 .form-panel button {
   width: fit-content;
 }
@@ -1083,7 +1152,8 @@
   gap: 14px;
 }
 
-.empty-state i {
+/* Hanya ikon utama (anak langsung), BUKAN ikon di dalam tombol. */
+.empty-state > i {
   width: 68px;
   height: 68px;
   display: grid;
@@ -1092,6 +1162,14 @@
   background: var(--accent-blue-soft);
   color: var(--accent-blue);
   font-size: 1.6rem;
+}
+
+/* Tombol empty-state dirapikan: benar-benar di tengah, tak melebar, glow lebih halus. */
+.empty-state .btn-primary {
+  justify-self: center;
+  margin-top: 4px;
+  padding: 12px 24px;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
 }
 
 .member-flash-stack {
@@ -1216,11 +1294,44 @@
     height: 220px;
   }
 
-  .chat-panel-head,
-  .chat-panel-actions,
   .chat-sidebar-foot {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  /* Header percakapan compact: satu baris, ikon kecil, subjudul disembunyikan. */
+  .chat-panel-head {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .chat-panel-identity {
+    gap: 10px;
+  }
+
+  .chat-panel-identity > div {
+    min-width: 0;
+  }
+
+  .chat-panel-identity > i {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+  }
+
+  .chat-panel-identity strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-panel-identity span {
+    display: none;
+  }
+
+  .chat-panel-actions {
+    flex: 0 0 auto;
   }
 
   .chat-message-list {
@@ -1245,30 +1356,46 @@
     justify-self: start;
   }
 
-  /* Chat mobile: tumpukan bersih — daftar ringkas di atas, area pesan scroll
-     sendiri, kotak ketik tepat di bawah (tak lagi menimpa pesan). */
+  /* Chat HP gaya WhatsApp: SATU tampilan penuh. Default = PERCAKAPAN;
+     tekan back di header percakapan untuk pindah ke DAFTAR chat. */
   .member-page #chat.page.active {
     height: auto;
     min-height: 0;
   }
 
   .chat-dashboard {
+    display: block;
     height: auto;
     overflow: visible;
   }
 
+  /* Default: sembunyikan daftar, tampilkan percakapan penuh. */
   .chat-thread-list {
-    max-height: 240px;
-    overflow-y: auto;
+    display: none;
+    max-height: none;
   }
 
   .chat-panel {
     min-height: 0;
   }
 
+  /* Mode "lihat daftar": tampilkan daftar, sembunyikan percakapan. */
+  .chat-dashboard.show-threads .chat-thread-list {
+    display: flex;
+  }
+
+  .chat-dashboard.show-threads .chat-panel {
+    display: none;
+  }
+
+  .chat-panel-back {
+    display: inline-flex;
+    align-items: center;
+  }
+
   .chat-message-list {
-    min-height: 240px;
-    max-height: 56vh;
+    min-height: 300px;
+    max-height: calc(100dvh - 250px);
   }
 
   .chat-compose {
@@ -1722,6 +1849,24 @@
   font-size: 0.88rem;
   font-weight: 400;
   color: var(--text-muted);
+}
+
+/* Hitung mundur realtime jatuh tempo */
+.my-kost-countdown {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-blue-soft);
+  color: var(--accent-blue);
+  font-size: 0.82rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.my-kost-countdown.is-overdue {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .my-kost-actions {

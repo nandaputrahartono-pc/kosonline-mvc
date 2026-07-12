@@ -113,6 +113,11 @@ final class AuthController extends Controller
                 redirect_to('/login#register');
             }
 
+            if (!preg_match('/^[0-9]{8,15}$/', $noHp)) {
+                set_flash('error', 'Nomor handphone hanya boleh angka (8–15 digit).');
+                redirect_to('/login#register');
+            }
+
             if (!preg_match('/^[a-z0-9_]{3,30}$/', $username)) {
                 set_flash('error', 'Username hanya boleh huruf kecil, angka, underscore, minimal 3 karakter.');
                 redirect_to('/login#register');

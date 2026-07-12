@@ -118,6 +118,28 @@ final class RentalModel extends Model
         );
     }
 
+    /**
+     * Majukan jatuh tempo satu bulan (dipanggil saat pembayaran bulanan diverifikasi lunas).
+     */
+    public function advanceDueDate(int $rentalId): void
+    {
+        $this->db->execute(
+            "UPDATE sewa SET jatuh_tempo = DATE_ADD(jatuh_tempo, INTERVAL 1 MONTH) WHERE id_sewa = ?",
+            [$rentalId]
+        );
+    }
+
+    /**
+     * Mundurkan jatuh tempo satu bulan (membatalkan efek advanceDueDate saat status lunas dibatalkan).
+     */
+    public function retreatDueDate(int $rentalId): void
+    {
+        $this->db->execute(
+            "UPDATE sewa SET jatuh_tempo = DATE_SUB(jatuh_tempo, INTERVAL 1 MONTH) WHERE id_sewa = ?",
+            [$rentalId]
+        );
+    }
+
     public function cancelPending(int $rentalId): void
     {
         $this->db->execute(
@@ -193,6 +215,7 @@ final class RentalModel extends Model
                 kamar.harga,
                 pembayaran.status_verifikasi,
                 sewa.status_sewa,
+                sewa.jatuh_tempo,
                 pembayaran.id_pembayaran,
                 pembayaran.invoice_no,
                 pembayaran.total_bayar,

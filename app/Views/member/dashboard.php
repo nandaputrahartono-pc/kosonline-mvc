@@ -89,9 +89,7 @@ $statusClass = static function (?string $status): string {
         default => 'warning',
     };
 };
-$avatarSource = !empty($user['foto_profil']) && $user['foto_profil'] !== 'default.jpg'
-    ? upload_asset((string) $user['foto_profil'])
-    : site_image('images.jpg');
+$avatarSource = profile_avatar($user['foto_profil'] ?? null);
 $wsHost = preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? '127.0.0.1'));
 $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
 ob_start();
@@ -259,6 +257,10 @@ ob_start();
                         <div class="my-kost-info-item">
                             <small>Jatuh Tempo Berikutnya</small>
                             <strong class="text-danger"><?php echo e($formatDate((string) $summary['jatuh_tempo'])); ?></strong>
+                            <?php $dueRaw = (string) $summary['jatuh_tempo']; ?>
+                            <?php if ($dueRaw !== '' && $dueRaw !== '-'): ?>
+                                <span class="my-kost-countdown" data-countdown data-deadline="<?php echo e($dueRaw); ?>T23:59:59">Menghitung&hellip;</span>
+                            <?php endif; ?>
                         </div>
                         <div class="my-kost-info-item">
                             <small>Fasilitas Kamar</small>
@@ -458,6 +460,9 @@ ob_start();
                 <section class="chat-panel">
                     <div class="chat-panel-head">
                         <div class="chat-panel-identity">
+                            <button type="button" class="chat-panel-back" id="chat-panel-back" aria-label="Kembali ke daftar chat">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
                             <i class="fa-solid fa-headset"></i>
                             <div>
                                 <strong><?php echo e($chatSubject($currentThread)); ?></strong>
@@ -466,7 +471,6 @@ ob_start();
                         </div>
                         <div class="chat-panel-actions">
                             <span><i></i> Online</span>
-                            <button type="button" aria-label="Pin chat"><i class="fa-solid fa-thumbtack"></i></button>
                         </div>
                     </div>
                     <div class="chat-message-list" data-chat-scroll>
@@ -555,8 +559,17 @@ ob_start();
                     <span><?php echo e($user['email']); ?></span>
                 </div>
 
-                <form method="POST" class="form-panel">
+                <form method="POST" class="form-panel" enctype="multipart/form-data">
                     <?php echo csrf_field(); ?>
+                    <label>Foto Profil
+                        <span class="profile-photo-field">
+                            <img src="<?php echo e($avatarSource); ?>" alt="Pratinjau foto profil" class="profile-photo-preview" id="profile-photo-preview" decoding="async">
+                            <span class="profile-photo-input">
+                                <input type="file" name="foto_profil" accept="image/jpeg,image/png,image/webp" id="profile-photo-input">
+                                <small>JPG, PNG, atau WebP. Maksimal 5 MB.</small>
+                            </span>
+                        </span>
+                    </label>
                     <label>Nama Lengkap
                         <input type="text" name="nama" value="<?php echo e($user['nama_lengkap']); ?>" required>
                     </label>
@@ -567,7 +580,7 @@ ob_start();
                         <input type="email" name="email" value="<?php echo e($user['email']); ?>" required>
                     </label>
                     <label>No. Handphone
-                        <input type="text" name="no_hp" value="<?php echo e($user['no_hp']); ?>" required>
+                        <input type="tel" name="no_hp" value="<?php echo e($user['no_hp']); ?>" inputmode="numeric" pattern="[0-9]{8,15}" maxlength="15" title="Nomor handphone hanya angka, 8-15 digit" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
                     </label>
                     <label>Password Baru
                         <input type="password" name="password" minlength="6" placeholder="Kosongkan kalau tidak diganti">
@@ -586,7 +599,8 @@ $title = 'Akun Saya - KosOnline';
 $showFooter = true;
 $showChatbot = false;
 $extraHead = '<link rel="stylesheet" href="' . e(asset('css/member.css')) . '?v=' . time() . '">';
-$extraScripts = '<script src="' . e(asset('js/chat-realtime.js')) . '"></script>' . <<<HTML
+$extraScripts = '<script src="' . e(asset('js/chat-realtime.js')) . '"></script>'
+    . '<script src="' . e(asset('js/countdown.js')) . '"></script>' . <<<HTML
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const dashboard = document.querySelector('.member-dashboard-shell');
@@ -641,6 +655,33 @@ document.addEventListener('DOMContentLoaded', function () {
   if (dashboard.querySelector('#chat.page.active')) {
     window.requestAnimationFrame(scrollChatToBottom);
     window.setTimeout(scrollChatToBottom, 220);
+  }
+
+  // Pratinjau foto profil sebelum diunggah.
+  const photoInput = document.getElementById('profile-photo-input');
+  const photoPreview = document.getElementById('profile-photo-preview');
+  if (photoInput && photoPreview) {
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files && photoInput.files[0];
+      if (file) photoPreview.src = URL.createObjectURL(file);
+    });
+  }
+
+  // Chat HP gaya WhatsApp: default tampil PERCAKAPAN; back di header percakapan
+  // membuka DAFTAR chat. Tap thread di daftar = navigasi ke percakapannya (reload).
+  const chatDashboard = document.querySelector('.chat-dashboard');
+  const chatPanelBack = document.getElementById('chat-panel-back');
+  if (chatDashboard && chatPanelBack) {
+    chatPanelBack.addEventListener('click', () => chatDashboard.classList.add('show-threads'));
+  }
+
+  // "Riwayat Chat" opsional untuk collapse daftar thread (default terbuka).
+  const chatThreadList = document.querySelector('.chat-thread-list');
+  const chatHistoryToggle = document.querySelector('.chat-sidebar-rule');
+  if (chatThreadList && chatHistoryToggle) {
+    chatHistoryToggle.addEventListener('click', () => {
+      chatThreadList.classList.toggle('history-collapsed');
+    });
   }
 });
 </script>

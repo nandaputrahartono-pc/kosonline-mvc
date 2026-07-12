@@ -42,11 +42,15 @@ final class AdminPaymentController extends Controller
             $amount = (float) ($latestPayment['total_bayar'] ?? $latestPayment['nominal'] ?? $rental['harga']);
 
             if (($rental['status_sewa'] ?? '') === 'Menunggu Pembayaran') {
+                // Pembayaran booking awal: aktifkan sewa. Jatuh tempo awal (masuk+1bln)
+                // sudah menjadi tenggat siklus berikutnya, jadi tidak dimajukan.
                 $this->paymentModel->markPaidByRental($rentalId, $amount);
                 $this->rentalModel->activate($rentalId);
                 $this->roomModel->setStatus((int) $rental['id_kamar'], 'Terisi');
             } else {
+                // Pembayaran bulanan sewa aktif: majukan jatuh tempo satu bulan.
                 $this->paymentModel->markPaid($rentalId, $billingMonth, $amount);
+                $this->rentalModel->advanceDueDate($rentalId);
             }
 
             set_flash('success', 'Status berhasil diubah menjadi SUDAH BAYAR.');
@@ -57,7 +61,9 @@ final class AdminPaymentController extends Controller
                 $this->roomModel->setStatus((int) $rental['id_kamar'], 'Tersedia');
                 set_flash('success', 'Booking pending berhasil dibatalkan.');
             } else {
+                // Batalkan pelunasan bulanan: mundurkan lagi jatuh tempo satu bulan.
                 $this->paymentModel->cancelPayment($rentalId, $billingMonth);
+                $this->rentalModel->retreatDueDate($rentalId);
                 set_flash('success', 'Status berhasil diubah menjadi BELUM BAYAR.');
             }
         } else {

@@ -452,6 +452,7 @@ a {
   flex-direction: column;
   cursor: pointer;
   gap: 6px;
+  position: relative;
   z-index: 1002;
 }
 
@@ -766,34 +767,115 @@ a {
     display: flex;
   }
 
+  body.menu-open {
+    overflow: hidden;
+  }
+
+  /* Menu HP: drawer sebagian layar dari kanan, naik sampai paling atas (top:0)
+     sehingga menutupi area header (logo "Kos Online" ketutup separuh). Tombol
+     tutup (✕) ada di dalam drawer. Sisa layar digelapkan oleh .nav-overlay. */
   .navbar ul {
     position: fixed;
-    top: 80px;
-    right: -100%;
-    width: 280px;
-    height: calc(100vh - 80px);
+    top: 0;
+    right: 0;
+    left: auto;
+    width: min(82vw, 340px);
+    height: 100vh;
+    height: 100dvh;
     background: var(--card-bg);
     flex-direction: column;
-    padding: 40px 30px;
-    box-shadow: var(--shadow-medium);
-    transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    padding: 70px 22px 40px;
+    box-shadow: -12px 0 40px rgba(15, 23, 42, 0.16);
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
     display: flex;
-    gap: 24px;
-    align-items: flex-start;
+    gap: 4px;
+    align-items: stretch;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .navbar ul.active {
-    right: 0;
+    transform: translateX(0);
+  }
+
+  /* Latar gelap penuh di belakang drawer — halaman masih terlihat samar; klik = tutup. */
+  .nav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 900;
+  }
+
+  .nav-overlay.active {
+    opacity: 1;
+    visibility: visible;
   }
 
   .nav-menu li {
     width: 100%;
   }
 
-  .nav-menu a {
-    display: block;
+  .nav-menu li form {
     width: 100%;
-    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  /* Semua item (menu utama + akun) jadi baris list yang seragam. */
+  .nav-menu a,
+  .nav-menu .nav-menu-logout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 12px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-main);
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .nav-menu a::after {
+    display: none;
+  }
+
+  .nav-menu a:hover,
+  .nav-menu a.active {
+    background: var(--accent-blue-soft);
+    color: var(--accent-blue);
+  }
+
+  .nav-menu a i {
+    width: 22px;
+    text-align: center;
+    color: var(--accent-blue);
+  }
+
+  .nav-menu .nav-menu-logout {
+    color: #b91c1c;
+  }
+
+  .nav-menu .nav-menu-logout i {
+    width: 22px;
+    text-align: center;
+    color: #b91c1c;
+  }
+
+  .nav-menu .nav-menu-logout:hover {
+    background: #fee2e2;
+  }
+
+  .nav-menu-sep {
+    height: 1px;
+    background: var(--border-soft);
+    margin: 10px 4px 6px;
   }
 
   .menu-toggle.is-active .bar:nth-child(2) {

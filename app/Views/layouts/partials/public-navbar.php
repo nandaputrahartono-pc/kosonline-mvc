@@ -2,11 +2,7 @@
 $isLoggedInUser = $isLoggedInUser ?? (($_SESSION['status'] ?? null) === 'login_user');
 $currentUserName = (string) ($currentUserName ?? ($_SESSION['nama'] ?? 'User'));
 $currentUserPhoto = (string) ($currentUserPhoto ?? ($_SESSION['foto_profil'] ?? 'default.jpg'));
-$currentUserAvatar = (string) ($currentUserAvatar ?? (
-    $currentUserPhoto !== '' && $currentUserPhoto !== 'default.jpg'
-        ? upload_asset($currentUserPhoto)
-        : site_image('images.jpg')
-));
+$currentUserAvatar = (string) ($currentUserAvatar ?? profile_avatar($currentUserPhoto));
 $currentPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
 $currentPath = rtrim((string) $currentPath, '/') ?: '/';
 $navClass = static function (array $paths) use ($currentPath): string {
@@ -38,19 +34,20 @@ $navClass = static function (array $paths) use ($currentPath): string {
             <li><a href="<?php echo e(url('/rooms')); ?>"<?php echo $navClass(['/rooms']); ?>>Kamar Kos</a></li>
             <li><a href="<?php echo e(url('/contact')); ?>"<?php echo $navClass(['/contact']); ?>>Hubungi Kami</a></li>
             <li><a href="<?php echo e(url('/map')); ?>"<?php echo $navClass(['/map']); ?>>Peta Lokasi</a></li>
-            <li class="d-lg-none mt-4 w-100">
-                <?php if ($isLoggedInUser): ?>
-                    <a href="<?php echo e(url('/wishlist')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue) !important; border-radius: 50px;">Kamar Tersimpan</a>
-                    <a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue-soft); color: var(--accent-blue) !important; border-radius: 50px;">Chat Admin</a>
-                    <a href="<?php echo e(url('/member/dashboard')); ?>" class="btn w-100 py-2.5 fw-bold mb-2" style="background-color: var(--accent-blue); color: white !important; border-radius: 50px; box-shadow: 0 4px 14px rgba(37,99,235,0.3);">Dashboard User</a>
+            <li class="d-lg-none nav-menu-sep" aria-hidden="true"></li>
+            <?php if ($isLoggedInUser): ?>
+                <li class="d-lg-none"><a href="<?php echo e(url('/wishlist')); ?>"><i class="fa-regular fa-bookmark"></i> Kamar Tersimpan</a></li>
+                <li class="d-lg-none"><a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a></li>
+                <li class="d-lg-none"><a href="<?php echo e(url('/member/dashboard')); ?>"><i class="fa-solid fa-gauge-high"></i> Menu</a></li>
+                <li class="d-lg-none">
                     <form method="POST" action="<?php echo e(url('/logout')); ?>">
                         <?php echo csrf_field(); ?>
-                        <button type="submit" class="btn w-100 py-2.5 fw-bold" style="background-color: #fee2e2; color: #b91c1c; border-radius: 50px;">Logout</button>
+                        <button type="submit" class="nav-menu-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                     </form>
-                <?php else: ?>
-                    <a href="<?php echo e(url('/login')); ?>" class="btn w-100 py-2.5 fw-bold" style="background-color: var(--accent-blue); color: white !important; border-radius: 50px; box-shadow: 0 4px 14px rgba(37,99,235,0.3);">Login / Register</a>
-                <?php endif; ?>
-            </li>
+                </li>
+            <?php else: ?>
+                <li class="d-lg-none"><a href="<?php echo e(url('/login')); ?>"><i class="fa-solid fa-right-to-bracket"></i> Login / Register</a></li>
+            <?php endif; ?>
         </ul>
     </nav>
 
@@ -76,7 +73,7 @@ $navClass = static function (array $paths) use ($currentPath): string {
                             <small>Sudah login</small>
                         </div>
                     </div>
-                    <a href="<?php echo e(url('/member/dashboard')); ?>" class="dropdown-item"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                    <a href="<?php echo e(url('/member/dashboard')); ?>" class="dropdown-item"><i class="fa-solid fa-gauge-high"></i> Menu</a>
                     <form method="POST" action="<?php echo e(url('/logout')); ?>">
                         <?php echo csrf_field(); ?>
                         <button type="submit" class="dropdown-item"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
@@ -94,3 +91,4 @@ $navClass = static function (array $paths) use ($currentPath): string {
         </div>
     </div>
 </header>
+<div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>

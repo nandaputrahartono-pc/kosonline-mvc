@@ -4,17 +4,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const navMenu = document.querySelector('.nav-menu');
 
     if (menuToggle && navMenu) {
+        const navOverlay = document.getElementById('nav-overlay');
+
+        const setMenu = (open) => {
+            menuToggle.classList.toggle('is-active', open);
+            navMenu.classList.toggle('active', open);
+            if (navOverlay) navOverlay.classList.toggle('active', open);
+            // Kunci scroll body saat drawer terbuka.
+            document.body.classList.toggle('menu-open', open);
+        };
+
         menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('is-active');
-            navMenu.classList.toggle('active');
+            setMenu(!navMenu.classList.contains('active'));
         });
 
-        // Close menu when clicking link
+        // Klik area gelap (backdrop) = tutup drawer.
+        if (navOverlay) {
+            navOverlay.addEventListener('click', () => setMenu(false));
+        }
+
+        // Tutup menu saat klik salah satu link
         document.querySelectorAll('.nav-menu a').forEach(link => {
-            link.addEventListener('click', () => {
-                menuToggle.classList.remove('is-active');
-                navMenu.classList.remove('active');
-            });
+            link.addEventListener('click', () => setMenu(false));
         });
     }
 

@@ -10,9 +10,7 @@ $extraScripts = $extraScripts ?? '';
 $isLoggedInUser = ($_SESSION['status'] ?? null) === 'login_user';
 $currentUserName = (string) ($_SESSION['nama'] ?? 'User');
 $currentUserPhoto = (string) ($_SESSION['foto_profil'] ?? 'default.jpg');
-$currentUserAvatar = $currentUserPhoto !== '' && $currentUserPhoto !== 'default.jpg'
-    ? upload_asset($currentUserPhoto)
-    : site_image('images.jpg');
+$currentUserAvatar = profile_avatar($currentUserPhoto);
 ?>
 <!DOCTYPE html>
 <html lang="id">

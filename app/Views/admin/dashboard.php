@@ -493,6 +493,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                             <th>Invoice / Periode</th>
                             <th>Tagihan</th>
                             <th>Status</th>
+                            <th>Jatuh Tempo</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -528,6 +529,15 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                     <span class="badge <?php echo $isPaid ? 'success' : 'warning'; ?>"><?php echo e($statusLabel); ?></span>
                                     <?php if (!empty($billing['bukti_bayar'])): ?>
                                         <br><a href="<?php echo e(upload_asset($billing['bukti_bayar'])); ?>" target="_blank" rel="noopener noreferrer" class="small fw-semibold"><i class="fa-solid fa-image"></i> Lihat Bukti</a>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php $dueRaw = (string) ($billing['jatuh_tempo'] ?? ''); ?>
+                                    <?php if ($dueRaw !== '' && $dueRaw !== '0000-00-00'): ?>
+                                        <strong><?php echo e(date('d M Y', strtotime($dueRaw))); ?></strong><br>
+                                        <span class="admin-countdown" data-countdown data-deadline="<?php echo e($dueRaw); ?>T23:59:59">&mdash;</span>
+                                    <?php else: ?>
+                                        <span style="color:#94a3b8;">&mdash;</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -794,5 +804,6 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
     <script src="<?php echo e(asset('js/confirm-modal.js')); ?>"></script>
     <script src="<?php echo e(asset('js/chat-realtime.js')); ?>"></script>
     <script src="<?php echo e(asset('js/admin.js')); ?>"></script>
+    <script src="<?php echo e(asset('js/countdown.js')); ?>"></script>
 </body>
 </html>

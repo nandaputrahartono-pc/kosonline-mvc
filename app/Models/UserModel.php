@@ -158,6 +158,14 @@ final class UserModel extends Model
         );
     }
 
+    public function updatePhoto(int $id, string $filename): bool
+    {
+        return $this->db->execute(
+            "UPDATE users SET foto_profil = ? WHERE id_user = ?",
+            [$filename, $id]
+        );
+    }
+
     public function delete(int $id): bool
     {
         return $this->db->execute("DELETE FROM users WHERE id_user = ?", [$id]);
