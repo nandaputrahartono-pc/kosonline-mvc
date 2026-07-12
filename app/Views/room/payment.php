@@ -300,7 +300,9 @@ $paymentConfig = [
         'minimal_transaksi' => (float) $promo['minimal_transaksi'],
     ], $availablePromos),
 ];
+$paymentPageCss = e(asset('css/pages/payment.css'));
 $extraHead = <<<HTML
+<link rel="stylesheet" href="{$paymentPageCss}">
 <style>
     .promo-chip {
         border: 1px solid var(--border-soft);
@@ -363,16 +365,6 @@ $extraHead = <<<HTML
         background: #fef2f2;
         color: #991b1b;
         border: 1px solid #fecaca;
-    }
-    [data-theme="dark"] .payment-note.warning {
-        background: rgba(234, 88, 12, 0.14);
-        border-color: rgba(251, 146, 60, 0.28);
-        color: #fdba74;
-    }
-    [data-theme="dark"] .payment-note.danger {
-        background: rgba(220, 38, 38, 0.14);
-        border-color: rgba(248, 113, 113, 0.28);
-        color: #fca5a5;
     }
     .booking-confirm-modal {
         border: 0;

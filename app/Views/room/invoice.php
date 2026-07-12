@@ -217,7 +217,9 @@ ob_start();
 <?php
 $content = ob_get_clean();
 $title = 'Invoice ' . $invoice['invoice_no'] . ' - KosOnline';
+$invoicePageCss = e(asset('css/pages/payment.css'));
 $extraHead = <<<HTML
+<link rel="stylesheet" href="{$invoicePageCss}">
 <style>
     .invoice-breakdown {
         border: 1px solid var(--border-soft);

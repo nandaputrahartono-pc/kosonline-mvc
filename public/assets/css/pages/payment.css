@@ -1,0 +1,17 @@
+/* Halaman Payment & Invoice — dimuat oleh room/payment.php dan room/invoice.php */
+
+/* Payment Gateway UI styling */
+
+.payment-method-item {
+  border: 2px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card-bg);
+}
+
+.payment-method-item:hover {
+  border-color: var(--accent-blue);
+  background: var(--accent-blue-soft);
+}

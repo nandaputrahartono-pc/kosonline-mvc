@@ -129,8 +129,10 @@ ob_start();
 <?php
 $content = ob_get_clean();
 $title = 'Peta Lokasi Kos - KosOnline';
+$mapPageCss = e(asset('css/pages/map.css'));
 $extraHead = <<<HTML
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="{$mapPageCss}">
 HTML;
 
 $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;

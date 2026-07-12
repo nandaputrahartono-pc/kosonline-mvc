@@ -15,18 +15,6 @@
   --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 
-[data-theme="dark"] .member-page {
-  --bg-main: #0b1120;
-  --sidebar-bg: #111827;
-  --card-bg: #111827;
-  --text-main: #f8fafc;
-  --text-muted: #cbd5e1;
-  --accent-blue: #60a5fa;
-  --accent-blue-soft: rgba(96, 165, 250, 0.16);
-  --border-soft: rgba(148, 163, 184, 0.24);
-  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.35);
-}
-
 .member-page,
 .member-page * {
   box-sizing: border-box;
@@ -42,6 +30,12 @@
     var(--bg-main);
   color: var(--text-main);
   font-family: 'Outfit', sans-serif;
+}
+
+/* Jaring pengaman anti-rusak: gambar tak melebihi lebar wadah di HP. */
+.member-page img,
+.member-page svg {
+  max-width: 100%;
 }
 
 .member-page button,
@@ -1133,73 +1127,6 @@
   color: var(--red);
 }
 
-[data-theme="dark"] .member-page {
-  background:
-    radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 32rem),
-    var(--bg-main);
-}
-
-[data-theme="dark"] .stats-card,
-[data-theme="dark"] .panel,
-[data-theme="dark"] .order-card,
-[data-theme="dark"] .invoice-card,
-[data-theme="dark"] .profile-card,
-[data-theme="dark"] .form-panel,
-[data-theme="dark"] .empty-state,
-[data-theme="dark"] .member-flash {
-  background: var(--card-bg);
-  border-color: var(--border-soft);
-}
-
-[data-theme="dark"] .mini-grid span,
-[data-theme="dark"] .invoice-meta span,
-[data-theme="dark"] .form-panel input {
-  background: #0f172a;
-  border-color: var(--border-soft);
-  color: var(--text-main);
-}
-
-[data-theme="dark"] .chat-dashboard,
-[data-theme="dark"] .chat-thread-list,
-[data-theme="dark"] .chat-panel,
-[data-theme="dark"] .chat-panel-head,
-[data-theme="dark"] .chat-sidebar-rule,
-[data-theme="dark"] .chat-sidebar-foot,
-[data-theme="dark"] .chat-compose,
-[data-theme="dark"] .chat-room-card-wrap,
-[data-theme="dark"] .chat-typing-indicator {
-  background: var(--card-bg);
-  border-color: var(--border-soft);
-}
-
-[data-theme="dark"] .chat-message-list,
-[data-theme="dark"] .chat-thread-list a.active,
-[data-theme="dark"] .chat-thread-list a:hover {
-  background: #0f172a;
-}
-
-[data-theme="dark"] .chat-thread-list a {
-  border-color: rgba(148, 163, 184, 0.14);
-}
-
-[data-theme="dark"] .chat-bubble,
-[data-theme="dark"] .chat-room-card,
-[data-theme="dark"] .chat-compose-box {
-  background: #111827;
-  border-color: var(--border-soft);
-  color: var(--text-main);
-}
-
-[data-theme="dark"] .chat-bubble.mine {
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
-[data-theme="dark"] .chat-panel-actions button {
-  background: #0f172a;
-  color: var(--text-muted);
-}
-
 @media (max-width: 1100px) {
   .member-dashboard-shell {
     grid-template-columns: 1fr;
@@ -1316,6 +1243,56 @@
   .chat-room-card small {
     grid-column: 1 / -1;
     justify-self: start;
+  }
+
+  /* Chat mobile: tumpukan bersih — daftar ringkas di atas, area pesan scroll
+     sendiri, kotak ketik tepat di bawah (tak lagi menimpa pesan). */
+  .member-page #chat.page.active {
+    height: auto;
+    min-height: 0;
+  }
+
+  .chat-dashboard {
+    height: auto;
+    overflow: visible;
+  }
+
+  .chat-thread-list {
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .chat-panel {
+    min-height: 0;
+  }
+
+  .chat-message-list {
+    min-height: 240px;
+    max-height: 56vh;
+  }
+
+  .chat-compose {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: #f8fafc;
+  }
+
+  .chat-bubble,
+  .chat-bubble.mine {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 86%;
+  }
+
+  .chat-bubble::before,
+  .chat-bubble.mine::before {
+    display: none;
+  }
+
+  .chat-sent-room-card,
+  .chat-sent-room-card.mine {
+    width: 100%;
   }
 }
 
@@ -1830,24 +1807,6 @@
 }
 
 /* Dark theme overrides for new elements */
-[data-theme="dark"] .hub-profile-card,
-[data-theme="dark"] .hub-menu-item,
-[data-theme="dark"] .btn-back-hub,
-[data-theme="dark"] .my-kost-detail-card,
-[data-theme="dark"] .verification-status-card {
-  background: var(--card-bg);
-  border-color: var(--border-soft);
-}
-
-[data-theme="dark"] .my-kost-info-item,
-[data-theme="dark"] .profile-completion {
-  background: #0f172a;
-}
-
-[data-theme="dark"] .hub-verification-badge {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
-}
 
 /* Responsive Overrides */
 @media (max-width: 992px) {

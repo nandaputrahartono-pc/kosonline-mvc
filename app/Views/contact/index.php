@@ -241,5 +241,6 @@ ob_start();
 <?php
 $content = ob_get_clean();
 $title = 'Hubungi Kami - KosOnline';
+$extraHead = '<link rel="stylesheet" href="' . e(asset('css/pages/contact.css')) . '">';
 require base_path('app/Views/layouts/public.php');
 ?>

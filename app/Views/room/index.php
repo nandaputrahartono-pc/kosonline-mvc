@@ -278,5 +278,6 @@ ob_start();
 <?php
 $content = ob_get_clean();
 $title = 'Daftar Kamar Kost - KosOnline';
+$extraHead = '<link rel="stylesheet" href="' . e(asset('css/pages/rooms.css')) . '">';
 require base_path('app/Views/layouts/public.php');
 ?>

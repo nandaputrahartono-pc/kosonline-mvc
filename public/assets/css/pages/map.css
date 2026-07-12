@@ -1,0 +1,425 @@
+/* Halaman Peta Lokasi — dimuat hanya oleh app/Views/map/index.php */
+
+.map-shell {
+  display: grid;
+  grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+  gap: 18px;
+  margin-top: 0;
+  padding: 18px;
+  border-radius: 30px;
+}
+
+.map-sidebar {
+  max-height: 700px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.map-sidebar-head {
+  padding: 8px 6px 0;
+}
+
+.map-sidebar-head h2 {
+  margin: 8px 0;
+}
+
+.map-location-list {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.map-location-card {
+  border-radius: 22px;
+  overflow: hidden;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.map-location-card.is-muted {
+  opacity: 0.72;
+}
+
+.map-location-card button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.map-location-card button:disabled {
+  cursor: not-allowed;
+}
+
+.map-pin-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--accent-blue);
+  background: var(--accent-blue-soft);
+  border-radius: 16px;
+}
+
+.map-location-card strong,
+.map-location-card small {
+  display: block;
+}
+
+.map-location-card strong {
+  font-weight: 800;
+}
+
+.map-location-card small {
+  margin-top: 4px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.map-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.map-card-footer span {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.map-card-footer div {
+  display: flex;
+  gap: 10px;
+}
+
+.map-card-footer a {
+  color: var(--accent-blue);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.map-canvas-card {
+  position: relative;
+  min-height: 680px;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #dbeafe;
+}
+
+.map-canvas {
+  width: 100%;
+  height: 680px;
+  z-index: 1;
+}
+
+.map-floating-tip {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 40px);
+  padding: 12px 16px;
+  color: var(--text-main);
+  background: var(--card-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  font-weight: 800;
+}
+
+.map-floating-tip i {
+  color: var(--accent-blue);
+}
+
+.kos-map-marker span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  border: 4px solid #fff;
+  border-radius: 16px 16px 16px 4px;
+  transform: rotate(-45deg);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.3);
+}
+
+.kos-map-marker i {
+  transform: rotate(45deg);
+}
+
+.map-popup {
+  width: 210px;
+  color: #0f172a;
+}
+
+.map-popup img {
+  width: 100%;
+  height: 112px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.map-popup strong,
+.map-popup p,
+.map-popup span,
+.map-popup a {
+  display: block;
+}
+
+.map-popup strong {
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.map-popup p {
+  margin: 0 0 8px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.map-popup span {
+  margin-bottom: 10px;
+  color: #059669;
+  font-weight: 800;
+}
+
+/* Scoped under .leaflet-popup-content agar menang dari default Leaflet
+   `.leaflet-container a { color:#0078A8 }` yang dimuat setelah style.css. */
+
+.leaflet-popup-content .map-popup a {
+  padding: 9px 12px;
+  color: #fff;
+  background: #2563eb;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.leaflet-popup-content .map-popup a:hover {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+/* Map Page Identity */
+
+.map-page {
+  background:
+    linear-gradient(180deg, #f8fafc 0%, #eef6ff 42%, var(--bg-main) 100%);
+}
+
+.map-hero {
+  padding: 88px 0 74px;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 13% 22%, rgba(59, 130, 246, 0.14), transparent 20rem),
+    radial-gradient(circle at 84% 22%, rgba(20, 184, 166, 0.2), transparent 22rem),
+    linear-gradient(135deg, #ffffff 0%, #eff6ff 46%, #e0f2fe 100%);
+}
+
+.map-hero::after {
+  display: none;
+}
+
+.map-hero h1 {
+  color: var(--text-main);
+}
+
+.map-hero p {
+  color: var(--text-muted);
+}
+
+.map-hero-visual {
+  position: relative;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid rgba(14, 165, 233, 0.18);
+  border-radius: 34px;
+  background:
+    linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+    #fff;
+  background-size: 34px 34px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.1);
+}
+
+.map-visual-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.map-visual-top span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0369a1;
+  font-weight: 800;
+}
+
+.map-visual-top strong {
+  padding: 8px 12px;
+  color: #0f766e;
+  background: rgba(20, 184, 166, 0.12);
+  border-radius: 999px;
+}
+
+.map-route-line {
+  display: grid;
+  grid-template-columns: 1fr 58px 1.4fr 58px 1fr;
+  align-items: center;
+  margin: 40px 0;
+}
+
+.map-route-line span {
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #60a5fa 0 16px, transparent 16px 26px);
+}
+
+.map-route-line i {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #14b8a6);
+  border: 5px solid #fff;
+  border-radius: 20px;
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22);
+}
+
+.map-visual-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.map-visual-grid div {
+  padding: 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.map-visual-grid small,
+.map-visual-grid strong {
+  display: block;
+}
+
+.map-visual-grid small {
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.map-visual-grid strong {
+  margin-top: 8px;
+  color: var(--accent-blue);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.map-hero-visual p {
+  margin-top: 18px;
+  color: var(--text-muted);
+}
+
+.map-section {
+  padding-top: 56px;
+}
+
+.map-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.map-insight-grid article {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(14, 165, 233, 0.16);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-soft);
+}
+
+.map-insight-grid i {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #0369a1;
+  background: #e0f2fe;
+  border-radius: 16px;
+}
+
+.map-insight-grid span {
+  color: var(--text-muted);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+@media (max-width: 1199px) {
+  .map-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .map-sidebar {
+    max-height: none;
+  }
+
+  .map-location-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+}
+
+@media (max-width: 767px) {
+  .map-route-line {
+    grid-template-columns: 1fr 50px 1.2fr 50px 1fr;
+    margin: 28px 0;
+  }
+
+  .map-route-line i {
+    width: 50px;
+    height: 50px;
+  }
+
+  .map-visual-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .map-shell {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .map-canvas-card,
+  .map-canvas {
+    min-height: 520px;
+    height: 520px;
+  }
+}

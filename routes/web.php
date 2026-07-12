@@ -86,16 +86,16 @@ $router->post('/admin/bookings/delete', [AdminPaymentController::class, 'deleteB
 $router->post('/admin/messages/delete', [AdminMessageController::class, 'delete']);
 
 // Redirect old admin login to unified login
-$router->get('/admin/login', static fn (): never => redirect_to('/login'));
-$router->post('/admin/login', static fn (): never => redirect_to('/login'));
+$router->get('/admin/login', static function (): never { redirect_to('/login'); });
+$router->post('/admin/login', static function (): never { redirect_to('/login'); });
 
 // Legacy aliases while keeping a single front controller.
-$router->get('/admin.php', static fn (): never => redirect_to('/admin/dashboard'));
-$router->get('/login.php', static fn (): never => redirect_to('/login'));
-$router->get('/kamar.php', static fn (): never => redirect_to('/rooms'));
-$router->get('/menu/kamar.php', static fn (): never => redirect_to('/rooms'));
-$router->get('/menu/contact.php', static fn (): never => redirect_to('/contact'));
-$router->get('/menu/lainnya.php', static fn (): never => redirect_to('/map'));
-$router->get('/anggota/anggota.php', static fn (): never => redirect_to('/member/dashboard'));
-$router->get('/admin/index.php', static fn (): never => redirect_to('/login'));
-$router->get('/admin/admin.php', static fn (): never => redirect_to('/admin/dashboard'));
+$router->get('/admin.php', static function (): never { redirect_to('/admin/dashboard'); });
+$router->get('/login.php', static function (): never { redirect_to('/login'); });
+$router->get('/kamar.php', static function (): never { redirect_to('/rooms'); });
+$router->get('/menu/kamar.php', static function (): never { redirect_to('/rooms'); });
+$router->get('/menu/contact.php', static function (): never { redirect_to('/contact'); });
+$router->get('/menu/lainnya.php', static function (): never { redirect_to('/map'); });
+$router->get('/anggota/anggota.php', static function (): never { redirect_to('/member/dashboard'); });
+$router->get('/admin/index.php', static function (): never { redirect_to('/login'); });
+$router->get('/admin/admin.php', static function (): never { redirect_to('/admin/dashboard'); });

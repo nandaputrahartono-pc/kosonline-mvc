@@ -380,8 +380,10 @@
 <?php
 $content = ob_get_clean();
 $title = 'Detail ' . $roomLabel($room['nomor_kamar']) . ' - ' . $room['nama_kost'];
+$detailPageCss = e(asset('css/pages/detail.css'));
 $extraHead = <<<HTML
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="{$detailPageCss}">
     <style>
         .leaflet-container { font-family: inherit; }
         .gallery-caption {

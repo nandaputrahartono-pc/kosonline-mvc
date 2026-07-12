@@ -42,36 +42,6 @@ ob_start();
                     <a href="<?php echo e(url('/rooms')); ?>" class="home-btn-primary"><i class="fa-solid fa-bed"></i> Lihat Kamar Tersedia</a>
                     <a href="<?php echo e($whatsappUrl); ?>" target="_blank" rel="noopener noreferrer" class="home-btn-outline"><i class="fa-brands fa-whatsapp"></i> Tanya Admin</a>
                 </div>
-
-                <form action="<?php echo e(url('/rooms')); ?>" method="GET" class="home-search-panel">
-                    <div class="home-search-field">
-                        <label>Lokasi / fasilitas</label>
-                        <div>
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" name="cari" placeholder="Contoh: listrik, air, parkir...">
-                        </div>
-                    </div>
-                    <div class="home-search-field">
-                        <label>Cabang kos</label>
-                        <div>
-                            <i class="fa-solid fa-building"></i>
-                            <select name="cabang">
-                                <option value="">Semua cabang</option>
-                                <?php foreach ($branches as $branch): ?>
-                                    <option value="<?php echo e($branch['id_kost']); ?>"><?php echo e($branch['nama_kost']); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit"><i class="fa-solid fa-arrow-right"></i> Cari</button>
-                </form>
-
-                <div class="home-quick-search">
-                    <span>Pencarian cepat:</span>
-                    <a href="<?php echo e(url('/rooms?cari=' . rawurlencode('Listrik'))); ?>">Listrik</a>
-                    <a href="<?php echo e(url('/rooms?cari=' . rawurlencode('Air'))); ?>">Air bersih</a>
-                    <a href="<?php echo e(url('/rooms?cari=' . rawurlencode('Parkir'))); ?>">Parkir</a>
-                </div>
             </div>
 
             <div class="col-lg-6">
@@ -381,5 +351,6 @@ ob_start();
 <?php
 $content = ob_get_clean();
 $title = 'Cari Kos Mudah & Cepat - KosOnline';
+$extraHead = '<link rel="stylesheet" href="' . e(asset('css/pages/home.css')) . '">';
 require base_path('app/Views/layouts/public.php');
 ?>

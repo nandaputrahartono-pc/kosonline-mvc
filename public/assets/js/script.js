@@ -47,41 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 5. THEME TOGGLE (LIGHT / DARK) ---
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const currentTheme = localStorage.getItem('theme');
-
-    if (currentTheme) {
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        updateThemeToggleIcon(currentTheme);
-    } else {
-        // Default theme is light
-        document.documentElement.setAttribute('data-theme', 'light');
-    }
-
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            let theme = document.documentElement.getAttribute('data-theme');
-            let targetTheme = 'light';
-            if (theme === 'light') {
-                targetTheme = 'dark';
-            }
-            
-            document.documentElement.setAttribute('data-theme', targetTheme);
-            localStorage.setItem('theme', targetTheme);
-            updateThemeToggleIcon(targetTheme);
-        });
-    }
-
-    function updateThemeToggleIcon(theme) {
-        if (!themeToggleBtn) return;
-        if (theme === 'dark') {
-            themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
-        } else {
-            themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
-        }
-    }
-
     // --- 6. CHATBOT WINDOW TOGGLE & FLOW ---
     const chatbotBtn = document.getElementById('chatbot-btn');
     const chatbotWindow = document.getElementById('chatbot-window');

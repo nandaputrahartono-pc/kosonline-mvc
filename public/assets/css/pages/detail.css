@@ -1,0 +1,29 @@
+/* Halaman Detail Kamar — dimuat hanya oleh app/Views/room/detail.php */
+
+/* Detail Kamar Layout */
+
+.detail-gallery {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.detail-info-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.facility-badge {
+  background: var(--bg-main);
+  border: 1px solid var(--border-soft);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

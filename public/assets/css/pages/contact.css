@@ -1,0 +1,392 @@
+/* Halaman Kontak — dimuat hanya oleh app/Views/contact/index.php */
+
+.contact-hero-card {
+  padding: 28px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+}
+
+.contact-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 8px 12px;
+  color: #dcfce7;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(187, 247, 208, 0.26);
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.contact-status span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.18);
+}
+
+.contact-hero-card h2 {
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.contact-mini-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.contact-mini-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.contact-channel-card,
+.quick-topic-card {
+  min-height: 220px;
+  padding: 26px;
+  border-radius: 26px;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.contact-channel-card:hover,
+.quick-topic-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.contact-channel-card > i,
+.quick-topic-card div {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+  color: var(--accent-blue);
+  background: var(--accent-blue-soft);
+  border-radius: 18px;
+  font-size: 1.45rem;
+}
+
+.contact-channel-card h3,
+.quick-topic-card h3,
+.faq-strip h3 {
+  color: var(--text-main);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.contact-channel-card p,
+.quick-topic-card p,
+.faq-strip p {
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.contact-channel-card a {
+  color: var(--accent-blue);
+  font-weight: 800;
+}
+
+.quick-topic-card {
+  display: block;
+  color: inherit;
+}
+
+.contact-form-section {
+  background: linear-gradient(180deg, transparent, rgba(37, 99, 235, 0.06));
+}
+
+.contact-note-card {
+  display: flex;
+  gap: 14px;
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 20px;
+}
+
+.contact-note-card i {
+  color: var(--accent-blue);
+  margin-top: 4px;
+}
+
+.contact-note-card p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.public-form-card {
+  padding: 28px;
+  border-radius: 28px;
+}
+
+.faq-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.faq-strip article {
+  padding: 22px;
+  border-radius: 22px;
+}
+
+/* Contact Page Identity */
+
+.contact-page {
+  background:
+    radial-gradient(circle at 8% 16%, rgba(37, 211, 102, 0.12), transparent 24rem),
+    radial-gradient(circle at 92% 10%, rgba(225, 48, 108, 0.12), transparent 22rem),
+    var(--bg-main);
+}
+
+.contact-hero {
+  min-height: auto;
+  padding: 86px 0 72px;
+  color: var(--text-main);
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.94) 54%, rgba(220, 252, 231, 0.82) 100%),
+    radial-gradient(circle at 76% 32%, rgba(37, 211, 102, 0.18), transparent 20rem);
+}
+
+.contact-hero::after {
+  display: none;
+}
+
+.contact-hero h1 {
+  color: var(--text-main);
+}
+
+.contact-hero p {
+  color: var(--text-muted);
+}
+
+.contact-orbit-card {
+  position: relative;
+  min-height: 430px;
+  padding: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 28% 28%, rgba(37, 211, 102, 0.18), transparent 12rem),
+    radial-gradient(circle at 80% 18%, rgba(225, 48, 108, 0.14), transparent 12rem),
+    var(--card-bg);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+}
+
+.contact-orbit-main {
+  position: absolute;
+  top: 102px;
+  left: 50%;
+  width: 168px;
+  height: 168px;
+  display: grid;
+  place-items: center;
+  transform: translateX(-50%);
+  color: #fff;
+  background: linear-gradient(135deg, #16a34a, #25d366);
+  border: 10px solid rgba(255, 255, 255, 0.76);
+  border-radius: 50%;
+  box-shadow: 0 24px 50px rgba(37, 211, 102, 0.25);
+  text-align: center;
+}
+
+.contact-orbit-main i {
+  font-size: 3rem;
+}
+
+.contact-orbit-main strong {
+  display: none;
+}
+
+.contact-orbit-item {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border-radius: 24px;
+  font-size: 1.5rem;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+}
+
+.contact-orbit-item.item-ig {
+  top: 80px;
+  right: 42px;
+  background: linear-gradient(135deg, #833ab4, #e1306c, #f77737);
+}
+
+.contact-orbit-item.item-fb {
+  top: 230px;
+  left: 32px;
+  background: #1877f2;
+}
+
+.contact-orbit-item.item-tt {
+  top: 250px;
+  right: 54px;
+  background: linear-gradient(135deg, #111827, #00f2ea);
+}
+
+.contact-number-card {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+}
+
+.contact-number-card span {
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.contact-number-card h2 {
+  margin: 6px 0 10px;
+  color: var(--text-main);
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.contact-number-card p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.contact-channel-section {
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.55));
+}
+
+.social-section {
+  position: relative;
+}
+
+.social-brand-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.social-brand-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 118px;
+  padding: 18px;
+  color: #fff;
+  border-radius: 26px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+
+.social-brand-card:hover {
+  color: #fff;
+  transform: translateY(-5px) rotate(-1deg);
+  box-shadow: 0 26px 55px rgba(15, 23, 42, 0.18);
+}
+
+.social-brand-card > span {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 1.55rem;
+}
+
+.social-brand-card div {
+  min-width: 0;
+  flex: 1;
+}
+
+.social-brand-card strong,
+.social-brand-card small {
+  display: block;
+}
+
+.social-brand-card strong {
+  font-size: 1.12rem;
+}
+
+.social-brand-card small {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 700;
+}
+
+.social-brand-card.whatsapp {
+  background: linear-gradient(135deg, #128c7e, #25d366);
+}
+
+.social-brand-card.instagram {
+  background: linear-gradient(135deg, #405de6, #833ab4, #e1306c, #f77737);
+}
+
+.social-brand-card.facebook {
+  background: linear-gradient(135deg, #0f5bd8, #1877f2);
+}
+
+.social-brand-card.tiktok {
+  background:
+    linear-gradient(135deg, rgba(255, 0, 80, 0.8), transparent 54%),
+    linear-gradient(315deg, rgba(0, 242, 234, 0.72), transparent 48%),
+    #111827;
+}
+
+@media (max-width: 767px) {
+  .contact-orbit-card {
+    min-height: 390px;
+  }
+
+  .contact-orbit-main {
+    top: 88px;
+    width: 136px;
+    height: 136px;
+  }
+
+  .contact-orbit-item {
+    width: 58px;
+    height: 58px;
+    border-radius: 20px;
+  }
+
+  .contact-orbit-item.item-ig {
+    top: 72px;
+    right: 24px;
+  }
+
+  .contact-orbit-item.item-fb {
+    top: 210px;
+    left: 24px;
+  }
+
+  .contact-orbit-item.item-tt {
+    top: 220px;
+    right: 30px;
+  }
+}

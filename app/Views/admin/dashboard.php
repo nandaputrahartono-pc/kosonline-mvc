@@ -176,9 +176,6 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                         <span class="notification-dot"></span>
                     <?php endif; ?>
                 </button>
-                <button id="theme-toggle" class="topbar-icon" title="Ubah tema">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
             </div>
         </div>
 

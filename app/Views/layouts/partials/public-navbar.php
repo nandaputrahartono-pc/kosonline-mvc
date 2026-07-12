@@ -61,9 +61,6 @@ $navClass = static function (array $paths) use ($currentPath): string {
         <a href="<?php echo e($isLoggedInUser ? url('/member/dashboard?tab=chat') : url('/login')); ?>" class="public-icon-link d-none d-lg-inline-flex <?php echo $currentPath === '/member/dashboard' && (string) ($_GET['tab'] ?? '') === 'chat' ? 'active' : ''; ?>" title="Chat Admin">
             <i class="fa-regular fa-comments"></i>
         </a>
-        <button id="theme-toggle" class="btn btn-link text-decoration-none p-0 m-0 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; background: var(--card-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: var(--text-main);">
-            <i class="fa-solid fa-moon"></i>
-        </button>
         <?php if ($isLoggedInUser): ?>
             <div class="dropdown public-user-menu d-none d-lg-block">
                 <button type="button" class="public-user-trigger dropdown-toggle" id="public-user-dropdown-toggle" data-bs-toggle="dropdown" aria-label="Menu akun" aria-expanded="false">

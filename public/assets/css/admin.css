@@ -18,26 +18,6 @@
   --card-bg: #ffffff;
 }
 
-[data-theme="dark"] {
-  --bg-main: #0f172a;
-  --bg-sidebar: #0f172a;
-  --bg-sidebar-dark: #020617;
-  --bg-hover: rgba(255, 255, 255, 0.05);
-
-  --text-main: #f8fafc;
-  --text-light: #f8fafc;
-  --text-muted: #94a3b8;
-
-  --accent-blue: #3b82f6;
-  --accent-blue-soft: #1e3a8a;
-
-  --danger: #f87171;
-
-  --border-soft: #334155;
-  --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.5);
-  --card-bg: #1e293b;
-}
-
 * {
   margin: 0;
   padding: 0;
@@ -49,6 +29,13 @@ body {
   display: flex;
   min-height: 100vh;
   background: var(--bg-main);
+}
+
+/* Jaring pengaman anti-rusak: gambar tak melebihi lebar wadah di HP. */
+img,
+svg,
+video {
+  max-width: 100%;
 }
 
 .sidebar {
@@ -1547,187 +1534,6 @@ body {
   transform: scale(0.95);
 }
 
-[data-theme="dark"] body,
-[data-theme="dark"] .content {
-  background: #0f172a;
-}
-
-[data-theme="dark"] .sidebar,
-[data-theme="dark"] .sidebar-header,
-[data-theme="dark"] .topbar-date,
-[data-theme="dark"] .topbar-icon,
-[data-theme="dark"] .metric-card,
-[data-theme="dark"] .dashboard-card {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-[data-theme="dark"] .sidebar-header h2,
-[data-theme="dark"] .topbar-greeting strong,
-[data-theme="dark"] .dashboard-hero h1,
-[data-theme="dark"] .metric-card:not(.primary) h3,
-[data-theme="dark"] .card-heading h3,
-[data-theme="dark"] .status-metrics strong,
-[data-theme="dark"] .asset-row strong,
-[data-theme="dark"] .priority-item strong {
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .menu li a,
-[data-theme="dark"] .topbar-greeting p,
-[data-theme="dark"] .topbar-date,
-[data-theme="dark"] .topbar-icon {
-  color: #cbd5e1;
-}
-
-[data-theme="dark"] .status-metrics div,
-[data-theme="dark"] .asset-row,
-[data-theme="dark"] .priority-item {
-  background: #0f172a;
-}
-
-[data-theme="dark"] .admin-chat-layout,
-[data-theme="dark"] .admin-chat-contacts,
-[data-theme="dark"] .admin-chat-panel {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-[data-theme="dark"] .admin-chat-contacts a,
-[data-theme="dark"] .admin-chat-head h3,
-[data-theme="dark"] .admin-chat-sidebar-head h3,
-[data-theme="dark"] .admin-chat-sidebar-rule,
-[data-theme="dark"] .admin-chat-sidebar-foot strong {
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .admin-chat-contacts a.active,
-[data-theme="dark"] .admin-chat-contacts a:hover,
-[data-theme="dark"] .admin-chat-messages,
-[data-theme="dark"] .admin-chat-panel,
-[data-theme="dark"] .admin-chat-room-card-wrap,
-[data-theme="dark"] .admin-chat-typing {
-  background: #0f172a;
-}
-
-[data-theme="dark"] .admin-chat-head,
-[data-theme="dark"] .admin-chat-sidebar-head,
-[data-theme="dark"] .admin-chat-sidebar-rule,
-[data-theme="dark"] .admin-chat-sidebar-foot,
-[data-theme="dark"] .admin-chat-compose {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-[data-theme="dark"] .admin-chat-bubble,
-[data-theme="dark"] .admin-chat-room-card,
-[data-theme="dark"] .admin-chat-compose-box {
-  background: #1e293b;
-  border-color: #334155;
-  color: #f8fafc;
-}
-
-[data-theme="dark"] body,
-[data-theme="dark"] .content {
-  background: #0b1120;
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .page-subtitle,
-[data-theme="dark"] .stats-card h3,
-[data-theme="dark"] .info-box p,
-[data-theme="dark"] .dashboard-hero p,
-[data-theme="dark"] .card-heading p,
-[data-theme="dark"] .chart-legend,
-[data-theme="dark"] .metric-card p,
-[data-theme="dark"] .metric-note,
-[data-theme="dark"] thead th {
-  color: #cbd5e1;
-}
-
-[data-theme="dark"] .sidebar {
-  box-shadow: 12px 0 40px rgba(0, 0, 0, 0.18);
-}
-
-[data-theme="dark"] .menu-label {
-  color: #93a4bd;
-}
-
-[data-theme="dark"] .menu li a i {
-  color: #94a3b8;
-}
-
-[data-theme="dark"] .menu li a:hover,
-[data-theme="dark"] .menu li a.active {
-  background: rgba(59, 130, 246, 0.16);
-  color: #bfdbfe;
-  box-shadow: none;
-}
-
-[data-theme="dark"] .menu li a:hover i,
-[data-theme="dark"] .menu li a.active i {
-  color: #60a5fa;
-}
-
-[data-theme="dark"] .logout {
-  border-color: #334155;
-}
-
-[data-theme="dark"] .admin-flash,
-[data-theme="dark"] .info-box,
-[data-theme="dark"] .stats-card,
-[data-theme="dark"] tbody tr,
-[data-theme="dark"] .page-btn {
-  background: #1e293b;
-  border-color: #334155;
-  color: #f8fafc;
-}
-
-[data-theme="dark"] tbody td,
-[data-theme="dark"] table td {
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .kost-image {
-  border-color: #334155;
-}
-
-[data-theme="dark"] .table-search input {
-  background: #111827;
-  border-color: #334155;
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .table-search input::placeholder {
-  color: #64748b;
-}
-
-[data-theme="dark"] .page-btn:hover {
-  background: #0f172a;
-}
-
-[data-theme="dark"] .topbar-date,
-[data-theme="dark"] .topbar-icon,
-[data-theme="dark"] .hero-actions button,
-[data-theme="dark"] .hero-actions a {
-  box-shadow: none;
-}
-
-[data-theme="dark"] .metric-icon.soft-blue {
-  background: rgba(59, 130, 246, 0.16);
-  color: #93c5fd;
-}
-
-[data-theme="dark"] .metric-icon.soft-green {
-  background: rgba(16, 185, 129, 0.14);
-  color: #86efac;
-}
-
-[data-theme="dark"] .metric-icon.soft-red {
-  background: rgba(248, 113, 113, 0.14);
-  color: #fca5a5;
-}
-
 @media (max-width: 1180px) {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1809,5 +1615,54 @@ body {
   .admin-chat-room-card small {
     grid-column: 1 / -1;
     justify-self: start;
+  }
+
+  /* Chat admin mobile: tumpukan bersih — daftar kontak ringkas, area pesan
+     scroll sendiri, kotak ketik tepat di bawah. */
+  #chat-user.page.active {
+    height: auto;
+  }
+
+  .admin-chat-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  .admin-chat-contacts {
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .admin-chat-panel {
+    min-height: 0;
+  }
+
+  .admin-chat-messages {
+    min-height: 240px;
+    max-height: 56vh;
+  }
+
+  .admin-chat-compose {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: #f8fafc;
+  }
+
+  .admin-chat-bubble,
+  .admin-chat-bubble.mine {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 86%;
+  }
+
+  .admin-chat-bubble::before,
+  .admin-chat-bubble.mine::before {
+    display: none;
+  }
+
+  .admin-chat-sent-room-card,
+  .admin-chat-sent-room-card.mine {
+    width: 100%;
   }
 }
