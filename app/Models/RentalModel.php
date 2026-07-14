@@ -46,8 +46,23 @@ final class RentalModel extends Model
                 LIMIT 1
              )
              WHERE sewa.id_user = ?
+               AND sewa.disembunyikan = 0
              ORDER BY sewa.id_sewa DESC",
             [$userId]
+        );
+    }
+
+    /**
+     * Sembunyikan sewa dari daftar user (bukan hapus!).
+     *
+     * Catatan pembayaran sengaja TIDAK disentuh supaya Total Pendapatan admin & riwayat
+     * keuangan tetap utuh — user tak bisa "menghapus" uang yang sudah masuk.
+     */
+    public function hideForUser(int $rentalId, int $userId): bool
+    {
+        return $this->db->execute(
+            "UPDATE sewa SET disembunyikan = 1 WHERE id_sewa = ? AND id_user = ?",
+            [$rentalId, $userId]
         );
     }
 
@@ -131,11 +146,31 @@ final class RentalModel extends Model
 
     /**
      * Mundurkan jatuh tempo satu bulan (membatalkan efek advanceDueDate saat status lunas dibatalkan).
+     *
+     * Jaring pengaman: jatuh tempo TIDAK PERNAH boleh mundur melewati tanggal masuk. Siklus
+     * pertama sudah dimulai sejak tanggal masuk, jadi jatuh tempo paling awal adalah
+     * tanggal_masuk + 1 bulan. Tanpa syarat ini, "Batal" yang terpanggil lebih dari sekali
+     * bisa menyeret jatuh tempo ke SEBELUM penyewa masuk.
      */
     public function retreatDueDate(int $rentalId): void
     {
         $this->db->execute(
-            "UPDATE sewa SET jatuh_tempo = DATE_SUB(jatuh_tempo, INTERVAL 1 MONTH) WHERE id_sewa = ?",
+            "UPDATE sewa
+             SET jatuh_tempo = DATE_SUB(jatuh_tempo, INTERVAL 1 MONTH)
+             WHERE id_sewa = ?
+             AND DATE_SUB(jatuh_tempo, INTERVAL 1 MONTH) > tanggal_masuk",
+            [$rentalId]
+        );
+    }
+
+    /**
+     * Kembalikan sewa ke status 'Menunggu Pembayaran' — kebalikan dari activate().
+     * Dipakai saat admin membatalkan pelunasan invoice BOOKING (invoice pertama).
+     */
+    public function revertToPending(int $rentalId): void
+    {
+        $this->db->execute(
+            "UPDATE sewa SET status_sewa = 'Menunggu Pembayaran' WHERE id_sewa = ?",
             [$rentalId]
         );
     }
@@ -241,7 +276,25 @@ final class RentalModel extends Model
                 SELECT p.id_pembayaran
                 FROM pembayaran p
                 WHERE p.id_sewa = sewa.id_sewa
-                ORDER BY p.id_pembayaran DESC
+                  AND (
+                        -- booking awal: selalu tampilkan invoice booking-nya
+                        sewa.status_sewa = 'Menunggu Pembayaran'
+                        -- selain itu: hanya invoice yang SUDAH waktunya diurus, yaitu
+                        -- periodenya sudah mulai ATAU penyewa sudah mengunggah bukti.
+                        -- Invoice periode masa depan sengaja TIDAK dipilih supaya admin
+                        -- tak bisa melunasinya berulang (bug runaway).
+                        OR p.periode_mulai IS NULL
+                        OR p.periode_mulai <= CURDATE()
+                        OR p.bukti_bayar IS NOT NULL
+                  )
+                ORDER BY
+                    -- 1) yang BELUM lunas didahulukan (itu yang butuh aksi admin)
+                    (p.status_verifikasi = 'Lunas') ASC,
+                    -- 2) di antara yang belum lunas: yang paling lama (paling mendesak)
+                    CASE WHEN p.status_verifikasi <> 'Lunas' THEN p.periode_mulai END ASC,
+                    -- 3) kalau semua sudah lunas: ambil periode TERBARU (periode berjalan)
+                    CASE WHEN p.status_verifikasi = 'Lunas' THEN p.periode_mulai END DESC,
+                    p.id_pembayaran DESC
                 LIMIT 1
              )
              WHERE sewa.status_sewa IN ('Menunggu Pembayaran', 'Aktif')

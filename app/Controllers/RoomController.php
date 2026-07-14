@@ -121,8 +121,19 @@ final class RoomController extends Controller
             ? (int) $_SESSION['id_user']
             : null;
 
+        // Kartu rekomendasi memakai partial yang sama dengan halaman /rooms, jadi butuh
+        // ringkasan ulasan & daftar wishlist supaya rating dan tombol simpannya ikut hidup.
+        $recommendations = $this->roomModel->recommendations($id, 8);
+        $recommendedIds = array_map(
+            static fn(array $recommended): int => (int) $recommended['id_kamar'],
+            $recommendations
+        );
+
         $this->render('room/detail', [
             'room' => $room,
+            'recommendations' => $recommendations,
+            'reviewSummaries' => $this->reviewModel->getSummariesForRooms($recommendedIds),
+            'savedRoomIds' => $userId !== null ? $this->wishlistModel->getSavedRoomIds($userId) : [],
             'gallery' => $this->galleryModel->getByRoomId($id),
             'reviews' => $this->reviewModel->getByRoomId($id),
             'reviewSummary' => $this->reviewModel->summaryByRoomId($id),
@@ -372,6 +383,8 @@ final class RoomController extends Controller
             $this->rentalModel->cancelPending($rentalId);
             $this->paymentModel->rejectLatestByRental($rentalId);
             $this->roomModel->setStatus($roomId, 'Tersedia');
+            // Booking batal = jatah promonya belum terpakai, kembalikan kuotanya.
+            $this->promoCodeModel->decrementUsage($invoice['kode_promo'] ?? null);
             $db->commit();
         } catch (\Throwable $e) {
             $db->rollback();

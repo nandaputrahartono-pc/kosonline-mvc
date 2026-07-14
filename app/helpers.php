@@ -94,6 +94,30 @@ function redirect_to(string $url): never
     exit;
 }
 
+/**
+ * Saring path tujuan yang datang dari input user (mis. field "redirect" tersembunyi).
+ *
+ * url() sengaja meneruskan URL absolut apa adanya, jadi nilai mentah dari user bisa
+ * memindahkan korban ke situs lain. Di sini hanya path internal yang diterima: harus
+ * diawali SATU garis miring ("//situs-jahat.com" ditolak) dan tanpa skema apa pun.
+ */
+function safe_redirect_path(?string $path, string $fallback = '/'): string
+{
+    $candidate = trim((string) $path);
+
+    if (
+        $candidate === ''
+        || !str_starts_with($candidate, '/')
+        || str_starts_with($candidate, '//')
+        || str_contains($candidate, "\r")
+        || str_contains($candidate, "\n")
+    ) {
+        return $fallback;
+    }
+
+    return $candidate;
+}
+
 function set_flash(string $key, string $message): void
 {
     $_SESSION['_flash'][$key] = $message;

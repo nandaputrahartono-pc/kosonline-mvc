@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Database;
 use App\Models\PaymentModel;
+use App\Models\PromoCodeModel;
 use App\Models\RentalModel;
 use App\Models\RoomModel;
 
@@ -15,12 +16,14 @@ final class AdminPaymentController extends Controller
     private PaymentModel $paymentModel;
     private RentalModel $rentalModel;
     private RoomModel $roomModel;
+    private PromoCodeModel $promoCodeModel;
 
     public function __construct()
     {
         $this->paymentModel = new PaymentModel();
         $this->rentalModel = new RentalModel();
         $this->roomModel = new RoomModel();
+        $this->promoCodeModel = new PromoCodeModel();
     }
 
     public function update(): void
@@ -39,14 +42,53 @@ final class AdminPaymentController extends Controller
         $isPendingBooking = ($rental['status_sewa'] ?? '') === 'Menunggu Pembayaran';
 
         // Verifikasi berbasis INVOICE (bukan bulan kalender) -> tak ada lagi baris stub/ganda.
-        $invoice = $this->paymentModel->latestInvoiceByRental($rentalId);
+        //
+        // Invoice diambil dari id yang DIKIRIM tabel, bukan "invoice terakhir". Dulu memakai
+        // latestInvoiceByRental(), padahal sesudah pelunasan ensureOpenInvoice sudah melahirkan
+        // invoice periode BERIKUTNYA dengan id lebih besar. Akibatnya tombol "Batal" menyasar
+        // invoice masa depan itu (yang memang belum lunas, jadi tak berubah apa-apa) sementara
+        // jatuh tempo tetap dimundurkan -> baris masih "Lunas" dan admin harus mengklik 2x.
+        $postedInvoiceId = (int) ($_POST['id_pembayaran'] ?? 0);
+        $invoice = $postedInvoiceId > 0
+            ? $this->paymentModel->findInvoiceForRental($postedInvoiceId, $rentalId)
+            : null;
+
+        if ($invoice === null && $action !== 'hentikan') {
+            set_flash('error', 'Invoice tidak dikenali. Muat ulang halaman lalu coba lagi.');
+            redirect_to('/admin/dashboard?tab=pembayaran');
+        }
+
         $invoiceId = (int) ($invoice['id_pembayaran'] ?? 0);
+
+        // Invoice BOOKING = invoice periode pertama (mulai tepat di tanggal masuk). Pelunasannya
+        // TIDAK memajukan jatuh tempo (jatuh tempo awal sudah masuk + 1 bulan), jadi pembatalannya
+        // juga TIDAK boleh memundurkan jatuh tempo.
+        $moveInDate = (string) ($rental['tanggal_masuk'] ?? '');
+        $isBookingInvoice = $moveInDate !== ''
+            && (string) ($invoice['periode_mulai'] ?? '') === $moveInDate;
 
         $db = Database::getInstance();
         $db->beginTransaction();
 
         try {
             if ($action === 'lunas') {
+                // GUARD: jangan biarkan admin melunasi invoice yang periodenya BELUM MULAI
+                // dan penyewa belum mengunggah bukti. Tanpa ini, tiap klik "Lunas" memajukan
+                // jatuh tempo + melahirkan invoice masa depan baru -> loop tak berujung
+                // (jatuh tempo bisa melompat bertahun-tahun & pendapatan menggelembung).
+                $periodStart = (string) ($invoice['periode_mulai'] ?? '');
+                $hasProof = !empty($invoice['bukti_bayar']);
+                $notDueYet = $periodStart !== ''
+                    && strtotime($periodStart) > strtotime(date('Y-m-d'));
+
+                if (!$isPendingBooking && $notDueYet && !$hasProof) {
+                    $db->rollback();
+                    set_flash('error', 'Invoice ini belum jatuh tempo (periode mulai '
+                        . date('d M Y', strtotime($periodStart))
+                        . '). Tunggu penyewa membayar dulu.');
+                    redirect_to('/admin/dashboard?tab=pembayaran');
+                }
+
                 $amount = (float) ($invoice['total_bayar'] ?? 0);
                 if ($amount <= 0) {
                     $amount = (float) ($invoice['nominal'] ?? $rental['harga']);
@@ -75,22 +117,39 @@ final class AdminPaymentController extends Controller
                     $this->paymentModel->rejectLatestByRental($rentalId);
                     $this->rentalModel->cancelPending($rentalId);
                     $this->roomModel->setStatus((int) $rental['id_kamar'], 'Tersedia');
+                    $this->paymentModel->voidOpenInvoices($rentalId);
+                    // Booking batal = jatah promonya belum terpakai, kembalikan kuotanya.
+                    $this->promoCodeModel->decrementUsage($invoice['kode_promo'] ?? null);
                     set_flash('success', 'Booking pending berhasil dibatalkan.');
                 } else {
                     // Non-destruktif: invoice dikembalikan ke 'Menunggu' (tidak dihapus),
-                    // jatuh tempo mundur, lalu invoice "masa depan" dibersihkan.
+                    // lalu invoice "masa depan" dibersihkan. Pembatalan harus jadi KEBALIKAN
+                    // PERSIS dari pelunasan, kalau tidak jatuh tempo akan melenceng.
                     if ($invoiceId > 0) {
                         $this->paymentModel->markInvoiceUnpaid($invoiceId);
                     }
-                    $this->rentalModel->retreatDueDate($rentalId);
 
-                    $fresh = $this->rentalModel->findByIdWithRoom($rentalId);
-                    $newDue = (string) ($fresh['jatuh_tempo'] ?? '');
-                    if ($newDue !== '' && $newDue !== '0000-00-00') {
-                        $this->paymentModel->deleteUnpaidInvoicesAfter($rentalId, $newDue);
+                    if ($isBookingInvoice) {
+                        // Kebalikan dari pelunasan booking: sewa kembali menunggu pembayaran.
+                        // Jatuh tempo TIDAK dimundurkan (dulu juga tak dimajukan), dan status kamar
+                        // TIDAK disentuh: kamar sudah 'Terisi' sejak booking dibuat, jadi harus tetap
+                        // ditahan. Melepasnya jadi 'Tersedia' akan membuat kamar yang sudah dibooking
+                        // muncul lagi di halaman kamar dan bisa dibooking orang lain.
+                        $this->rentalModel->revertToPending($rentalId);
+                        $this->paymentModel->deleteUnpaidInvoicesAfter($rentalId, $moveInDate);
+                        set_flash('success', 'Pelunasan booking dibatalkan. Sewa kembali menunggu pembayaran.');
+                    } else {
+                        // Kebalikan dari pelunasan bulanan: jatuh tempo mundur satu bulan.
+                        $this->rentalModel->retreatDueDate($rentalId);
+
+                        $fresh = $this->rentalModel->findByIdWithRoom($rentalId);
+                        $newDue = (string) ($fresh['jatuh_tempo'] ?? '');
+                        if ($newDue !== '' && $newDue !== '0000-00-00') {
+                            $this->paymentModel->deleteUnpaidInvoicesAfter($rentalId, $newDue);
+                        }
+
+                        set_flash('success', 'Status dikembalikan menjadi BELUM BAYAR.');
                     }
-
-                    set_flash('success', 'Status dikembalikan menjadi BELUM BAYAR.');
                 }
             } elseif ($action === 'hentikan') {
                 // Penyewa menunggak dan admin memilih menghentikan sewa (bukan melunasi).
@@ -102,6 +161,8 @@ final class AdminPaymentController extends Controller
 
                 $this->rentalModel->stopActiveByRentalId($rentalId);
                 $this->roomModel->setStatus((int) $rental['id_kamar'], 'Tersedia');
+                // Invoice bulanan yang belum disentuh siapa pun jadi yatim begitu sewa berakhir.
+                $this->paymentModel->voidOpenInvoices($rentalId);
                 set_flash('success', 'Sewa dihentikan. Kamar dilepas kembali menjadi Tersedia.');
             } else {
                 $db->rollback();

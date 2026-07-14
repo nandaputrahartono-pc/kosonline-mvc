@@ -171,13 +171,18 @@ final class UserModel extends Model
         return $this->db->execute("DELETE FROM users WHERE id_user = ?", [$id]);
     }
 
+    /**
+     * Hanya menerima password yang ter-hash. Dulu ada cadangan yang membandingkan teks
+     * polos bila hash tak dikenali — itu membuat password polos di database diam-diam
+     * bisa dipakai login. Semua akun kini bcrypt, jadi cadangan itu dibuang.
+     */
     private function passwordMatches(string $plainPassword, string $storedPassword): bool
     {
-        if (password_get_info($storedPassword)['algo'] !== null) {
-            return password_verify($plainPassword, $storedPassword);
+        if (password_get_info($storedPassword)['algo'] === null) {
+            return false;
         }
 
-        return hash_equals($storedPassword, $plainPassword);
+        return password_verify($plainPassword, $storedPassword);
     }
 
     private function makeUsername(string $name, string $email): string

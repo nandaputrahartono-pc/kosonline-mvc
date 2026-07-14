@@ -38,12 +38,16 @@ final class AdminModel extends Model
         return $this->passwordMatches($password, (string) ($admin['password'] ?? ''));
     }
 
+    /**
+     * Hanya menerima password yang ter-hash — cadangan perbandingan teks polos dibuang
+     * supaya password polos di database tak bisa dipakai login. Lihat UserModel.
+     */
     private function passwordMatches(string $plainPassword, string $storedPassword): bool
     {
-        if (password_get_info($storedPassword)['algo'] !== null) {
-            return password_verify($plainPassword, $storedPassword);
+        if (password_get_info($storedPassword)['algo'] === null) {
+            return false;
         }
 
-        return hash_equals($storedPassword, $plainPassword);
+        return password_verify($plainPassword, $storedPassword);
     }
 }

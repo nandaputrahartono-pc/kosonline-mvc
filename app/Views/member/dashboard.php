@@ -259,7 +259,7 @@ ob_start();
                             <strong class="text-danger"><?php echo e($formatDate((string) $summary['jatuh_tempo'])); ?></strong>
                             <?php $dueRaw = (string) $summary['jatuh_tempo']; ?>
                             <?php if ($dueRaw !== '' && $dueRaw !== '-'): ?>
-                                <span class="my-kost-countdown" data-countdown data-deadline="<?php echo e($dueRaw); ?>T23:59:59">Menghitung&hellip;</span>
+                                <span class="my-kost-countdown" data-countdown data-deadline="<?php echo e($dueRaw); ?>T00:00:00">Menghitung&hellip;</span>
                             <?php endif; ?>
                         </div>
                         <div class="my-kost-info-item">
@@ -391,7 +391,11 @@ ob_start();
                                     <?php if (!empty($item['invoice_no'])): ?>
                                         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
                                             <strong style="font-size:.9rem;"><i class="fa-solid fa-file-invoice-dollar"></i> <?php echo e($item['invoice_no']); ?></strong>
-                                            <span class="badge <?php echo e($statusClass((string) ($item['status_verifikasi'] ?? 'Menunggu'))); ?>"><?php echo e($item['status_verifikasi'] ?? 'Menunggu'); ?></span>
+                                            <?php if ($isEnded): ?>
+                                                <span class="badge">Sewa Berakhir</span>
+                                            <?php else: ?>
+                                                <span class="badge <?php echo e($statusClass((string) ($item['status_verifikasi'] ?? 'Menunggu'))); ?>"><?php echo e($item['status_verifikasi'] ?? 'Menunggu'); ?></span>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="mini-grid">
                                             <span><b>Periode</b><?php echo e($formatDate((string) ($item['periode_mulai'] ?? ''))); ?> - <?php echo e($formatDate((string) ($item['periode_selesai'] ?? ''))); ?></span>
@@ -403,8 +407,9 @@ ob_start();
                                         <?php if (!empty($item['id_pembayaran'])): ?>
                                             <a href="<?php echo e(url('/rooms/invoice?id=' . $item['id_pembayaran'])); ?>" class="btn-primary soft"><i class="fa-solid fa-file-lines"></i> Detail Invoice</a>
                                         <?php endif; ?>
-                                        <?php if (($item['status_sewa'] ?? '') === 'Dibatalkan'): ?>
-                                            <form method="POST" action="<?php echo e(url('/member/orders/delete')); ?>" data-confirm="Hapus pesanan yang dibatalkan ini? Tidak bisa dikembalikan." data-confirm-ok="Ya, Hapus">
+                                        <?php if ($isEnded): ?>
+                                            <a href="<?php echo e(url('/rooms/payment?id=' . $item['id_kamar'])); ?>" class="btn-primary"><i class="fa-solid fa-rotate-right"></i> Sewa Lagi</a>
+                                            <form method="POST" action="<?php echo e(url('/member/orders/delete')); ?>" data-confirm="Hapus kartu ini dari daftarmu? Riwayat pembayaran tetap tersimpan di sisi admin." data-confirm-ok="Ya, Hapus">
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="id_sewa" value="<?php echo e($item['id_sewa']); ?>">
                                                 <button type="submit" style="background:#fee2e2; color:#b91c1c; border:0; border-radius:10px; padding:10px 16px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-trash"></i> Hapus</button>

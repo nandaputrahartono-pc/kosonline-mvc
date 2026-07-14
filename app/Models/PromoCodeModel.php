@@ -61,4 +61,24 @@ final class PromoCodeModel extends Model
             [strtoupper(trim($code))]
         );
     }
+
+    /**
+     * Kembalikan kuota saat booking DIBATALKAN (belum pernah aktif).
+     *
+     * Tanpa ini kuota bocor: tiap booking batal tetap membakar satu jatah selamanya,
+     * sehingga kode promo bisa habis padahal tak ada yang benar-benar memakainya.
+     * GREATEST menjaga agar penghitungnya tak pernah minus.
+     */
+    public function decrementUsage(?string $code): void
+    {
+        $normalizedCode = strtoupper(trim((string) $code));
+        if ($normalizedCode === '') {
+            return;
+        }
+
+        $this->db->execute(
+            "UPDATE promo_codes SET digunakan = GREATEST(digunakan - 1, 0) WHERE kode = ?",
+            [$normalizedCode]
+        );
+    }
 }

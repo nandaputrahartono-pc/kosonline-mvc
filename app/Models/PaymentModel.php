@@ -26,14 +26,62 @@ final class PaymentModel extends Model
     /**
      * Pembayaran yang menunggu verifikasi admin (user sudah bayar/unggah bukti).
      * Tak perlu flag "dibaca": otomatis hilang begitu admin verifikasi/tolak.
+     *
+     * Hanya menghitung yang benar-benar bisa ditindak admin di tab Pembayaran:
+     * sewa yang masih berjalan, dan usernya sudah bergerak (booking baru, unggah
+     * bukti, atau memilih metode). Invoice bulanan hasil auto-generate yang belum
+     * disentuh siapa pun adalah TAGIHAN, bukan permintaan verifikasi — itu sudah
+     * punya notifikasi sendiri lewat RentalModel::countOverdue().
      */
     public function countPendingVerification(): int
     {
         $row = $this->db->selectOne(
-            "SELECT COUNT(*) AS total FROM pembayaran WHERE status_verifikasi = 'Menunggu'"
+            "SELECT COUNT(*) AS total
+             FROM pembayaran p
+             JOIN sewa s ON s.id_sewa = p.id_sewa
+             WHERE p.status_verifikasi = 'Menunggu'
+             AND s.status_sewa IN ('Menunggu Pembayaran', 'Aktif')
+             AND (
+                 s.status_sewa = 'Menunggu Pembayaran'
+                 OR (p.bukti_bayar IS NOT NULL AND p.bukti_bayar <> '')
+                 OR (p.metode_bayar IS NOT NULL AND p.metode_bayar <> '')
+             )"
         );
 
         return (int) ($row['total'] ?? 0);
+    }
+
+    /**
+     * Buang invoice terbuka yang murni dibuat sistem (ensureOpenInvoice) dan tak
+     * pernah disentuh siapa pun. Dipakai saat sewa dihentikan/dibatalkan supaya
+     * tak meninggalkan invoice yatim. Invoice yang sudah ada bukti/metode bayar
+     * TIDAK diusik — itu jejak pembukuan.
+     */
+    public function voidOpenInvoices(int $rentalId): int
+    {
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM pembayaran
+             WHERE id_sewa = ?
+             AND status_verifikasi = 'Menunggu'
+             AND (bukti_bayar IS NULL OR bukti_bayar = '')
+             AND (metode_bayar IS NULL OR metode_bayar = '')",
+            [$rentalId]
+        );
+        $total = (int) ($row['total'] ?? 0);
+
+        if ($total > 0) {
+            $this->db->execute(
+                "DELETE FROM pembayaran
+                 WHERE id_sewa = ?
+                 AND status_verifikasi = 'Menunggu'
+                 AND (bukti_bayar IS NULL OR bukti_bayar = '')
+                 AND (metode_bayar IS NULL OR metode_bayar = '')",
+                [$rentalId]
+            );
+        }
+
+        return $total;
     }
 
     public function totalPaidRevenue(): float
@@ -350,6 +398,22 @@ final class PaymentModel extends Model
         return $this->db->selectOne(
             "SELECT * FROM pembayaran WHERE id_sewa = ? ORDER BY id_pembayaran DESC LIMIT 1",
             [$rentalId]
+        );
+    }
+
+    /**
+     * Ambil invoice tertentu, dipastikan memang milik sewa yang bersangkutan.
+     *
+     * Admin menindak invoice yang DITAMPILKAN di tabel penagihan, bukan "invoice terakhir".
+     * Keduanya bisa berbeda: sesudah pelunasan, ensureOpenInvoice melahirkan invoice periode
+     * BERIKUTNYA yang id-nya lebih besar, sementara tabel tetap menampilkan invoice berjalan.
+     * Kalau controller memakai yang terakhir, tombol "Batal" menyasar invoice yang salah.
+     */
+    public function findInvoiceForRental(int $invoiceId, int $rentalId): ?array
+    {
+        return $this->db->selectOne(
+            "SELECT * FROM pembayaran WHERE id_pembayaran = ? AND id_sewa = ?",
+            [$invoiceId, $rentalId]
         );
     }
 

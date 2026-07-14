@@ -375,6 +375,18 @@
                 </div>
             </div>
         </div>
+
+        <?php $recommendations = $recommendations ?? []; ?>
+        <?php if ($recommendations !== []): ?>
+            <div class="container mt-5">
+                <div class="room-modern-grid">
+                    <?php $cardRedirectUrl = '/rooms/detail?id=' . (int) $room['id_kamar']; ?>
+                    <?php foreach ($recommendations as $roomCard): ?>
+                        <?php require __DIR__ . '/../partials/room-card.php'; ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </section>
 
 <?php

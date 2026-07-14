@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 use App\Models\ChatModel;
 
+if (PHP_SAPI !== "cli") {
+    http_response_code(403);
+    exit("Skrip ini hanya boleh dijalankan lewat terminal (CLI).");
+}
+
 require_once dirname(__DIR__) . '/bootstrap.php';
 
 $host = getenv('CHAT_WS_HOST') ?: '127.0.0.1';

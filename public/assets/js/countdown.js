@@ -1,6 +1,14 @@
 // Hitung mundur realtime untuk jatuh tempo.
-// Pakai: <span data-countdown data-deadline="2026-07-21T23:59:59"></span>
-// Diperbarui tiap detik. Kalau lewat tenggat -> "Terlambat X hari" + class .is-overdue.
+// Pakai: <span data-countdown data-deadline="2026-07-21T00:00:00"></span>
+//
+// deadline HARUS awal hari jatuh tempo (T00:00:00), bukan akhir hari (T23:59:59).
+// Kalau dipakai akhir hari, sisa harinya kelebihan satu (15 Jul -> 15 Agu terbaca
+// "32 hari" padahal 31), dan label "Terlambat" jadi telat sehari dari backend —
+// yang menghitung menunggak begitu jatuh_tempo < CURDATE(), yakni sehari SESUDAH
+// tanggal jatuh tempo.
+//
+// Diperbarui tiap detik. Pada hari-H -> "Jatuh tempo hari ini"; sesudahnya ->
+// "Terlambat X hari" + class .is-overdue.
 (function () {
   function pad(n) {
     return n < 10 ? '0' + n : String(n);

@@ -48,6 +48,11 @@ if ($bankAccount !== null && !empty($bankAccount['logo']) && is_file(base_path('
     $bankLogo = asset('images/banks/' . $bankAccount['logo']);
 }
 
+// Sewa sudah berakhir (dihentikan admin / dibatalkan): invoice ini murni riwayat.
+// Semua aksi pembayaran disembunyikan dan penyewa ditawari "Sewa Lagi".
+$isEnded = !$isBookingActive;
+$endedLabel = (string) ($invoice['status_sewa'] ?? '') === 'Dibatalkan' ? 'Dibatalkan' : 'Sewa Berakhir';
+
 ob_start();
 ?>
 
@@ -63,7 +68,11 @@ ob_start();
                                 <h1 class="fw-bold mt-2 mb-1" style="color: var(--text-main);"><?php echo e($invoice['invoice_no']); ?></h1>
                                 <p class="text-muted mb-0">Kode booking: <?php echo e($invoice['kode_booking']); ?></p>
                             </div>
-                            <span class="badge <?php echo e($statusClass); ?> px-3 py-2"><?php echo e($invoice['status_verifikasi']); ?></span>
+                            <?php if ($isEnded): ?>
+                                <span class="badge danger px-3 py-2"><?php echo e($endedLabel); ?></span>
+                            <?php else: ?>
+                                <span class="badge <?php echo e($statusClass); ?> px-3 py-2"><?php echo e($invoice['status_verifikasi']); ?></span>
+                            <?php endif; ?>
                         </div>
 
                         <div class="row g-3 mb-4">
@@ -130,7 +139,19 @@ ob_start();
                     </div>
                 </div>
 
-                <?php if (!$isCashMethod): ?>
+                <?php if ($isEnded): ?>
+                <div class="card border-0 shadow-sm" style="border-radius: 24px; background: var(--card-bg);">
+                    <div class="card-body p-4">
+                        <div class="alert alert-secondary mb-0">
+                            <strong>Sewa ini sudah berakhir.</strong>
+                            Invoice ini hanya <strong>riwayat pembayaran</strong> &mdash; tidak ada tagihan yang perlu dibayar lagi.
+                            Kalau kamu ingin menempati kamar ini lagi, klik <strong>Sewa Lagi</strong>.
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!$isCashMethod && !$isEnded): ?>
                 <div class="card border-0 shadow-sm" style="border-radius: 24px; background: var(--card-bg);">
                     <div class="card-body p-4">
                         <h4 class="fw-bold mb-3" style="color: var(--text-main);">Bukti Pembayaran</h4>
@@ -178,13 +199,19 @@ ob_start();
                         <span class="badge mb-2" style="background: var(--accent-blue-soft); color: var(--accent-blue);"><?php echo e($invoice['nama_kost']); ?></span>
                         <h4 class="fw-bold mb-1">Kamar No. <?php echo e($invoice['nomor_kamar']); ?></h4>
                         <p class="text-muted small">Lantai <?php echo e($invoice['lantai']); ?> &bull; <?php echo e($invoice['alamat']); ?></p>
-                        <form method="POST" action="<?php echo e(url('/rooms/invoice/confirm-chat')); ?>">
-                            <?php echo csrf_field(); ?>
-                            <input type="hidden" name="id_pembayaran" value="<?php echo e($invoice['id_pembayaran'] ?? ''); ?>">
-                            <button type="submit" class="btn btn-primary w-100 fw-bold py-3">
-                                <i class="fa-regular fa-comments me-2"></i> Konfirmasi ke Admin
-                            </button>
-                        </form>
+                        <?php if ($isEnded): ?>
+                            <a href="<?php echo e(url('/rooms/payment?id=' . ($invoice['id_kamar'] ?? ''))); ?>" class="btn btn-primary w-100 fw-bold py-3">
+                                <i class="fa-solid fa-rotate-right me-2"></i> Sewa Lagi
+                            </a>
+                        <?php else: ?>
+                            <form method="POST" action="<?php echo e(url('/rooms/invoice/confirm-chat')); ?>">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="id_pembayaran" value="<?php echo e($invoice['id_pembayaran'] ?? ''); ?>">
+                                <button type="submit" class="btn btn-primary w-100 fw-bold py-3">
+                                    <i class="fa-regular fa-comments me-2"></i> Konfirmasi ke Admin
+                                </button>
+                            </form>
+                        <?php endif; ?>
 
                         <div class="invoice-quick-links">
                             <a href="https://wa.me/6287748703029?text=<?php echo e(rawurlencode('Halo Admin KosOnline, saya ingin konfirmasi invoice ' . $invoice['invoice_no'])); ?>" target="_blank" rel="noopener" class="invoice-quick-link is-wa" title="Konfirmasi via WhatsApp">

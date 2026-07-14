@@ -421,18 +421,34 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                         <?php endif; ?>
                         <?php foreach ($rooms as $room): ?>
                             <?php
-                            $badgeClass = $room['status'] === 'Terisi' ? 'warning' : 'success';
-                            $buttonClass = $room['status'] === 'Terisi' ? 'btn btn-sm btn-delete' : 'btn btn-sm btn-edit';
-                            $buttonIcon = $room['status'] === 'Terisi' ? 'fa-user-xmark' : 'fa-user-check';
-                            $buttonLabel = $room['status'] === 'Terisi' ? 'Kosongkan' : 'Isi Kamar';
-                            $confirmMessage = $room['status'] === 'Terisi' ? 'Yakin ingin mengosongkan kamar ini?' : 'Ubah status menjadi Terisi?';
+                            $isArchived = $room['status'] === 'Arsip';
+                            $isOccupied = $room['status'] === 'Terisi';
+
+                            if ($isArchived) {
+                                $badgeClass = 'danger';
+                                $buttonClass = 'btn btn-sm btn-edit';
+                                $buttonIcon = 'fa-rotate-left';
+                                $buttonLabel = 'Pulihkan';
+                                $confirmMessage = 'Pulihkan kamar ini dari arsip supaya bisa disewa lagi?';
+                            } else {
+                                $badgeClass = $isOccupied ? 'warning' : 'success';
+                                $buttonClass = $isOccupied ? 'btn btn-sm btn-delete' : 'btn btn-sm btn-edit';
+                                $buttonIcon = $isOccupied ? 'fa-user-xmark' : 'fa-user-check';
+                                $buttonLabel = $isOccupied ? 'Kosongkan' : 'Isi Kamar';
+                                $confirmMessage = $isOccupied ? 'Yakin ingin mengosongkan kamar ini?' : 'Ubah status menjadi Terisi?';
+                            }
                             ?>
                             <tr>
                                 <td><?php echo e($room['nomor_kamar']); ?></td>
                                 <td><?php echo e($room['nama_kost']); ?></td>
                                 <td>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></td>
                                 <td><?php echo (int) ($room['diskon_persen'] ?? 0) > 0 ? e($room['diskon_persen']) . '%' : '-'; ?></td>
-                                <td><span class="badge <?php echo e($badgeClass); ?>"><?php echo e($room['status']); ?></span></td>
+                                <td>
+                                    <span class="badge <?php echo e($badgeClass); ?>"><?php echo e($room['status']); ?></span>
+                                    <?php if ($isArchived): ?>
+                                        <br><small style="color:#64748b;">Tak tampil di halaman penyewa. Riwayat pembayaran tetap utuh.</small>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <form method="POST" action="<?php echo e(url('/admin/rooms/toggle-status')); ?>" class="inline-action-form" data-confirm="<?php echo e($confirmMessage); ?>">
                                         <?php echo csrf_field(); ?>
@@ -441,11 +457,13 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                     </form>
 
                                     <a href="<?php echo e(url('/admin/rooms/edit?id=' . $room['id_kamar'])); ?>" class="btn btn-sm btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                    <form method="POST" action="<?php echo e(url('/admin/rooms/delete')); ?>" class="inline-action-form" data-confirm="Hapus kamar ini beserta data sewanya?">
-                                        <?php echo csrf_field(); ?>
-                                        <input type="hidden" name="id" value="<?php echo e($room['id_kamar']); ?>">
-                                        <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
-                                    </form>
+                                    <?php if (!$isArchived): ?>
+                                        <form method="POST" action="<?php echo e(url('/admin/rooms/delete')); ?>" class="inline-action-form" data-confirm="Hapus kamar ini? Kalau kamar pernah punya pembayaran, kamar akan DIARSIPKAN (pembukuan tetap utuh), bukan dihapus.">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="id" value="<?php echo e($room['id_kamar']); ?>">
+                                            <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -597,7 +615,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                     <?php $dueRaw = (string) ($billing['jatuh_tempo'] ?? ''); ?>
                                     <?php if ($dueRaw !== '' && $dueRaw !== '0000-00-00'): ?>
                                         <strong><?php echo e(date('d M Y', strtotime($dueRaw))); ?></strong><br>
-                                        <span class="admin-countdown" data-countdown data-deadline="<?php echo e($dueRaw); ?>T23:59:59">&mdash;</span>
+                                        <span class="admin-countdown" data-countdown data-deadline="<?php echo e($dueRaw); ?>T00:00:00">&mdash;</span>
                                     <?php else: ?>
                                         <span style="color:#94a3b8;">&mdash;</span>
                                     <?php endif; ?>
@@ -606,6 +624,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                     <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" data-confirm="<?php echo $isPaid ? 'Batalkan status bayar?' : 'Konfirmasi pembayaran ini sebagai lunas?'; ?>"<?php echo $isPaid ? '' : ' data-confirm-variant="primary" data-confirm-ok="Ya, Lunas"'; ?>>
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
+                                        <input type="hidden" name="id_pembayaran" value="<?php echo e((string) ($billing['id_pembayaran'] ?? '')); ?>">
                                         <input type="hidden" name="aksi" value="<?php echo $isPaid ? 'batal' : 'lunas'; ?>">
                                         <button type="submit" class="btn btn-sm <?php echo $isPaid ? 'btn-delete' : 'btn-edit'; ?>">
                                             <i class="fa-solid <?php echo $isPaid ? 'fa-xmark' : 'fa-check'; ?>"></i> <?php echo $isPaid ? 'Batal' : 'Lunas'; ?>
@@ -623,6 +642,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                         <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" data-confirm="Batalkan booking pending ini?">
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
+                                            <input type="hidden" name="id_pembayaran" value="<?php echo e((string) ($billing['id_pembayaran'] ?? '')); ?>">
                                             <input type="hidden" name="aksi" value="batal">
                                             <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-ban"></i> Batalkan</button>
                                         </form>
@@ -698,24 +718,26 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                         <span>Kontak Aktif</span>
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
-                    <?php if ($chatThreads !== []): ?>
-                        <?php foreach ($chatThreads as $thread): ?>
-                            <?php
-                            $isActiveThread = $currentChatThread !== null && (int) $currentChatThread['id_thread'] === (int) $thread['id_thread'];
-                            $context = $thread['email'] ?? 'User KosOnline';
-                            ?>
-                            <a href="<?php echo e(url('/admin/dashboard?tab=chat-user&thread=' . $thread['id_thread'])); ?>" class="<?php echo $isActiveThread ? 'active' : ''; ?>">
-                                <i><?php echo e($chatInitials($thread['nama_lengkap'] ?? 'User')); ?></i>
-                                <span class="thread-copy">
-                                    <strong><?php echo e($thread['nama_lengkap']); ?></strong>
-                                    <em><?php echo e($context); ?></em>
-                                    <small><?php echo e($thread['pesan_terakhir'] ?? 'Belum ada pesan'); ?></small>
-                                </span>
-                            </a>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="empty-state">Belum ada chat user.</div>
-                    <?php endif; ?>
+                    <div class="admin-chat-contact-list">
+                        <?php if ($chatThreads !== []): ?>
+                            <?php foreach ($chatThreads as $thread): ?>
+                                <?php
+                                $isActiveThread = $currentChatThread !== null && (int) $currentChatThread['id_thread'] === (int) $thread['id_thread'];
+                                $context = $thread['email'] ?? 'User KosOnline';
+                                ?>
+                                <a href="<?php echo e(url('/admin/dashboard?tab=chat-user&thread=' . $thread['id_thread'])); ?>" class="<?php echo $isActiveThread ? 'active' : ''; ?>">
+                                    <i><?php echo e($chatInitials($thread['nama_lengkap'] ?? 'User')); ?></i>
+                                    <span class="thread-copy">
+                                        <strong><?php echo e($thread['nama_lengkap']); ?></strong>
+                                        <em><?php echo e($context); ?></em>
+                                        <small><?php echo e($thread['pesan_terakhir'] ?? 'Belum ada pesan'); ?></small>
+                                    </span>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="empty-state">Belum ada chat user.</div>
+                        <?php endif; ?>
+                    </div>
                     <div class="admin-chat-sidebar-foot">
                         <span><?php echo count($chatThreads); ?> kontak</span>
                         <strong><i></i> Admin Online</strong>

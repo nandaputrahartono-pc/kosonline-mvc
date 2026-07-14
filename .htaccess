@@ -6,6 +6,11 @@ php_value date.timezone Asia/Jakarta
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
+# Folder internal tak boleh dijangkau browser. HARUS di atas aturan -f/-d di bawah:
+# aturan itu menyajikan file yang benar-benar ada secara langsung, sehingga tanpa blokir ini
+# siapa pun bisa menjalankan skrip migrasi/perbaikan di scripts/ tanpa login.
+RewriteRule ^(scripts|app|config)/ - [F,L]
+
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]

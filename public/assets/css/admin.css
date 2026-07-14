@@ -1202,6 +1202,22 @@ body {
   flex-direction: column;
   background: #ffffff;
   border-right: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+/* Hanya daftar kontaknya yang bergulir; kepala & kaki sidebar tetap terpaku,
+   dan gulirannya terpisah dari panel chat di sebelah kanan. */
+.admin-chat-contact-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-chat-sidebar-head,
+.admin-chat-sidebar-rule,
+.admin-chat-sidebar-foot {
+  flex-shrink: 0;
 }
 
 .admin-chat-sidebar-head {
@@ -1706,6 +1722,7 @@ body {
   .admin-chat-contacts {
     border-right: 0;
     border-bottom: 1px solid #e2e8f0;
+    max-height: 320px;
   }
 }
 
@@ -1776,8 +1793,7 @@ body {
   }
 
   .admin-chat-contacts {
-    max-height: 240px;
-    overflow-y: auto;
+    max-height: 360px;
   }
 
   .admin-chat-panel {

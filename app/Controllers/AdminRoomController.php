@@ -192,18 +192,49 @@ final class AdminRoomController extends Controller
         ]);
     }
 
+    /**
+     * Menghapus kamar TIDAK BOLEH menghapus pembukuan.
+     *
+     * Dulu method ini membuang semua pembayaran kamar (termasuk yang Lunas) beserta sewanya,
+     * sehingga Total Pendapatan bisa lenyap tanpa peringatan dan penghuni yang sedang tinggal
+     * ikut hilang. Sekarang bertingkat:
+     *   1. masih ada penghuni/booking berjalan -> tolak;
+     *   2. ada jejak pembayaran               -> ARSIPKAN (data keuangan utuh);
+     *   3. belum pernah disewa sama sekali    -> baru boleh dihapus betulan.
+     */
     public function delete(): void
     {
         $this->requireAdmin();
 
         $roomId = (int) ($_POST['id'] ?? 0);
+
+        if ($this->roomModel->findById($roomId) === null) {
+            set_flash('error', 'Data kamar tidak ditemukan.');
+            redirect_to('/admin/dashboard?tab=data-kamar');
+        }
+
+        if ($this->roomModel->hasRunningRental($roomId)) {
+            set_flash('error', 'Kamar ini masih punya penghuni atau booking yang berjalan. Hentikan atau batalkan sewanya dulu.');
+            redirect_to('/admin/dashboard?tab=data-kamar');
+        }
+
+        if ($this->roomModel->hasBillingHistory($roomId)) {
+            if ($this->roomModel->archive($roomId)) {
+                set_flash('success', 'Kamar diarsipkan. Kamar hilang dari halaman penyewa, tapi riwayat pembayaran & Total Pendapatan tetap utuh.');
+            } else {
+                set_flash('error', 'Gagal mengarsipkan kamar.');
+            }
+
+            redirect_to('/admin/dashboard?tab=data-kamar');
+        }
+
+        // Kamar polos: tak pernah disewa, tak ada apa pun untuk diselamatkan.
         $db = Database::getInstance();
         $galleryFiles = array_column($this->galleryModel->getByRoomId($roomId), 'nama_file');
 
         $db->beginTransaction();
 
         try {
-            $this->paymentModel->deleteByRoomId($roomId);
             $this->rentalModel->deleteByRoomId($roomId);
             $this->roomModel->delete($roomId);
             $db->commit();
@@ -215,7 +246,7 @@ final class AdminRoomController extends Controller
             set_flash('error', 'Gagal menghapus kamar. Error Database.');
         }
 
-        redirect_to('/admin/dashboard');
+        redirect_to('/admin/dashboard?tab=data-kamar');
     }
 
     private function updateExistingGallery(int $roomId, array &$removedFiles): void
@@ -342,6 +373,18 @@ final class AdminRoomController extends Controller
 
         $currentStatus = (string) $room['status'];
         $activeRental = $this->rentalModel->getActiveTenantByRoomId($roomId);
+
+        // Kamar terarsip: pulihkan saja, jangan diperlakukan seperti kamar terisi
+        // (tak ada penghuni yang perlu dihentikan).
+        if ($currentStatus === 'Arsip') {
+            if ($this->roomModel->setStatus($roomId, 'Tersedia')) {
+                set_flash('success', 'Kamar dipulihkan dari arsip dan kembali tersedia untuk disewa.');
+            } else {
+                set_flash('error', 'Kamar gagal dipulihkan.');
+            }
+
+            redirect_to('/admin/dashboard?tab=data-kamar');
+        }
 
         if ($currentStatus === 'Tersedia') {
             set_flash('error', 'Untuk mengisi kamar, pilih penghuni dulu lewat menu edit kamar.');

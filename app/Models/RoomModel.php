@@ -34,6 +34,43 @@ final class RoomModel extends Model
         return self::$columnCache[$cacheKey];
     }
 
+    /**
+     * Kamar rekomendasi untuk ditampilkan di halaman detail.
+     *
+     * Hanya kamar Tersedia, kamar yang sedang dibuka dikecualikan, dan kamar dari kost
+     * yang sama didahulukan (paling relevan) sebelum kost lain.
+     */
+    public function recommendations(int $roomId, int $limit = 4): array
+    {
+        $limit = max(1, min(12, $limit));
+
+        $current = $this->db->selectOne("SELECT id_kost FROM kamar WHERE id_kamar = ?", [$roomId]);
+        $kostId = (int) ($current['id_kost'] ?? 0);
+
+        $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
+        $hasKostDiskon = $this->hasColumn('kost', 'diskon_persen');
+
+        $kamarDiskonExpr = $hasKamarDiskon ? 'COALESCE(kamar.diskon_persen, 0)' : '0';
+        $kostDiskonExpr = $hasKostDiskon ? 'COALESCE(kost.diskon_persen, 0)' : '0';
+
+        $results = $this->db->selectAll(
+            "SELECT kamar.*, kost.nama_kost, kost.alamat, kost.foto_kost,
+                    {$kamarDiskonExpr} AS kamar_diskon,
+                    {$kostDiskonExpr} AS kost_diskon
+             FROM kamar
+             JOIN kost ON kamar.id_kost = kost.id_kost
+             WHERE kamar.status = 'Tersedia'
+               AND kamar.id_kamar <> ?
+             ORDER BY (kost.id_kost = ?) DESC, kamar.harga ASC, kamar.nomor_kamar ASC
+             LIMIT {$limit}",
+            [$roomId, $kostId]
+        );
+
+        $this->applyEffectiveDiscount($results, $hasKamarDiskon, $hasKostDiskon);
+
+        return $results;
+    }
+
     public function searchAvailableFiltered(?string $keyword = null, ?int $idKost = null): array
     {
         $hasKamarDiskon = $this->hasColumn('kamar', 'diskon_persen');
@@ -302,6 +339,60 @@ final class RoomModel extends Model
     public function delete(int $id): bool
     {
         return $this->db->execute("DELETE FROM kamar WHERE id_kamar = ?", [$id]);
+    }
+
+    /**
+     * Kamar masih dipakai: ada penghuni aktif atau booking yang belum selesai.
+     * Kamar seperti ini tak boleh dihapus MAUPUN diarsipkan.
+     */
+    public function hasRunningRental(int $id): bool
+    {
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM sewa
+             WHERE id_kamar = ?
+             AND status_sewa IN ('Menunggu Pembayaran', 'Aktif')",
+            [$id]
+        );
+
+        return (int) ($row['total'] ?? 0) > 0;
+    }
+
+    /**
+     * Kamar punya jejak keuangan (pernah ada invoice). Menghapusnya berarti menghapus
+     * pembukuan — termasuk pembayaran Lunas yang menyusun Total Pendapatan. Kamar seperti
+     * ini diarsipkan, bukan dihapus.
+     */
+    public function hasBillingHistory(int $id): bool
+    {
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM pembayaran
+             JOIN sewa ON sewa.id_sewa = pembayaran.id_sewa
+             WHERE sewa.id_kamar = ?",
+            [$id]
+        );
+
+        return (int) ($row['total'] ?? 0) > 0;
+    }
+
+    /**
+     * Arsipkan kamar: hilang dari sisi user (semua kueri publik menyaring 'Tersedia'),
+     * tetapi sewa, pembayaran, dan galerinya tetap utuh.
+     */
+    public function archive(int $id): bool
+    {
+        return $this->db->execute(
+            "UPDATE kamar SET status = 'Arsip' WHERE id_kamar = ?",
+            [$id]
+        );
+    }
+
+    public function isArchived(int $id): bool
+    {
+        $row = $this->db->selectOne("SELECT status FROM kamar WHERE id_kamar = ?", [$id]);
+
+        return (string) ($row['status'] ?? '') === 'Arsip';
     }
 
     /**

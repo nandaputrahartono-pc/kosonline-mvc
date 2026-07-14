@@ -447,10 +447,9 @@ $oldIdentifier = $oldIdentifier ?? '';
                 <?php echo csrf_field(); ?>
                 <h1>Registration</h1>
                 <div class="social-container">
-                    <a href="#" class="social"><i class="fa-brands fa-google"></i></a>
-                    <a href="#" class="social"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="social"><i class="fa-brands fa-github"></i></a>
-                    <a href="#" class="social"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" class="social" aria-label="Lanjutkan dengan Google"><i class="fa-brands fa-google"></i></a>
+                    <a href="#" class="social" aria-label="Lanjutkan dengan Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" class="social" aria-label="Lanjutkan dengan TikTok"><i class="fa-brands fa-tiktok"></i></a>
                 </div>
                 <span class="mb-3 text-muted">atau daftar dengan email baru</span>
 
@@ -492,10 +491,9 @@ $oldIdentifier = $oldIdentifier ?? '';
                 <?php echo csrf_field(); ?>
                 <h1>Login</h1>
                 <div class="social-container">
-                    <a href="#" class="social"><i class="fa-brands fa-google"></i></a>
-                    <a href="#" class="social"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="social"><i class="fa-brands fa-github"></i></a>
-                    <a href="#" class="social"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" class="social" aria-label="Lanjutkan dengan Google"><i class="fa-brands fa-google"></i></a>
+                    <a href="#" class="social" aria-label="Lanjutkan dengan Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" class="social" aria-label="Lanjutkan dengan TikTok"><i class="fa-brands fa-tiktok"></i></a>
                 </div>
                 <span class="mb-3 text-muted">atau login dengan akun Anda</span>
 

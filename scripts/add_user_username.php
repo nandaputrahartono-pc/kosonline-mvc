@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+if (PHP_SAPI !== "cli") {
+    http_response_code(403);
+    exit("Skrip ini hanya boleh dijalankan lewat terminal (CLI).");
+}
+
 require_once dirname(__DIR__) . '/bootstrap.php';
 
 use App\Core\Database;

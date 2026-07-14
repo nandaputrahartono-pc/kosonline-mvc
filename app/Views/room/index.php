@@ -59,19 +59,6 @@ if ((int) $pagination['current_page'] > 1) {
 }
 $currentRoomsUrl = '/rooms' . ($currentRoomQuery !== [] ? '?' . http_build_query($currentRoomQuery) : '');
 
-$finalPrice = static function (array $room): float {
-    $price = (float) ($room['harga'] ?? 0);
-    $discount = max(0, min(100, (int) ($room['diskon_persen'] ?? 0)));
-
-    return $discount > 0 ? $price * (1 - ($discount / 100)) : $price;
-};
-
-$facilityList = static function (?string $facilities): array {
-    $items = array_filter(array_map('trim', explode(',', (string) $facilities)));
-
-    return array_slice($items, 0, 4);
-};
-
 $sortLabels = [
     'recommended' => 'Rekomendasi',
     'termurah' => 'Termurah',
@@ -142,67 +129,9 @@ ob_start();
 
             <?php if (!empty($rooms)): ?>
                 <div class="room-modern-grid">
-                    <?php foreach ($rooms as $room): ?>
-                        <?php
-                        $hasPromo = (int) ($room['diskon_persen'] ?? 0) > 0;
-                        $priceAfterDiscount = $finalPrice($room);
-                        $roomId = (int) $room['id_kamar'];
-                        $ratingSummary = $reviewSummaries[$roomId] ?? ['rating_avg' => 0, 'total_review' => 0];
-                        $isSaved = in_array($roomId, $savedRoomIds, true);
-                        ?>
-                        <article class="card h-100 room-modern-card">
-                            <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="room-card-image">
-                                <img src="<?php echo e(upload_asset($room['foto_kost'])); ?>" class="card-img-top" alt="Foto kamar <?php echo e($room['nomor_kamar']); ?>" loading="lazy" decoding="async">
-                                <span class="room-card-badge"><?php echo e($room['nama_kost']); ?></span>
-                                <?php if ($hasPromo): ?>
-                                    <span class="room-card-promo">Diskon <?php echo e((string) $room['diskon_persen']); ?>%</span>
-                                <?php endif; ?>
-                            </a>
-                            <div class="card-body room-card-body">
-                                <div class="room-card-title">
-                                    <div>
-                                        <span>Lantai <?php echo e($room['lantai']); ?></span>
-                                        <h3><?php echo e($room['nomor_kamar']); ?></h3>
-                                    </div>
-                                    <form method="POST" action="<?php echo e(url('/wishlist/toggle')); ?>" class="room-wishlist-form room-title-save-form">
-                                        <?php echo csrf_field(); ?>
-                                        <input type="hidden" name="id_kamar" value="<?php echo e($roomId); ?>">
-                                        <input type="hidden" name="redirect" value="<?php echo e($currentRoomsUrl); ?>">
-                                        <button type="submit" class="room-title-save-btn <?php echo $isSaved ? 'saved' : ''; ?>" aria-label="<?php echo $isSaved ? 'Hapus dari simpanan' : 'Simpan kamar'; ?>">
-                                            <i class="<?php echo $isSaved ? 'fa-solid' : 'fa-regular'; ?> fa-bookmark"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                                <div class="room-rating-mini">
-                                    <i class="fa-solid fa-star"></i>
-                                    <strong><?php echo e((string) $ratingSummary['rating_avg']); ?></strong>
-                                    <span><?php echo e((string) $ratingSummary['total_review']); ?> ulasan</span>
-                                </div>
-                                <p class="room-address"><i class="fa-solid fa-location-dot"></i> <?php echo e($room['alamat']); ?></p>
-                                <div class="room-facility-list">
-                                    <?php foreach ($facilityList($room['fasilitas'] ?? '') as $facility): ?>
-                                        <span><i class="fa-solid fa-check"></i> <?php echo e($facility); ?></span>
-                                    <?php endforeach; ?>
-                                    <?php if (empty($facilityList($room['fasilitas'] ?? ''))): ?>
-                                        <span><i class="fa-solid fa-circle-info"></i> Fasilitas bisa ditanyakan ke admin</span>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="room-price-row">
-                                    <div>
-                                        <?php if ($hasPromo): ?>
-                                            <small>Rp <?php echo number_format((float) $room['harga'], 0, ',', '.'); ?></small>
-                                        <?php endif; ?>
-                                        <strong>Rp <?php echo number_format($priceAfterDiscount, 0, ',', '.'); ?></strong>
-                                        <span>/ bulan</span>
-                                    </div>
-                                </div>
-                                <div class="room-card-actions">
-                                    <a href="<?php echo e(url('/rooms/detail?id=' . $room['id_kamar'])); ?>" class="btn btn-primary">
-                                        Lihat Detail
-                                    </a>
-                                </div>
-                            </div>
-                        </article>
+                    <?php $cardRedirectUrl = $currentRoomsUrl; ?>
+                    <?php foreach ($rooms as $roomCard): ?>
+                        <?php require __DIR__ . '/../partials/room-card.php'; ?>
                     <?php endforeach; ?>
                 </div>
                 <?php if ((int) $pagination['total_pages'] > 1): ?>
@@ -279,5 +208,25 @@ ob_start();
 $content = ob_get_clean();
 $title = 'Daftar Kamar Kost - KosOnline';
 $extraHead = '<link rel="stylesheet" href="' . e(asset('css/pages/rooms.css')) . '">';
+
+// Filter (cabang, urutkan, promo) langsung diterapkan begitu diubah — tanpa ini
+// pengguna harus menekan "Cari" dulu sehingga filternya terasa "mati".
+$extraScripts = <<<'HTML'
+<script>
+    (function () {
+        var form = document.querySelector('.rooms-search-form');
+        if (!form) return;
+
+        ['cabang', 'sort', 'promo'].forEach(function (name) {
+            var field = form.querySelector('[name="' + name + '"]');
+            if (!field) return;
+            field.addEventListener('change', function () {
+                form.submit();
+            });
+        });
+    })();
+</script>
+HTML;
+
 require base_path('app/Views/layouts/public.php');
 ?>

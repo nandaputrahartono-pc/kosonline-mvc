@@ -227,25 +227,21 @@ final class MemberController extends Controller
         $userId = (int) $_SESSION['id_user'];
         $rental = $this->rentalModel->findByIdForUser($rentalId, $userId);
 
-        if ($rental === null || ($rental['status_sewa'] ?? '') !== 'Dibatalkan') {
-            set_flash('error', 'Hanya pesanan yang dibatalkan yang bisa dihapus.');
+        // Hanya sewa yang sudah BERAKHIR yang boleh dibuang dari daftar.
+        $endedStatuses = ['Dibatalkan', 'Berhenti'];
+        if ($rental === null || !in_array((string) ($rental['status_sewa'] ?? ''), $endedStatuses, true)) {
+            set_flash('error', 'Hanya sewa yang sudah berakhir atau dibatalkan yang bisa dihapus dari daftar.');
             redirect_to('/member/dashboard?tab=pesananku');
         }
 
-        $db = Database::getInstance();
-        $db->beginTransaction();
-
-        try {
-            $this->paymentModel->deleteByRentalId($rentalId);
-            $this->rentalModel->deleteById($rentalId);
-            $db->commit();
-        } catch (\Throwable $e) {
-            $db->rollback();
-            set_flash('error', 'Gagal menghapus pesanan. Silakan coba lagi.');
+        // SEMBUNYIKAN, bukan hapus: catatan pembayaran sengaja dibiarkan utuh supaya
+        // Total Pendapatan admin & riwayat keuangan tidak ikut hilang.
+        if (!$this->rentalModel->hideForUser($rentalId, $userId)) {
+            set_flash('error', 'Gagal menghapus pesanan dari daftar. Silakan coba lagi.');
             redirect_to('/member/dashboard?tab=pesananku');
         }
 
-        set_flash('success', 'Pesanan yang dibatalkan berhasil dihapus.');
+        set_flash('success', 'Pesanan dihapus dari daftar kamu.');
         redirect_to('/member/dashboard?tab=pesananku');
     }
 }

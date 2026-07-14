@@ -3,15 +3,16 @@
 declare(strict_types=1);
 
 /**
- * Menyiapkan kolom penanda "sudah dibaca" untuk notifikasi.
+ * Kolom penanda "disembunyikan dari daftar user".
  *
- * - `pesan.dibaca`  : penanda pesan kontak sudah dibaca admin (belum ada di skema).
- *
- * Catatan: `chat_messages.dibaca` sudah ada di skema (tinggal dipakai), jadi tak diubah.
+ * Saat user menghapus kartu sewa yang sudah berakhir/dibatalkan, kartunya hilang dari
+ * daftar "Pesanan & Invoice" TAPI catatan pembayarannya TIDAK dihapus — supaya Total
+ * Pendapatan admin & riwayat keuangan tetap utuh (user tak bisa "menghapus" uang yang
+ * sudah masuk).
  *
  * Pakai:
- *   php scripts/add_notifications.php           # dry-run: hanya melaporkan rencana
- *   php scripts/add_notifications.php --apply   # benar-benar mengubah tabel
+ *   php scripts/add_hidden_rental.php           # dry-run
+ *   php scripts/add_hidden_rental.php --apply   # terapkan
  *
  * Idempotent: aman dijalankan berkali-kali.
  */
@@ -39,14 +40,14 @@ $hasColumn = static function (string $table, string $column) use ($db): bool {
     return false;
 };
 
-if (!$hasColumn('pesan', 'dibaca')) {
-    $changes[] = 'pesan.dibaca';
+if (!$hasColumn('sewa', 'disembunyikan')) {
+    $changes[] = 'sewa.disembunyikan';
 
     if ($applyChanges) {
         $db->execute(
-            "ALTER TABLE `pesan`
-             ADD COLUMN `dibaca` TINYINT(1) NOT NULL DEFAULT 0
-             AFTER `isi_pesan`"
+            "ALTER TABLE `sewa`
+             ADD COLUMN `disembunyikan` TINYINT(1) NOT NULL DEFAULT 0
+             AFTER `status_sewa`"
         );
     }
 }

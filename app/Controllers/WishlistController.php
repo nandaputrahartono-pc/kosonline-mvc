@@ -41,7 +41,9 @@ final class WishlistController extends Controller
         $this->requireUser();
 
         $roomId = (int) ($_POST['id_kamar'] ?? 0);
-        $redirect = (string) ($_POST['redirect'] ?? '/rooms');
+        // Nilai ini datang dari form, jadi tak boleh dipercaya: tanpa saringan, "redirect"
+        // bisa diisi URL luar dan melempar user ke situs orang.
+        $redirect = safe_redirect_path($_POST['redirect'] ?? null, '/rooms');
 
         if ($roomId <= 0) {
             if ($this->expectsJson()) {
