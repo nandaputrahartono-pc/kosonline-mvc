@@ -23,6 +23,19 @@ final class PaymentModel extends Model
         return (int) ($row['total'] ?? 0);
     }
 
+    /**
+     * Pembayaran yang menunggu verifikasi admin (user sudah bayar/unggah bukti).
+     * Tak perlu flag "dibaca": otomatis hilang begitu admin verifikasi/tolak.
+     */
+    public function countPendingVerification(): int
+    {
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total FROM pembayaran WHERE status_verifikasi = 'Menunggu'"
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
     public function totalPaidRevenue(): float
     {
         $row = $this->db->selectOne(
@@ -213,11 +226,146 @@ final class PaymentModel extends Model
         );
     }
 
+    /**
+     * Batalkan status lunas TANPA menghapus barisnya.
+     *
+     * Dulu memakai DELETE — itu memusnahkan invoice asli (invoice_no, bukti bayar,
+     * promo, deposit) kalau bulan tagihannya kebetulan sama dengan bulan berjalan.
+     */
     public function cancelPayment(int $rentalId, string $billingMonth): void
     {
         $this->db->execute(
-            "DELETE FROM pembayaran WHERE id_sewa = ? AND bulan_tagihan = ?",
+            "UPDATE pembayaran
+             SET status_verifikasi = 'Menunggu', tanggal_bayar = NULL
+             WHERE id_sewa = ? AND bulan_tagihan = ?",
             [$rentalId, $billingMonth]
+        );
+    }
+
+    /**
+     * Tandai satu invoice (berdasarkan id) sebagai lunas.
+     * Basis verifikasi = INVOICE, bukan bulan kalender -> tak ada lagi baris stub/ganda.
+     */
+    public function markInvoicePaid(int $paymentId, float $amount): void
+    {
+        $this->db->execute(
+            "UPDATE pembayaran
+             SET status_verifikasi = 'Lunas',
+                 tanggal_bayar = ?,
+                 nominal = ?,
+                 total_bayar = IF(total_bayar > 0, total_bayar, ?)
+             WHERE id_pembayaran = ?",
+            [date('Y-m-d'), $amount, $amount, $paymentId]
+        );
+    }
+
+    /**
+     * Kembalikan invoice ke status menunggu (non-destruktif).
+     */
+    public function markInvoiceUnpaid(int $paymentId): void
+    {
+        $this->db->execute(
+            "UPDATE pembayaran
+             SET status_verifikasi = 'Menunggu', tanggal_bayar = NULL
+             WHERE id_pembayaran = ?",
+            [$paymentId]
+        );
+    }
+
+    /**
+     * Pastikan sewa AKTIF punya invoice terbuka untuk periode berjalan.
+     *
+     * Periode berjalan = [jatuh_tempo, jatuh_tempo + 1 bulan - 1 hari], jatuh temponya = jatuh_tempo.
+     * IDEMPOTENT: kalau invoice untuk periode itu sudah ada, tak melakukan apa-apa.
+     * Ini yang menutup siklus bulanan -> user punya invoice untuk dibayar tiap bulan.
+     *
+     * @return int|null id_pembayaran invoice yang baru dibuat, atau null kalau tak membuat apa pun.
+     */
+    public function ensureOpenInvoice(int $rentalId): ?int
+    {
+        $rental = $this->db->selectOne(
+            "SELECT sewa.id_sewa, sewa.jatuh_tempo, sewa.status_sewa,
+                    kamar.harga, kamar.diskon_persen,
+                    users.nama_lengkap, users.email, users.no_hp
+             FROM sewa
+             JOIN kamar ON kamar.id_kamar = sewa.id_kamar
+             LEFT JOIN users ON users.id_user = sewa.id_user
+             WHERE sewa.id_sewa = ?",
+            [$rentalId]
+        );
+
+        if ($rental === null || (string) $rental['status_sewa'] !== 'Aktif') {
+            return null;
+        }
+
+        $dueDate = (string) ($rental['jatuh_tempo'] ?? '');
+        if ($dueDate === '' || $dueDate === '0000-00-00') {
+            return null;
+        }
+
+        // Sudah ada invoice untuk periode ini? -> jangan buat lagi (idempotent).
+        $existing = $this->db->selectOne(
+            "SELECT id_pembayaran FROM pembayaran WHERE id_sewa = ? AND periode_mulai = ?",
+            [$rentalId, $dueDate]
+        );
+
+        if ($existing !== null) {
+            return null;
+        }
+
+        $start = new \DateTimeImmutable($dueDate);
+        $end = $start->modify('+1 month')->modify('-1 day');
+
+        $price = (float) $rental['harga'];
+        $discountPercent = (int) ($rental['diskon_persen'] ?? 0);
+        $roomDiscount = round($price * $discountPercent / 100, 2);
+        $total = max(0.0, $price - $roomDiscount);
+
+        return $this->createPendingInvoice([
+            'id_sewa' => $rentalId,
+            'invoice_no' => 'INV-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3))),
+            'bulan_tagihan' => $start->format('F Y'),
+            'periode_mulai' => $start->format('Y-m-d'),
+            'periode_selesai' => $end->format('Y-m-d'),
+            'harga_kamar' => $price,
+            'diskon_kamar' => $roomDiscount,
+            'kode_promo' => null,
+            'diskon_promo' => 0,
+            'biaya_admin' => 0,
+            'deposit' => 0,
+            'total_bayar' => $total,
+            'metode_bayar' => null,
+            'nama_penyewa' => $rental['nama_lengkap'] ?? null,
+            'email_penyewa' => $rental['email'] ?? null,
+            'no_hp_penyewa' => $rental['no_hp'] ?? null,
+            'catatan' => 'Tagihan sewa bulanan. Silakan bayar sebelum jatuh tempo.',
+        ]);
+    }
+
+    /**
+     * Invoice terbaru milik sebuah sewa (invoice "berjalan").
+     */
+    public function latestInvoiceByRental(int $rentalId): ?array
+    {
+        return $this->db->selectOne(
+            "SELECT * FROM pembayaran WHERE id_sewa = ? ORDER BY id_pembayaran DESC LIMIT 1",
+            [$rentalId]
+        );
+    }
+
+    /**
+     * Bersihkan invoice BELUM lunas yang periodenya melewati tanggal tertentu.
+     * Dipakai saat pelunasan dibatalkan, supaya invoice "masa depan" tak nyangkut.
+     */
+    public function deleteUnpaidInvoicesAfter(int $rentalId, string $date): void
+    {
+        $this->db->execute(
+            "DELETE FROM pembayaran
+             WHERE id_sewa = ?
+               AND status_verifikasi <> 'Lunas'
+               AND periode_mulai IS NOT NULL
+               AND periode_mulai > ?",
+            [$rentalId, $date]
         );
     }
 

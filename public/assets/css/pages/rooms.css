@@ -271,4 +271,14 @@
   .room-filter-actions {
     grid-template-columns: 1fr;
   }
+
+  /* Di HP hero (gambar + teks) disembunyikan: teksnya "mendem" ketutup kartu
+     filter yang naik ke atas. Tanpa hero, kartu filter tak perlu margin negatif. */
+  .rooms-compact-hero {
+    display: none;
+  }
+
+  .public-filter-card.rooms-filter-card {
+    margin-top: 12px;
+  }
 }

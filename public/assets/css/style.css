@@ -346,6 +346,45 @@ a {
   box-shadow: var(--shadow-soft);
 }
 
+/* Badge angka pesan belum dibaca pada ikon chat */
+.public-chat-link {
+  position: relative;
+}
+
+.chat-unread-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #ef4444;
+  border: 2px solid var(--card-bg);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Badge pada item "Chat Admin" di drawer HP */
+.chat-unread-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .public-icon-link:hover,
 .public-icon-link.active {
   background: #fff1f2;

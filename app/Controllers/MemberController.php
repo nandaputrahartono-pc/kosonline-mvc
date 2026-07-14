@@ -120,6 +120,13 @@ final class MemberController extends Controller
         $_SESSION['nama'] = $user['nama_lengkap'];
         $_SESSION['foto_profil'] = $user['foto_profil'] ?? 'default.jpg';
 
+        // Pastikan sewa aktif punya invoice periode berjalan supaya user bisa membayar
+        // bulan berikutnya lewat aplikasi (idempotent; juga menyembuhkan sewa lama).
+        $activeRental = $this->rentalModel->getActiveByUserIdOnly($userId);
+        if ($activeRental !== null) {
+            $this->paymentModel->ensureOpenInvoice((int) $activeRental['id_sewa']);
+        }
+
         $rentals = $this->rentalModel->getDashboardRowsByUserId($userId);
         $rental = null;
         foreach ($rentals as $row) {
@@ -138,6 +145,13 @@ final class MemberController extends Controller
             $currentThreadId = (int) $chatThreads[0]['id_thread'];
         }
         $currentThread = $currentThreadId > 0 ? $this->chatModel->getThreadForUser($currentThreadId, $userId) : null;
+
+        // Begitu user benar-benar membuka tab chat, pesan admin ditandai sudah dibaca
+        // supaya badge angka di ikon chat hilang.
+        if ((string) ($_GET['tab'] ?? '') === 'chat' && $currentThread !== null) {
+            $this->chatModel->markThreadReadForUser((int) $currentThread['id_thread'], $userId);
+        }
+
         $chatMessages = $currentThread !== null ? $this->chatModel->getMessages((int) $currentThread['id_thread']) : [];
         $pendingRoomId = (int) ($_GET['pending_room'] ?? 0);
         $pendingRoomCard = $pendingRoomId > 0 ? $this->chatModel->roomCardByRoomId($pendingRoomId) : null;

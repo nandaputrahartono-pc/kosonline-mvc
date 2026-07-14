@@ -3,6 +3,9 @@ $isLoggedInUser = $isLoggedInUser ?? (($_SESSION['status'] ?? null) === 'login_u
 $currentUserName = (string) ($currentUserName ?? ($_SESSION['nama'] ?? 'User'));
 $currentUserPhoto = (string) ($currentUserPhoto ?? ($_SESSION['foto_profil'] ?? 'default.jpg'));
 $currentUserAvatar = (string) ($currentUserAvatar ?? profile_avatar($currentUserPhoto));
+// Jumlah pesan admin yang belum dibaca (disuntik dari App\Core\Controller::render).
+$chatUnreadCount = (int) ($chatUnreadCount ?? 0);
+$chatUnreadLabel = $chatUnreadCount > 99 ? '99+' : (string) $chatUnreadCount;
 $currentPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
 $currentPath = rtrim((string) $currentPath, '/') ?: '/';
 $navClass = static function (array $paths) use ($currentPath): string {
@@ -37,7 +40,7 @@ $navClass = static function (array $paths) use ($currentPath): string {
             <li class="d-lg-none nav-menu-sep" aria-hidden="true"></li>
             <?php if ($isLoggedInUser): ?>
                 <li class="d-lg-none"><a href="<?php echo e(url('/wishlist')); ?>"><i class="fa-regular fa-bookmark"></i> Kamar Tersimpan</a></li>
-                <li class="d-lg-none"><a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>"><i class="fa-regular fa-comments"></i> Chat Admin</a></li>
+                <li class="d-lg-none"><a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>"><i class="fa-regular fa-comments"></i> Chat Admin<?php if ($chatUnreadCount > 0): ?> <span class="chat-unread-badge"><?php echo e($chatUnreadLabel); ?></span><?php endif; ?></a></li>
                 <li class="d-lg-none"><a href="<?php echo e(url('/member/dashboard')); ?>"><i class="fa-solid fa-gauge-high"></i> Menu</a></li>
                 <li class="d-lg-none">
                     <form method="POST" action="<?php echo e(url('/logout')); ?>">
@@ -55,8 +58,11 @@ $navClass = static function (array $paths) use ($currentPath): string {
         <a href="<?php echo e($isLoggedInUser ? url('/wishlist') : url('/login')); ?>" class="public-icon-link public-save-link d-none d-lg-inline-flex <?php echo $currentPath === '/wishlist' ? 'active' : ''; ?>" title="Kamar Tersimpan">
             <i class="fa-regular fa-bookmark"></i>
         </a>
-        <a href="<?php echo e($isLoggedInUser ? url('/member/dashboard?tab=chat') : url('/login')); ?>" class="public-icon-link d-none d-lg-inline-flex <?php echo $currentPath === '/member/dashboard' && (string) ($_GET['tab'] ?? '') === 'chat' ? 'active' : ''; ?>" title="Chat Admin">
+        <a href="<?php echo e($isLoggedInUser ? url('/member/dashboard?tab=chat') : url('/login')); ?>" class="public-icon-link public-chat-link d-none d-lg-inline-flex <?php echo $currentPath === '/member/dashboard' && (string) ($_GET['tab'] ?? '') === 'chat' ? 'active' : ''; ?>" title="Chat Admin">
             <i class="fa-regular fa-comments"></i>
+            <?php if ($chatUnreadCount > 0): ?>
+                <span class="chat-unread-dot"><?php echo e($chatUnreadLabel); ?></span>
+            <?php endif; ?>
         </a>
         <?php if ($isLoggedInUser): ?>
             <div class="dropdown public-user-menu d-none d-lg-block">

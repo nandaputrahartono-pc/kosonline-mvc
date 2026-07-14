@@ -269,7 +269,7 @@ ob_start();
                     </div>
 
                     <div class="my-kost-actions">
-                        <a href="#" class="btn-primary soft" data-page="pembayaran"><i class="fa-solid fa-file-invoice-dollar"></i> Bayar Tagihan</a>
+                        <a href="<?php echo e(url('/member/dashboard?tab=pesananku')); ?>" class="btn-primary soft" data-page="pesananku"><i class="fa-solid fa-file-invoice-dollar"></i> Bayar Tagihan</a>
                         <a href="<?php echo e(url('/member/dashboard?tab=chat')); ?>" class="btn-primary" data-page="chat"><i class="fa-regular fa-comments"></i> Hubungi Admin</a>
                     </div>
                 </div>
@@ -361,12 +361,29 @@ ob_start();
                                         <h3><?php echo e($item['nama_kost']); ?></h3>
                                         <p>Kamar <?php echo e($item['nomor_kamar']); ?>, Lantai <?php echo e($item['lantai']); ?></p>
                                     </div>
+                                    <?php
+                                    // Sewa yang sudah berakhir tak punya jatuh tempo/tagihan lagi.
+                                    $isEnded = in_array((string) $item['status_sewa'], ['Berhenti', 'Dibatalkan'], true);
+                                    $itemDue = (string) ($item['jatuh_tempo'] ?? '');
+                                    $isOverdue = !$isEnded
+                                        && (string) $item['status_sewa'] === 'Aktif'
+                                        && $itemDue !== '' && $itemDue !== '0000-00-00'
+                                        && strtotime($itemDue) < strtotime(date('Y-m-d'))
+                                        && (string) ($item['status_verifikasi'] ?? '') !== 'Lunas';
+                                    ?>
                                     <span class="badge <?php echo e($statusClass((string) $item['status_sewa'])); ?>"><?php echo e($item['status_sewa']); ?></span>
+                                    <?php if ($isOverdue): ?>
+                                        <span class="badge danger">Menunggak</span>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="mini-grid">
                                     <span><b>Tanggal masuk</b><?php echo e($formatDate((string) $item['tanggal_masuk'])); ?></span>
-                                    <span><b>Jatuh tempo</b><?php echo e($formatDate((string) $item['jatuh_tempo'])); ?></span>
-                                    <span><b>Tagihan</b><?php echo e($formatRupiah((float) ($item['total_bayar'] ?? $item['harga']))); ?></span>
+                                    <?php if ($isEnded): ?>
+                                        <span><b>Tanggal keluar</b><?php echo e($formatDate((string) ($item['tanggal_keluar'] ?? ''))); ?></span>
+                                    <?php else: ?>
+                                        <span><b>Jatuh tempo</b><?php echo e($formatDate($itemDue)); ?></span>
+                                        <span><b>Tagihan</b><?php echo e($formatRupiah((float) ($item['total_bayar'] ?? $item['harga']))); ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <p class="muted"><i class="fa-solid fa-location-dot"></i> <?php echo e($item['alamat']); ?></p>
 
@@ -618,6 +635,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const footer = document.querySelector('.footer-premium');
 
   function showPage(pageId, pushState) {
+    // Jaring pengaman: kalau id tab tak dikenal, JANGAN sembunyikan semua page
+    // (dulu ini bikin dashboard blank saat tombol menunjuk tab yang sudah dihapus).
+    const known = Array.from(pages).some(function (page) { return page.id === pageId; });
+    if (!known) return;
+
     dashboard.classList.toggle('is-chat-open', pageId === 'chat');
     if (footer) {
       footer.style.display = pageId === 'chat' ? 'none' : 'block';

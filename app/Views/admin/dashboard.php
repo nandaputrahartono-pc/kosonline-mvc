@@ -167,15 +167,65 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                     <i class="fa-regular fa-calendar"></i>
                     <?php echo e($todayLabel); ?>
                 </div>
-                <button type="button" class="topbar-icon" title="Cari">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-                <button type="button" class="topbar-icon" title="Notifikasi">
-                    <i class="fa-regular fa-bell"></i>
-                    <?php if ((int) $stats['belum_bayar'] > 0): ?>
-                        <span class="notification-dot"></span>
-                    <?php endif; ?>
-                </button>
+                <?php
+                $notif = array_merge(
+                    ['pembayaran' => 0, 'menunggak' => 0, 'chat' => 0, 'pesan' => 0, 'total' => 0],
+                    (array) ($notifications ?? [])
+                );
+                $notifTotal = (int) $notif['total'];
+                ?>
+                <div class="topbar-search" id="admin-search-wrap">
+                    <button type="button" class="topbar-icon" id="admin-search-toggle" title="Cari" aria-label="Cari">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <input type="search" id="admin-search" class="topbar-search-input" placeholder="Cari di tabel ini&hellip;" autocomplete="off" hidden>
+                    <span class="topbar-search-count" id="admin-search-count" hidden></span>
+                </div>
+
+                <div class="topbar-notif" id="notif-wrap">
+                    <button type="button" class="topbar-icon" id="notif-toggle" title="Notifikasi" aria-label="Notifikasi" aria-expanded="false">
+                        <i class="fa-regular fa-bell"></i>
+                        <?php if ($notifTotal > 0): ?>
+                            <span class="notif-badge"><?php echo e($notifTotal > 99 ? '99+' : (string) $notifTotal); ?></span>
+                        <?php endif; ?>
+                    </button>
+
+                    <div class="notif-panel" id="notif-panel" hidden>
+                        <div class="notif-panel-head">
+                            <strong>Notifikasi</strong>
+                            <span><?php echo e((string) $notifTotal); ?> baru</span>
+                        </div>
+
+                        <?php if ($notifTotal === 0): ?>
+                            <p class="notif-empty"><i class="fa-regular fa-bell-slash"></i> Tidak ada notifikasi baru.</p>
+                        <?php else: ?>
+                            <?php if ((int) $notif['pembayaran'] > 0): ?>
+                                <a class="notif-item" href="<?php echo e(url('/admin/dashboard?tab=pembayaran')); ?>">
+                                    <i class="fa-solid fa-file-invoice-dollar notif-ic is-pay"></i>
+                                    <span><strong><?php echo e((string) $notif['pembayaran']); ?> pembayaran</strong> menunggu verifikasi</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ((int) $notif['menunggak'] > 0): ?>
+                                <a class="notif-item" href="<?php echo e(url('/admin/dashboard?tab=pembayaran')); ?>">
+                                    <i class="fa-solid fa-triangle-exclamation notif-ic is-late"></i>
+                                    <span><strong><?php echo e((string) $notif['menunggak']); ?> sewa menunggak</strong> lewat jatuh tempo</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ((int) $notif['chat'] > 0): ?>
+                                <a class="notif-item" href="<?php echo e(url('/admin/dashboard?tab=chat-user')); ?>">
+                                    <i class="fa-regular fa-comments notif-ic is-chat"></i>
+                                    <span><strong><?php echo e((string) $notif['chat']); ?> pesan chat</strong> baru dari user</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ((int) $notif['pesan'] > 0): ?>
+                                <a class="notif-item" href="<?php echo e(url('/admin/dashboard?tab=pesan-masuk')); ?>">
+                                    <i class="fa-solid fa-envelope notif-ic is-msg"></i>
+                                    <span><strong><?php echo e((string) $notif['pesan']); ?> pesan masuk</strong> belum dibaca</span>
+                                </a>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -306,7 +356,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             </div>
         </section>
 
-        <section class="page" id="data-kost">
+        <section class="page <?php echo $activeTab === 'data-kost' ? 'active' : ''; ?>" id="data-kost">
             <h2 class="page-title">Data Kost</h2>
             <div class="table-header">
                 <a href="<?php echo e(url('/admin/kost/create')); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Tambah Kost</a>
@@ -445,7 +495,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             <?php endif; ?>
         </section>
 
-        <section class="page" id="data-user">
+        <section class="page <?php echo $activeTab === 'data-user' ? 'active' : ''; ?>" id="data-user">
             <h2 class="page-title">Data User</h2>
             <div class="table-header">
                 <a href="<?php echo e(url('/admin/users/create')); ?>" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Tambah User</a>
@@ -481,7 +531,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             </div>
         </section>
 
-        <section class="page" id="pembayaran">
+        <section class="page <?php echo $activeTab === 'pembayaran' ? 'active' : ''; ?>" id="pembayaran">
             <h2 class="page-title">Pembayaran (<?php echo e($billingMonth); ?>)</h2>
             <p class="page-subtitle">Kelola status pembayaran penyewa bulan ini</p>
             <div class="table-responsive table-wrapper">
@@ -512,6 +562,15 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                             $periodLabel = !empty($billing['periode_mulai']) && !empty($billing['periode_selesai'])
                                 ? date('d M Y', strtotime((string) $billing['periode_mulai'])) . ' - ' . date('d M Y', strtotime((string) $billing['periode_selesai']))
                                 : $billingMonth;
+                            // Menunggak = sewa aktif, lewat jatuh tempo, invoice berjalan belum lunas.
+                            $rowDue = (string) ($billing['jatuh_tempo'] ?? '');
+                            $isOverdue = ($billing['status_sewa'] ?? '') === 'Aktif'
+                                && !$isPaid
+                                && $rowDue !== '' && $rowDue !== '0000-00-00'
+                                && strtotime($rowDue) < strtotime(date('Y-m-d'));
+                            $overdueDays = $isOverdue
+                                ? (int) floor((strtotime(date('Y-m-d')) - strtotime($rowDue)) / 86400)
+                                : 0;
                             $waMessage = 'Halo ' . $billing['nama_lengkap'] . ', tagihan kost bulan ' . $billingMonth . ' belum dibayar ya.';
                             $phone = preg_replace('/\D+/', '', (string) $billing['no_hp']) ?? '';
                             $waPhone = str_starts_with($phone, '0') ? '62' . substr($phone, 1) : $phone;
@@ -527,6 +586,9 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                 <td>Rp <?php echo number_format($billAmount, 0, ',', '.'); ?></td>
                                 <td>
                                     <span class="badge <?php echo $isPaid ? 'success' : 'warning'; ?>"><?php echo e($statusLabel); ?></span>
+                                    <?php if ($isOverdue): ?>
+                                        <br><span class="badge danger">Menunggak <?php echo e((string) $overdueDays); ?> hari</span>
+                                    <?php endif; ?>
                                     <?php if (!empty($billing['bukti_bayar'])): ?>
                                         <br><a href="<?php echo e(upload_asset($billing['bukti_bayar'])); ?>" target="_blank" rel="noopener noreferrer" class="small fw-semibold"><i class="fa-solid fa-image"></i> Lihat Bukti</a>
                                     <?php endif; ?>
@@ -549,6 +611,14 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
                                             <i class="fa-solid <?php echo $isPaid ? 'fa-xmark' : 'fa-check'; ?>"></i> <?php echo $isPaid ? 'Batal' : 'Lunas'; ?>
                                         </button>
                                     </form>
+                                    <?php if ($isOverdue): ?>
+                                        <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" data-confirm="Hentikan sewa ini? Kamar akan dilepas kembali menjadi Tersedia." data-confirm-ok="Ya, Hentikan">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="id" value="<?php echo e($billing['id_sewa']); ?>">
+                                            <input type="hidden" name="aksi" value="hentikan">
+                                            <button type="submit" class="btn btn-sm btn-delete"><i class="fa-solid fa-door-open"></i> Hentikan Sewa</button>
+                                        </form>
+                                    <?php endif; ?>
                                     <?php if ($isPendingBooking && !$isPaid): ?>
                                         <form method="POST" action="<?php echo e(url('/admin/payments/update')); ?>" class="inline-action-form" data-confirm="Batalkan booking pending ini?">
                                             <?php echo csrf_field(); ?>
@@ -717,7 +787,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             </div>
         </section>
 
-        <section class="page" id="pesan-masuk">
+        <section class="page <?php echo $activeTab === 'pesan-masuk' ? 'active' : ''; ?>" id="pesan-masuk">
             <h2 class="page-title">Pesan Masuk</h2>
             <div class="table-responsive table-wrapper">
                 <table class="table table-hover align-middle mb-0">
@@ -753,7 +823,7 @@ $wsHost = $wsHost !== '' ? $wsHost : '127.0.0.1';
             </div>
         </section>
 
-        <section class="page" id="atur-lokasi">
+        <section class="page <?php echo $activeTab === 'atur-lokasi' ? 'active' : ''; ?>" id="atur-lokasi">
             <h2 class="page-title">Atur Lokasi Kost</h2>
             <div class="table-responsive table-wrapper">
                 <table class="table table-hover align-middle mb-0">

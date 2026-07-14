@@ -124,10 +124,15 @@ final class ChatController extends Controller
     {
         $this->requireUser();
 
+        $userId = (int) $_SESSION['id_user'];
         $threadId = (int) ($_GET['thread'] ?? 0);
-        if ($threadId <= 0 || $this->chatModel->getThreadForUser($threadId, (int) $_SESSION['id_user']) === null) {
+        if ($threadId <= 0 || $this->chatModel->getThreadForUser($threadId, $userId) === null) {
             $this->json(['ok' => false, 'message' => 'Chat tidak ditemukan.'], 404);
         }
+
+        // Sama seperti sisi admin: pesan admin yang masuk saat user membuka chat
+        // langsung ditandai terbaca supaya badge angka tidak menumpuk.
+        $this->chatModel->markThreadReadForUser($threadId, $userId);
 
         $this->json($this->memberThreadPayload($threadId));
     }
@@ -140,6 +145,10 @@ final class ChatController extends Controller
         if ($threadId <= 0 || $this->chatModel->getThreadForAdmin($threadId) === null) {
             $this->json(['ok' => false, 'message' => 'Chat tidak ditemukan.'], 404);
         }
+
+        // Admin sedang membuka thread ini, jadi pesan user yang baru masuk lewat polling
+        // realtime pun langsung dianggap terbaca. Tanpa ini notifikasi menumpuk terus.
+        $this->chatModel->markThreadReadForAdmin($threadId);
 
         $this->json($this->adminThreadPayload($threadId));
     }

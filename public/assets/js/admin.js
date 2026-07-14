@@ -32,6 +32,11 @@ document.addEventListener("DOMContentLoaded", function () {
     menuLinks.forEach((item) => {
       item.classList.toggle("active", item.getAttribute("data-page") === targetPageId);
     });
+
+    // Filter search hanya berlaku untuk tab aktif -> bersihkan saat pindah tab.
+    if (typeof resetFilter === "function") {
+      resetFilter();
+    }
   }
 
   pageLinks.forEach((link) => {
@@ -50,6 +55,96 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- C. LOGIC LOGOUT ---
   // Konfirmasi logout ditangani confirm-modal.js lewat atribut data-confirm pada form.
+
+  // --- C2. SEARCH: filter baris tabel di TAB YANG SEDANG AKTIF ---
+  const searchToggle = document.getElementById("admin-search-toggle");
+  const searchInput = document.getElementById("admin-search");
+  const searchCount = document.getElementById("admin-search-count");
+
+  function activeRows() {
+    const activePage = document.querySelector(".page.active");
+    if (!activePage) return [];
+    return Array.from(activePage.querySelectorAll("table tbody tr"));
+  }
+
+  function applyFilter() {
+    if (!searchInput) return;
+    const query = searchInput.value.trim().toLowerCase();
+    const rows = activeRows();
+
+    if (query === "") {
+      rows.forEach((row) => (row.hidden = false));
+      if (searchCount) searchCount.hidden = true;
+      return;
+    }
+
+    let matches = 0;
+    rows.forEach((row) => {
+      const hit = row.textContent.toLowerCase().includes(query);
+      row.hidden = !hit;
+      if (hit) matches++;
+    });
+
+    if (searchCount) {
+      searchCount.hidden = false;
+      searchCount.textContent = matches === 0 ? "Tidak ada hasil" : matches + " hasil";
+    }
+  }
+
+  function resetFilter() {
+    if (!searchInput) return;
+    searchInput.value = "";
+    activeRows().forEach((row) => (row.hidden = false));
+    if (searchCount) searchCount.hidden = true;
+  }
+
+  if (searchToggle && searchInput) {
+    searchToggle.addEventListener("click", () => {
+      const willShow = searchInput.hidden;
+      searchInput.hidden = !willShow;
+      if (willShow) {
+        searchInput.focus();
+      } else {
+        resetFilter();
+      }
+    });
+
+    searchInput.addEventListener("input", applyFilter);
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        resetFilter();
+        searchInput.hidden = true;
+      }
+    });
+  }
+
+  // --- C3. NOTIFIKASI: buka/tutup panel lonceng ---
+  const notifToggle = document.getElementById("notif-toggle");
+  const notifPanel = document.getElementById("notif-panel");
+
+  if (notifToggle && notifPanel) {
+    notifToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const willOpen = notifPanel.hidden;
+      notifPanel.hidden = !willOpen;
+      notifToggle.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    // Tutup saat klik di luar panel
+    document.addEventListener("click", (e) => {
+      if (notifPanel.hidden) return;
+      if (notifPanel.contains(e.target) || notifToggle.contains(e.target)) return;
+      notifPanel.hidden = true;
+      notifToggle.setAttribute("aria-expanded", "false");
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !notifPanel.hidden) {
+        notifPanel.hidden = true;
+        notifToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
 
   // --- E. REVENUE CHART ---
   const revenueCanvas = document.getElementById("revenueChart");

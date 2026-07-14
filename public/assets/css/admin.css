@@ -25,9 +25,12 @@
   font-family: "Segoe UI", sans-serif;
 }
 
+/* Sidebar & konten punya scroll masing-masing: body dikunci setinggi layar supaya
+   sidebar tak ikut melar mengikuti tinggi halaman (bikin Logout terdorong ke dasar). */
 body {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--bg-main);
 }
 
@@ -40,6 +43,9 @@ video {
 
 .sidebar {
   width: 260px;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
   background: linear-gradient(
     180deg,
     var(--bg-sidebar-dark),
@@ -122,6 +128,8 @@ video {
 
 .content {
   flex: 1;
+  height: 100vh;
+  overflow-y: auto;
   padding: 30px;
   background: #f8fafc;
 }
@@ -394,9 +402,11 @@ table td:last-child {
 
 /* TAMPILAN HP (Max 768px) */
 @media (max-width: 768px) {
-  /* 1. Layout Body */
+  /* 1. Layout Body — kembalikan scroll halaman normal (sidebar HP off-canvas). */
   body {
     display: block; /* Matikan flex row */
+    height: auto;
+    overflow: visible;
   }
 
   /* 2. Sidebar Mobile (Off-Canvas) */
@@ -440,6 +450,8 @@ table td:last-child {
   /* 4. Konten Utama */
   .content {
     width: 100%;
+    height: auto;
+    overflow: visible;
     padding: 10px 20px 80px 20px;
   }
 
@@ -661,15 +673,145 @@ body {
   cursor: pointer;
 }
 
-.notification-dot {
+/* --- Search topbar (filter tabel tab aktif) --- */
+.topbar-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-search-input {
+  width: 220px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #e5eaf3;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--text-main);
+  font-size: 13px;
+  outline: 0;
+}
+
+.topbar-search-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.topbar-search-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* --- Notifikasi (lonceng) --- */
+.topbar-notif {
+  position: relative;
+}
+
+.notif-badge {
   position: absolute;
-  top: 9px;
-  right: 9px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
   background: #ef4444;
   border: 2px solid #ffffff;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1200;
+  width: 300px;
+  padding: 8px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e5eaf3;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.14);
+}
+
+.notif-panel[hidden] {
+  display: none;
+}
+
+.notif-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid #eef2f7;
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.notif-panel-head span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.notif-item:hover {
+  background: #f1f5f9;
+}
+
+.notif-ic {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.notif-ic.is-pay {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.notif-ic.is-chat {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.notif-ic.is-msg {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.notif-ic.is-late {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.notif-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .dashboard-hero {
@@ -1612,17 +1754,9 @@ body {
     padding: 20px 18px 28px;
   }
 
-  .admin-chat-bubble {
-    max-width: calc(100% - 58px);
-  }
-
   .admin-chat-room-card {
     grid-template-columns: 82px minmax(0, 1fr);
     width: 100%;
-  }
-
-  .admin-chat-sent-room-card {
-    width: calc(100% - 58px);
   }
 
   .admin-chat-room-card small {
@@ -1674,8 +1808,17 @@ body {
     display: none;
   }
 
+  /* Kartu kamar diperlakukan sama seperti bubble di HP: buang gutter 56px untuk
+     avatar dan sembunyikan avatarnya, supaya kartu tak meluber & kepotong. */
   .admin-chat-sent-room-card,
   .admin-chat-sent-room-card.mine {
     width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .admin-chat-sent-room-card::before {
+    display: none;
   }
 }

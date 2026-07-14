@@ -161,6 +161,67 @@ final class ChatModel extends Model
         );
     }
 
+    /**
+     * Jumlah pesan dari USER yang belum dibaca admin (untuk lonceng notifikasi admin).
+     */
+    public function countUnreadForAdmin(): int
+    {
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM chat_messages
+             WHERE sender_type = 'user' AND dibaca = 0"
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
+     * Jumlah pesan dari ADMIN yang belum dibaca user (untuk badge ikon chat di navbar).
+     */
+    public function countUnreadForUser(int $userId): int
+    {
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM chat_messages
+             JOIN chat_threads ON chat_threads.id_thread = chat_messages.id_thread
+             WHERE chat_threads.id_user = ?
+               AND chat_messages.sender_type = 'admin'
+               AND chat_messages.dibaca = 0",
+            [$userId]
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
+     * Tandai pesan user pada sebuah thread sudah dibaca admin.
+     */
+    public function markThreadReadForAdmin(int $threadId): void
+    {
+        $this->db->execute(
+            "UPDATE chat_messages SET dibaca = 1
+             WHERE id_thread = ? AND sender_type = 'user' AND dibaca = 0",
+            [$threadId]
+        );
+    }
+
+    /**
+     * Tandai pesan admin pada thread milik user sudah dibaca user.
+     */
+    public function markThreadReadForUser(int $threadId, int $userId): void
+    {
+        $this->db->execute(
+            "UPDATE chat_messages
+             JOIN chat_threads ON chat_threads.id_thread = chat_messages.id_thread
+             SET chat_messages.dibaca = 1
+             WHERE chat_messages.id_thread = ?
+               AND chat_threads.id_user = ?
+               AND chat_messages.sender_type = 'admin'
+               AND chat_messages.dibaca = 0",
+            [$threadId, $userId]
+        );
+    }
+
     public function setTyping(int $threadId, string $actorType, bool $isTyping): void
     {
         $this->db->execute(

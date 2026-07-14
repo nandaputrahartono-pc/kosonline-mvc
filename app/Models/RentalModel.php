@@ -203,7 +203,14 @@ final class RentalModel extends Model
         );
     }
 
-    public function getAdminBillingRows(string $billingMonth): array
+    /**
+     * Baris tagihan admin = sewa aktif/menunggu + INVOICE BERJALAN-nya (invoice terbaru).
+     *
+     * Dulu invoice dijodohkan lewat `bulan_tagihan` (bulan kalender), padahal periode sewa
+     * memakai siklus tanggal masuk (mis. tgl 21 -> 20). Keduanya melenceng sehingga verifikasi
+     * bikin baris ganda/stub. Sekarang cukup ambil invoice terbaru milik sewa itu.
+     */
+    public function getAdminBillingRows(): array
     {
         return $this->db->selectAll(
             "SELECT
@@ -234,12 +241,46 @@ final class RentalModel extends Model
                 SELECT p.id_pembayaran
                 FROM pembayaran p
                 WHERE p.id_sewa = sewa.id_sewa
-                AND (p.bulan_tagihan = ? OR sewa.status_sewa = 'Menunggu Pembayaran')
                 ORDER BY p.id_pembayaran DESC
                 LIMIT 1
              )
-             WHERE sewa.status_sewa IN ('Menunggu Pembayaran', 'Aktif')",
-            [$billingMonth]
+             WHERE sewa.status_sewa IN ('Menunggu Pembayaran', 'Aktif')
+             ORDER BY sewa.id_sewa DESC"
         );
+    }
+
+    /**
+     * Sewa aktif yang lewat jatuh tempo DAN invoice berjalannya belum lunas (menunggak).
+     * Status turunan: dihitung, tidak disimpan di kolom mana pun.
+     */
+    public function countOverdue(): int
+    {
+        $row = $this->db->selectOne(
+            "SELECT COUNT(*) AS total
+             FROM sewa
+             WHERE sewa.status_sewa = 'Aktif'
+               AND sewa.jatuh_tempo < CURDATE()
+               AND COALESCE((
+                    SELECT p.status_verifikasi
+                    FROM pembayaran p
+                    WHERE p.id_sewa = sewa.id_sewa
+                    ORDER BY p.id_pembayaran DESC
+                    LIMIT 1
+               ), 'Menunggu') <> 'Lunas'"
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
+     * Semua sewa aktif (untuk ensureOpenInvoice saat dashboard dimuat).
+     *
+     * @return list<int>
+     */
+    public function activeRentalIds(): array
+    {
+        $rows = $this->db->selectAll("SELECT id_sewa FROM sewa WHERE status_sewa = 'Aktif'");
+
+        return array_map(static fn (array $row): int => (int) $row['id_sewa'], $rows);
     }
 }

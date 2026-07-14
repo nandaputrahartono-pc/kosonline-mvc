@@ -28,7 +28,6 @@ final class AdminPaymentController extends Controller
         $this->requireAdmin();
 
         $rentalId = (int) ($_POST['id'] ?? 0);
-        $billingMonth = date('F Y');
         $action = (string) ($_POST['aksi'] ?? '');
         $rental = $this->rentalModel->findByIdWithRoom($rentalId);
 
@@ -37,40 +36,86 @@ final class AdminPaymentController extends Controller
             redirect_to('/admin/dashboard');
         }
 
-        if ($action === 'lunas') {
-            $latestPayment = $this->paymentModel->getHistoryByRentalId($rentalId)[0] ?? null;
-            $amount = (float) ($latestPayment['total_bayar'] ?? $latestPayment['nominal'] ?? $rental['harga']);
+        $isPendingBooking = ($rental['status_sewa'] ?? '') === 'Menunggu Pembayaran';
 
-            if (($rental['status_sewa'] ?? '') === 'Menunggu Pembayaran') {
-                // Pembayaran booking awal: aktifkan sewa. Jatuh tempo awal (masuk+1bln)
-                // sudah menjadi tenggat siklus berikutnya, jadi tidak dimajukan.
-                $this->paymentModel->markPaidByRental($rentalId, $amount);
-                $this->rentalModel->activate($rentalId);
-                $this->roomModel->setStatus((int) $rental['id_kamar'], 'Terisi');
-            } else {
-                // Pembayaran bulanan sewa aktif: majukan jatuh tempo satu bulan.
-                $this->paymentModel->markPaid($rentalId, $billingMonth, $amount);
-                $this->rentalModel->advanceDueDate($rentalId);
-            }
+        // Verifikasi berbasis INVOICE (bukan bulan kalender) -> tak ada lagi baris stub/ganda.
+        $invoice = $this->paymentModel->latestInvoiceByRental($rentalId);
+        $invoiceId = (int) ($invoice['id_pembayaran'] ?? 0);
 
-            set_flash('success', 'Status berhasil diubah menjadi SUDAH BAYAR.');
-        } elseif ($action === 'batal') {
-            if (($rental['status_sewa'] ?? '') === 'Menunggu Pembayaran') {
-                $this->paymentModel->rejectLatestByRental($rentalId);
-                $this->rentalModel->cancelPending($rentalId);
+        $db = Database::getInstance();
+        $db->beginTransaction();
+
+        try {
+            if ($action === 'lunas') {
+                $amount = (float) ($invoice['total_bayar'] ?? 0);
+                if ($amount <= 0) {
+                    $amount = (float) ($invoice['nominal'] ?? $rental['harga']);
+                }
+
+                if ($invoiceId > 0) {
+                    $this->paymentModel->markInvoicePaid($invoiceId, $amount);
+                }
+
+                if ($isPendingBooking) {
+                    // Booking awal: aktifkan sewa. Jatuh tempo awal (masuk + 1 bulan) SUDAH
+                    // menunjuk siklus berikutnya, jadi TIDAK dimajukan.
+                    $this->rentalModel->activate($rentalId);
+                    $this->roomModel->setStatus((int) $rental['id_kamar'], 'Terisi');
+                } else {
+                    // Pelunasan bulanan: jatuh tempo maju satu bulan.
+                    $this->rentalModel->advanceDueDate($rentalId);
+                }
+
+                // Lahirkan invoice periode BERIKUTNYA supaya user bisa bayar bulan depan.
+                $this->paymentModel->ensureOpenInvoice($rentalId);
+
+                set_flash('success', 'Pembayaran diverifikasi LUNAS. Invoice periode berikutnya sudah dibuat.');
+            } elseif ($action === 'batal') {
+                if ($isPendingBooking) {
+                    $this->paymentModel->rejectLatestByRental($rentalId);
+                    $this->rentalModel->cancelPending($rentalId);
+                    $this->roomModel->setStatus((int) $rental['id_kamar'], 'Tersedia');
+                    set_flash('success', 'Booking pending berhasil dibatalkan.');
+                } else {
+                    // Non-destruktif: invoice dikembalikan ke 'Menunggu' (tidak dihapus),
+                    // jatuh tempo mundur, lalu invoice "masa depan" dibersihkan.
+                    if ($invoiceId > 0) {
+                        $this->paymentModel->markInvoiceUnpaid($invoiceId);
+                    }
+                    $this->rentalModel->retreatDueDate($rentalId);
+
+                    $fresh = $this->rentalModel->findByIdWithRoom($rentalId);
+                    $newDue = (string) ($fresh['jatuh_tempo'] ?? '');
+                    if ($newDue !== '' && $newDue !== '0000-00-00') {
+                        $this->paymentModel->deleteUnpaidInvoicesAfter($rentalId, $newDue);
+                    }
+
+                    set_flash('success', 'Status dikembalikan menjadi BELUM BAYAR.');
+                }
+            } elseif ($action === 'hentikan') {
+                // Penyewa menunggak dan admin memilih menghentikan sewa (bukan melunasi).
+                if ($isPendingBooking) {
+                    set_flash('error', 'Booking yang belum aktif tidak bisa dihentikan. Gunakan Batalkan.');
+                    $db->rollback();
+                    redirect_to('/admin/dashboard?tab=pembayaran');
+                }
+
+                $this->rentalModel->stopActiveByRentalId($rentalId);
                 $this->roomModel->setStatus((int) $rental['id_kamar'], 'Tersedia');
-                set_flash('success', 'Booking pending berhasil dibatalkan.');
+                set_flash('success', 'Sewa dihentikan. Kamar dilepas kembali menjadi Tersedia.');
             } else {
-                // Batalkan pelunasan bulanan: mundurkan lagi jatuh tempo satu bulan.
-                $this->paymentModel->cancelPayment($rentalId, $billingMonth);
-                $this->rentalModel->retreatDueDate($rentalId);
-                set_flash('success', 'Status berhasil diubah menjadi BELUM BAYAR.');
+                $db->rollback();
+                set_flash('error', 'Aksi pembayaran tidak valid.');
+                redirect_to('/admin/dashboard?tab=pembayaran');
             }
-        } else {
-            set_flash('error', 'Aksi pembayaran tidak valid.');
+
+            $db->commit();
+        } catch (\Throwable $throwable) {
+            $db->rollback();
+            set_flash('error', 'Gagal memperbarui pembayaran.');
         }
 
-        redirect_to('/admin/dashboard');
+        redirect_to('/admin/dashboard?tab=pembayaran');
     }
 
     public function deleteBooking(): void

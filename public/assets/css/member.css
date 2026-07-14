@@ -1338,17 +1338,9 @@
     padding: 20px 18px 28px;
   }
 
-  .chat-bubble {
-    max-width: calc(100% - 58px);
-  }
-
   .chat-room-card {
     grid-template-columns: 82px minmax(0, 1fr);
     width: 100%;
-  }
-
-  .chat-sent-room-card {
-    width: calc(100% - 58px);
   }
 
   .chat-room-card small {
@@ -1356,17 +1348,19 @@
     justify-self: start;
   }
 
-  /* Chat HP gaya WhatsApp: SATU tampilan penuh. Default = PERCAKAPAN;
-     tekan back di header percakapan untuk pindah ke DAFTAR chat. */
+  /* Chat HP gaya WhatsApp: SATU tampilan penuh setinggi layar. Default = PERCAKAPAN;
+     tekan back di header percakapan untuk pindah ke DAFTAR chat.
+     Pakai 100dvh (dynamic viewport): saat keyboard virtual muncul, tinggi menyusut
+     otomatis sehingga kotak "Tulis pesan" ikut naik di atas keyboard. */
   .member-page #chat.page.active {
-    height: auto;
+    height: calc(100dvh - 80px);
     min-height: 0;
   }
 
   .chat-dashboard {
     display: block;
-    height: auto;
-    overflow: visible;
+    height: 100%;
+    overflow: hidden;
   }
 
   /* Default: sembunyikan daftar, tampilkan percakapan penuh. */
@@ -1375,13 +1369,18 @@
     max-height: none;
   }
 
+  /* Percakapan isi penuh: baris pesan (1fr) memuai, komposer jadi baris terakhir
+     yang otomatis nempel di dasar. */
   .chat-panel {
+    height: 100%;
     min-height: 0;
   }
 
   /* Mode "lihat daftar": tampilkan daftar, sembunyikan percakapan. */
   .chat-dashboard.show-threads .chat-thread-list {
     display: flex;
+    height: 100%;
+    overflow-y: auto;
   }
 
   .chat-dashboard.show-threads .chat-panel {
@@ -1393,15 +1392,16 @@
     align-items: center;
   }
 
+  /* Area pesan memuai mengisi sisa ruang & scroll sendiri (bukan lagi tinggi tetap
+     yang bikin komposer ngambang di tengah). */
   .chat-message-list {
-    min-height: 300px;
-    max-height: calc(100dvh - 250px);
+    min-height: 0;
+    max-height: none;
   }
 
+  /* Komposer = baris terakhir grid, otomatis di dasar layar. */
   .chat-compose {
-    position: sticky;
-    bottom: 0;
-    z-index: 2;
+    position: static;
     background: #f8fafc;
   }
 
@@ -1417,9 +1417,18 @@
     display: none;
   }
 
+  /* Kartu kamar diperlakukan sama seperti bubble di HP: buang gutter 56px untuk
+     avatar dan sembunyikan avatarnya, supaya kartu tak meluber & kepotong. */
   .chat-sent-room-card,
   .chat-sent-room-card.mine {
     width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .chat-sent-room-card::before {
+    display: none;
   }
 }
 

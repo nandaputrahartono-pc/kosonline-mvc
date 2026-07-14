@@ -49,7 +49,14 @@ final class AdminDashboardController extends Controller
 
         $billingMonth = date('F Y');
         $roomCounts = $this->roomModel->getCounts();
-        $billings = $this->rentalModel->getAdminBillingRows($billingMonth);
+
+        // Pastikan tiap sewa aktif punya invoice periode berjalan (idempotent & self-healing:
+        // sewa lama yang belum punya invoice bulan ke-2 pun otomatis dibuatkan).
+        foreach ($this->rentalModel->activeRentalIds() as $activeRentalId) {
+            $this->paymentModel->ensureOpenInvoice($activeRentalId);
+        }
+
+        $billings = $this->rentalModel->getAdminBillingRows();
         $paidBillings = 0;
         $unpaidBillings = [];
 
@@ -82,9 +89,29 @@ final class AdminDashboardController extends Controller
         }
         $currentChatThread = $currentChatThreadId > 0 ? $this->chatModel->getThreadForAdmin($currentChatThreadId) : null;
 
+        // Tandai sudah dibaca begitu admin benar-benar membuka tab terkait,
+        // supaya notifikasi berkurang secara wajar.
+        $activeTab = (string) ($_GET['tab'] ?? 'dashboard');
+        if ($activeTab === 'chat-user' && $currentChatThreadId > 0) {
+            $this->chatModel->markThreadReadForAdmin($currentChatThreadId);
+        }
+        if ($activeTab === 'pesan-masuk') {
+            $this->messageModel->markAllRead();
+        }
+
+        // Dihitung SETELAH mark-read supaya angka lonceng langsung akurat.
+        $notifications = [
+            'pembayaran' => $this->paymentModel->countPendingVerification(),
+            'menunggak' => $this->rentalModel->countOverdue(),
+            'chat' => $this->chatModel->countUnreadForAdmin(),
+            'pesan' => $this->messageModel->countUnread(),
+        ];
+        $notifications['total'] = array_sum($notifications);
+
         $this->render('admin/dashboard', [
             'billingMonth' => $billingMonth,
             'adminName' => $_SESSION['admin_name'] ?? 'Admin',
+            'notifications' => $notifications,
             'successMessage' => flash('success'),
             'errorMessage' => flash('error'),
             'stats' => [

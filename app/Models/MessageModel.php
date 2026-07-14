@@ -25,4 +25,22 @@ final class MessageModel extends Model
     {
         return $this->db->execute("DELETE FROM pesan WHERE id_pesan = ?", [$id]);
     }
+
+    /**
+     * Jumlah pesan kontak yang belum dibaca admin (untuk lonceng notifikasi).
+     */
+    public function countUnread(): int
+    {
+        $row = $this->db->selectOne("SELECT COUNT(*) AS total FROM pesan WHERE dibaca = 0");
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
+     * Tandai semua pesan kontak sudah dibaca (dipanggil saat admin membuka tab Pesan Masuk).
+     */
+    public function markAllRead(): void
+    {
+        $this->db->execute("UPDATE pesan SET dibaca = 1 WHERE dibaca = 0");
+    }
 }
