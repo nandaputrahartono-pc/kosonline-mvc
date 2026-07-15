@@ -279,10 +279,15 @@ final class RentalModel extends Model
                   AND (
                         -- booking awal: selalu tampilkan invoice booking-nya
                         sewa.status_sewa = 'Menunggu Pembayaran'
+                        -- invoice yang SUDAH lunas selalu boleh dipilih (cuma memunculkan
+                        -- tombol Batal, bukan Lunas). Ini penting untuk booking dengan tanggal
+                        -- masuk di masa depan (mis. Bayar Saat Survei yang dibayar di muka):
+                        -- periodenya belum mulai, tapi barisnya tak boleh kosong.
+                        OR p.status_verifikasi = 'Lunas'
                         -- selain itu: hanya invoice yang SUDAH waktunya diurus, yaitu
                         -- periodenya sudah mulai ATAU penyewa sudah mengunggah bukti.
-                        -- Invoice periode masa depan sengaja TIDAK dipilih supaya admin
-                        -- tak bisa melunasinya berulang (bug runaway).
+                        -- Invoice periode masa depan yang BELUM lunas sengaja TIDAK dipilih
+                        -- supaya admin tak bisa melunasinya berulang (bug runaway).
                         OR p.periode_mulai IS NULL
                         OR p.periode_mulai <= CURDATE()
                         OR p.bukti_bayar IS NOT NULL
