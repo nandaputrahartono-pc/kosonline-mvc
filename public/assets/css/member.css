@@ -1244,6 +1244,14 @@
     padding: 0;
   }
 
+  /* Judul display disetel untuk layar besar (line-height 1, tracking -0.06em) sehingga
+     di HP barisnya nempel & hurufnya sesak. Dilonggarkan di mobile. */
+  .member-page h1,
+  .panel-hero h2 {
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+
   .member-dashboard-shell {
     width: 100%;
     max-width: none;

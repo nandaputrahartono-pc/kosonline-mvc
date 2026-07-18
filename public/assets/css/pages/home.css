@@ -878,7 +878,17 @@
   }
 
   .home-hero h1 {
-    font-size: 2.55rem;
+    /* Judul dulu dipaksa 2.55rem dgn line-height 0.98 & tracking -0.06em dari base,
+       jadi di HP barisnya nyaris nempel dan hurufnya sesak. Di layar kecil: ukuran
+       ikut mengecil, jarak baris & huruf dilonggarkan. */
+    font-size: clamp(1.85rem, 8.5vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .home-hero-copy {
+    font-size: 1rem;
+    line-height: 1.65;
   }
 
   .home-hero-visual img {

@@ -1450,7 +1450,11 @@ a {
   }
 
   .public-page-hero h1 {
-    font-size: clamp(2.2rem, 13vw, 3.2rem);
+    /* 13vw bikin judul ~51px di HP, plus line-height 0.98 & tracking -0.06em dari base
+       (baris nempel, huruf sesak). Dilonggarkan & diukur ulang untuk layar kecil. */
+    font-size: clamp(1.9rem, 8vw, 2.6rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
   }
 
   .public-page-hero p {

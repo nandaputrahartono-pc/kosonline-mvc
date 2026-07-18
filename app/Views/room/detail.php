@@ -69,7 +69,7 @@
                 </a>
             </div>
 
-            <div class="row g-5">
+            <div class="row g-4 g-lg-5">
                 <!-- Gallery Section (Left) -->
                 <div class="col-lg-7">
                     <div class="detail-gallery mb-4">

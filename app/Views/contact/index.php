@@ -65,7 +65,7 @@ ob_start();
 <main class="public-page contact-page">
     <section class="public-page-hero contact-hero">
         <div class="container">
-            <div class="row align-items-center g-5">
+            <div class="row align-items-center g-4 g-lg-5">
                 <div class="col-lg-7">
                     <span class="section-eyebrow">Hubungi Kami</span>
                     <h1>Butuh kamar cepat? Mulai dari chat yang tepat.</h1>

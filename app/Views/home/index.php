@@ -30,7 +30,7 @@ ob_start();
     <div class="home-hero-glow glow-two"></div>
 
     <div class="container">
-        <div class="row align-items-center g-5">
+        <div class="row align-items-center g-4 g-lg-5">
             <div class="col-lg-6">
                 <span class="home-eyebrow"><i class="fa-solid fa-house-circle-check"></i> Kos strategis di Cirebon</span>
                 <h1>Temukan kamar kos yang pas, nyaman, dan siap huni.</h1>

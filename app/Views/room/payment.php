@@ -53,7 +53,7 @@ ob_start();
             <p class="text-muted">Belum terhubung payment gateway. Invoice akan dicatat sebagai pembayaran manual dan menunggu verifikasi admin.</p>
         </div>
 
-        <form method="POST" action="<?php echo e(url('/rooms/payment?id=' . $room['id_kamar'])); ?>" class="row g-5" id="booking-payment-form">
+        <form method="POST" action="<?php echo e(url('/rooms/payment?id=' . $room['id_kamar'])); ?>" class="row g-4 g-lg-5" id="booking-payment-form">
             <?php echo csrf_field(); ?>
 
             <div class="col-lg-7">
