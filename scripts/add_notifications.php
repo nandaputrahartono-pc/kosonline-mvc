@@ -2,19 +2,7 @@
 
 declare(strict_types=1);
 
-/**
- * Menyiapkan kolom penanda "sudah dibaca" untuk notifikasi.
- *
- * - `pesan.dibaca`  : penanda pesan kontak sudah dibaca admin (belum ada di skema).
- *
- * Catatan: `chat_messages.dibaca` sudah ada di skema (tinggal dipakai), jadi tak diubah.
- *
- * Pakai:
- *   php scripts/add_notifications.php           # dry-run: hanya melaporkan rencana
- *   php scripts/add_notifications.php --apply   # benar-benar mengubah tabel
- *
- * Idempotent: aman dijalankan berkali-kali.
- */
+
 
 if (PHP_SAPI !== "cli") {
     http_response_code(403);

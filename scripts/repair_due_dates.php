@@ -2,25 +2,7 @@
 
 declare(strict_types=1);
 
-/**
- * Perbaiki jatuh tempo yang mustahil: jatuh_tempo LEBIH AWAL dari tanggal_masuk.
- *
- * Sisa dari bug "harus klik Batal 2x": tombol Batal dulu memundurkan jatuh tempo bahkan
- * untuk invoice booking (yang pelunasannya tak pernah memajukan jatuh tempo), sehingga dua
- * kali klik menyeretnya sampai SEBULAN SEBELUM penyewa masuk.
- *
- * Siklus pertama sudah berjalan sejak tanggal masuk, jadi jatuh tempo yang benar paling
- * awal adalah tanggal_masuk + 1 bulan. Itulah yang dipulihkan di sini.
- *
- * Bug penyebabnya sudah ditutup (retreatDueDate kini menolak mundur melewati tanggal masuk),
- * jadi script ini hanya membersihkan baris lama.
- *
- * Pakai:
- *   php scripts/repair_due_dates.php           # dry-run: hanya melaporkan rencana
- *   php scripts/repair_due_dates.php --apply   # benar-benar memperbaiki
- *
- * Idempotent: aman dijalankan berkali-kali (jalan kedua akan melaporkan 0 baris).
- */
+
 
 if (PHP_SAPI !== "cli") {
     http_response_code(403);

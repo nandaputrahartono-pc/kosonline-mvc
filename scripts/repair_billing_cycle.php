@@ -2,29 +2,7 @@
 
 declare(strict_types=1);
 
-/**
- * Perbaiki kerusakan akibat bug "runaway Lunas".
- *
- * Gejala: admin bisa mengklik "Lunas" berulang untuk invoice periode yang BELUM terjadi.
- * Tiap klik memajukan `sewa.jatuh_tempo` +1 bulan dan melahirkan invoice masa depan baru,
- * sehingga jatuh tempo melompat bertahun-tahun dan Total Pendapatan menggelembung oleh
- * pembayaran fiktif.
- *
- * Yang dilakukan (per sewa aktif):
- *   1. Cari invoice terbayar yang SAH = status 'Lunas' DAN periodenya sudah benar-benar mulai
- *      (periode_mulai <= hari ini). Ini pembayaran nyata.
- *   2. Hapus invoice apa pun yang periodenya melewati akhir periode sah terakhir DAN belum
- *      ada bukti bayarnya (invoice fiktif hasil runaway + invoice masa depan yang nyangkut).
- *   3. Setel ulang `jatuh_tempo` = akhir periode sah terakhir + 1 hari.
- *
- * Invoice yang PUNYA bukti bayar tak pernah disentuh (itu pembayaran sungguhan).
- *
- * Pakai:
- *   php scripts/repair_billing_cycle.php           # dry-run: hanya melaporkan rencana
- *   php scripts/repair_billing_cycle.php --apply   # benar-benar memperbaiki
- *
- * Idempotent: aman dijalankan berkali-kali.
- */
+
 
 if (PHP_SAPI !== "cli") {
     http_response_code(403);

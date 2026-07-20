@@ -2,23 +2,6 @@
 
 declare(strict_types=1);
 
-/**
- * Tambah status 'Arsip' pada kamar.
- *
- * Kenapa: menghapus kamar dulu ikut MENGHAPUS seluruh pembayarannya (termasuk yang Lunas)
- * dan sewa yang masih aktif — Total Pendapatan bisa lenyap tanpa peringatan. Sekarang kamar
- * yang punya riwayat pembayaran diarsipkan, bukan dihapus: pembukuannya tetap utuh, tapi
- * kamarnya hilang dari sisi user.
- *
- * Kamar 'Arsip' otomatis tak muncul di halaman kamar, rekomendasi, maupun peta — semua kueri
- * publik memang sudah menyaring status = 'Tersedia'.
- *
- * Pakai:
- *   php scripts/add_room_archive.php           # dry-run: hanya melaporkan rencana
- *   php scripts/add_room_archive.php --apply   # benar-benar mengubah skema
- *
- * Idempotent: aman dijalankan berkali-kali.
- */
 
 if (PHP_SAPI !== "cli") {
     http_response_code(403);

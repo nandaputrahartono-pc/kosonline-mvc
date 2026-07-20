@@ -2,32 +2,7 @@
 
 declare(strict_types=1);
 
-/**
- * Bersihkan invoice yatim yang membuat notifikasi pembayaran admin tak pernah hilang.
- *
- * Gejala: badge "Pembayaran" di dashboard admin menyala terus, padahal tab Pembayaran
- * tak menampilkan baris apa pun yang bisa diklik.
- *
- * Sebabnya: `PaymentModel::ensureOpenInvoice()` melahirkan invoice bulanan otomatis untuk
- * sewa aktif. Bila sewa itu KEMUDIAN dihentikan/dibatalkan, invoice tadi tertinggal dengan
- * status 'Menunggu'. Tabel penagihan admin hanya menampilkan sewa 'Aktif'/'Menunggu
- * Pembayaran', jadi barisnya tak pernah muncul — mustahil dibersihkan lewat UI.
- *
- * Yang dihapus HANYA invoice yang memenuhi semuanya:
- *   - status_verifikasi = 'Menunggu'  (belum lunas, jadi tak menyentuh pendapatan)
- *   - sewanya sudah berakhir ('Berhenti'/'Dibatalkan')
- *   - tanpa bukti_bayar DAN tanpa metode_bayar  (murni bikinan sistem, tak pernah
- *     disentuh user maupun admin)
- *
- * Invoice yang punya bukti/metode bayar TIDAK pernah disentuh — itu jejak pembukuan.
- * Total Pendapatan dijamin tak berubah (hanya menjumlah yang 'Lunas').
- *
- * Pakai:
- *   php scripts/cleanup_orphan_invoices.php           # dry-run: hanya melaporkan rencana
- *   php scripts/cleanup_orphan_invoices.php --apply   # benar-benar menghapus
- *
- * Idempotent: aman dijalankan berkali-kali (jalan kedua akan melaporkan 0 invoice).
- */
+
 
 if (PHP_SAPI !== "cli") {
     http_response_code(403);
